@@ -1,0 +1,18 @@
+---
+modules:
+  lab01:
+    name: Lab 01 - Introduction
+  lab02:
+    name: Lab 02 - The Disconnected Installation Process
+  lab03:
+    name: Lab 03 - Preparing the Connected Side
+  lab04:
+    name: Lab 04 - Preparing the Disconnected Side
+  lab05:
+    name: Lab 05 - Running the Installation
+  lab06:
+    name: Lab 06 - Accessing the Cluster
+# config:
+#   vars:
+#     - name: GUID
+#       value: CHANGEME

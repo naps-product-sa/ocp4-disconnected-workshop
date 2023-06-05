@@ -1,0 +1,1 @@
+In this lab, we'll prepare the Disconnected Side.

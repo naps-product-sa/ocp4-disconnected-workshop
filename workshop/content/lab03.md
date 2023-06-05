@@ -1,0 +1,1 @@
+In this lab, we'll download required content to the Connected Side.
