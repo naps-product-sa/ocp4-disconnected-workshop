@@ -1,10 +1,10 @@
-In this lab, we'll download required content to the Connected Side.
+In this lab, we'll download required content on the Connected Side.
 
 ## Mirroring Images
 Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the disconnected side. To begin the mirroring process, you first need to deploy this registry.
 
 ### Creating a Mirror Host
-We're going to start by creating a host on the connected side to house our registry. According to the [documentation](https://docs.openshift.com/container-platform/latest/installing/disconnected_install/installing-mirroring-creating-registry.html#prerequisites_installing-mirroring-creating-registry), our host must have the following characteristics:
+We're going to start by creating a host to house our registry. According to the [documentation](https://docs.openshift.com/container-platform/latest/installing/disconnected_install/installing-mirroring-creating-registry.html#prerequisites_installing-mirroring-creating-registry), our host must have the following characteristics:
 * Red Hat Enterprise Linux (RHEL) 8 and 9 with Podman 3.4.2 or later and OpenSSL installed.
 * 2 vCPUs
 * 8 GB RAM
