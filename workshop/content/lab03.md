@@ -1,4 +1,4 @@
-In this lab, we'll download required content on the Connected Side.
+In this lab, we'll download required content on the Low Side.
 
 ## Mirroring Images
 Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the disconnected side. You can use any registry you like for this as long as it supports Docker v2-2, such as:
@@ -25,7 +25,7 @@ Mirroring all release and operator images can take awhile depending on the netwo
 ```
 
 ### Creating a Mirror Registry
-Next we're going to deploy the registry itself. SSH into your registry host 
+Next we're going to deploy the registry itself. First, ssh into your bastion host and 
 
 ### Mirroring Content
 
