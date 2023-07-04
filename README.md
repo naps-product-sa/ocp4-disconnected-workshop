@@ -120,7 +120,8 @@ sudo chown ec2-user:ec2-user /mnt
 scp -i disco_key /mnt/mirror_seq1_000000.tar ec2-user@10.0.51.231:/mnt/
 
 # While that's running, install podman and git
-# TODO: Guessing 
+# TODO: Need another way to do this since we can't install packages on the high side!!
+# TODO: Change storage path for podman to use /mnt due to storage issues
 sudo yum install -y podman git
 
 # Get mirror registry
