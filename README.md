@@ -15,23 +15,23 @@ Then open http://localhost:8080 in your browser
 
 ssh-keygen -f ./disco_key
 
-KEY_NAME=
+KEY_NAME=disco-key
 
 aws ec2 import-key-pair --key-name $KEY_NAME --public-key-material fileb://./disco_key.pub
 
 # TODO: Do we need 3 public subnets? Docs suggest only one
-aws cloudformation create-stack --stack-name ocpdd --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM
 
 # Look at subnets
 aws ec2 describe-subnets | jq '[.Subnets[].Tags[] | select(.Key=="Name").Value] | sort'
 
 # Get VPC ID
-VPC_ID=$(aws ec2 describe-vpcs | jq '.Vpcs[] | select(.Tags[].Value=="ocpdd").VpcId' -r)
+VPC_ID=$(aws ec2 describe-vpcs | jq '.Vpcs[] | select(.Tags[].Value=="disco").VpcId' -r)
 
 ### LOW SIDE ###
 
 # Get Subnet ID
-PUBLIC_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Public Subnet - ocpdd").SubnetId' -r)
+PUBLIC_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Public Subnet - disco").SubnetId' -r)
 
 ## BASTION ##
 # Create security group
@@ -93,7 +93,7 @@ oc mirror --config imageset-config.yaml file:///mnt
 
 ### HIGH SIDE ###
 # Get Private Subnet ID
-PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Private Subnet - ocpdd").SubnetId' -r)
+PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Private Subnet - disco").SubnetId' -r)
 
 ## BASTION ##
 BASTION_NAME="disco-bastion-high"

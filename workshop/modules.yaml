@@ -5,9 +5,9 @@ modules:
   lab02:
     name: Lab 02 - The Disconnected Installation Process
   lab03:
-    name: Lab 03 - Preparing the Connected Side
+    name: Lab 03 - Preparing the Low Side
   lab04:
-    name: Lab 04 - Preparing the Disconnected Side
+    name: Lab 04 - Preparing the High Side
   lab05:
     name: Lab 05 - Running the Installation
   lab06:
