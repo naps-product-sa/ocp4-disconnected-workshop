@@ -15,7 +15,9 @@ Then open http://localhost:8080 in your browser
 
 ssh-keygen -f ./disco_key
 
-aws ec2 import-key-pair --key-name disco-key --public-key-material fileb://./disco_key.pub
+KEY_NAME=
+
+aws ec2 import-key-pair --key-name $KEY_NAME --public-key-material fileb://./disco_key.pub
 
 # TODO: Do we need 3 public subnets? Docs suggest only one
 aws cloudformation create-stack --stack-name ocpdd --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM
@@ -47,7 +49,7 @@ PREP_SYSTEM_NAME="disco-prep-system"
 AMI_ID="ami-06640050dc3f556bb"
 
 # Create Prep Server
-aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.micro --key-name disco-key --security-group-ids $PublicSecurityGroupId --subnet-id $PUBLIC_SUBNET --associate-public-ip-address --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$PREP_SYSTEM_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.micro --key-name $KEY_NAME --security-group-ids $PublicSecurityGroupId --subnet-id $PUBLIC_SUBNET --associate-public-ip-address --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$PREP_SYSTEM_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
 
 # Get prep system IP and check port 22
 PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$PREP_SYSTEM_NAME" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
@@ -96,10 +98,14 @@ PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Valu
 ## BASTION ##
 BASTION_NAME="disco-bastion-high"
 # set AMI ID (us-east-1 RHEL8)
-AMI_ID="ami-06640050dc3f556bb"
+AMI_ID="ami-0f8f9d60f5a31cb15"
 
 # Create Bastion Server
-aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.micro --key-name disco-key --security-group-ids $PublicSecurityGroupId --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+# Need to install podman but there's no internet! Let's use Image Builder:
+# https://console.redhat.com/insights/image-builder
+# Be sure to install podman and git
+
+aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.large --key-name $KEY_NAME --security-group-ids $PublicSecurityGroupId --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
 
 # Get bastion IP and check port 22
 BASTION_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$BASTION_NAME" | jq -r '.Reservations[0].Instances[0].PrivateIpAddress')
@@ -133,6 +139,11 @@ tar -xzf mirror-registry.tar.gz
 # Start registry
 # TODO: dynamically get internal hostname
 ./mirror-registry install --quayHostname ip-10-0-51-231.ec2.internal --quayRoot /mnt/quay
+
+# get oc and oc-mirror to the PATH on the bastion first, then mirror from disk to reg
+# TODO: use quay root CA from /mnt/quay/quay-rootCA
+podman login --tls-verify=false https://ip-10-0-59-47.ec2.internal:8443
+oc mirror --from=./mirror_seq1_000000.tar --dest-skip-tls docker://ip-10-0-59-47.ec2.internal:8443
 
 
 ```
