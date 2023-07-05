@@ -1,5 +1,7 @@
 Let's start with an overview of the disconnected installation process.
 
+## Creating an Air Gap
+
 ## Preparing the Low Side
 A disconnected installation begins with downloading content and tooling to a **prep server** that has access to the Internet. This server resides in an environment commonly referred to as the **Low Side** due to its low security profile. Compliance requirements usually prevent the low side from housing sensitive data or private information.
 

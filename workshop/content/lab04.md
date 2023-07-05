@@ -1,30 +1,111 @@
-In this lab, we'll prepare the High Side.
+In this lab, we'll prepare the low side.
 
-## Mirroring Images
-Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the disconnected side. You can use any registry you like for this as long as it supports Docker v2-2, such as:
-* Red Hat Quay
-* JFrog Artifactory
-* Sonatype Nexus Repository
-* Harbor
+## Create a Prep System
+Let's start by creating a prep system so we can begin downloading content.
 
-An OpenShift subscription includes access to the [mirror registry for Red Hat OpenShift](https://docs.openshift.com/container-platform/4.13/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry), which is a small-scale container registry designed specifically for mirroring images in disconnected installations. We'll make use of this option in this lab.
+1. Collect the IDs for your VPC and public subnet:
+   ```bash
+   VPC_ID=$(aws ec2 describe-vpcs | jq '.Vpcs[] | select(.Tags[].Value=="disco").VpcId' -r)
+   echo $VPC_ID
 
-### Creating a Mirror Host
-We're going to start by creating a host to house our registry. According to the [documentation](https://docs.openshift.com/container-platform/latest/installing/disconnected_install/installing-mirroring-creating-registry.html#prerequisites_installing-mirroring-creating-registry), our host must have the following characteristics:
-* Red Hat Enterprise Linux (RHEL) 8 and 9 with Podman 3.4.2 or later and OpenSSL installed.
-* 2 vCPUs
-* 8 GB RAM
-* About 12 GB for OpenShift Container Platform 4.13 release images, or about 358 GB for OpenShift Container Platform 4.13 release images and OpenShift Container Platform 4.13 Red Hat Operator images. Up to 1 TB per stream or more is suggested.
+   PUBLIC_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Public Subnet - disco").SubnetId' -r)
+   echo $PUBLIC_SUBNET
+   ```
+2. Create a Security Group and collect its ID:
+   ```bash
+   aws ec2 create-security-group --group-name disco-sg --description disco-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=disco-sg}]"
 
-> Note that storage requirements are relatively modest for a bare-bones install, but a more future-proof setup has greater capacity to accommodate mirroring update streams when it comes time to upgrade the cluster.
+   SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=disco-sg" | jq -r '.SecurityGroups[0].GroupId')
+   echo $SG_ID
+   ```
+3. Allow SSH to hosts in this security group:
+   ```bash
+   aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+   ```
+4. Next we'll specify an Amazon Machine Image (AMI) to use for our prep server. For this lab, we'll just use the Marketplace AMI for RHEL 8 in `us-east-1`:
+   ```bash
+   AMI_ID="ami-06640050dc3f556bb"
+   ```
+5. Ready to launch! We'll use the `t2.micro` instance type, which offers 1GiB of RAM and 1vCPU, along with a 50GiB volume to ensure we have enough storage for mirrored content:
+   ```bash
+   PREP_SYSTEM_NAME="disco-prep-system"
 
-Mirroring all release and operator images can take awhile depending on the network bandwidth. For this lab, we're going to mirror  just the release images to save time and resources.
+   aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.micro --key-name $KEY_NAME --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET --associate-public-ip-address --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$PREP_SYSTEM_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
 
-```bash
-# TODO - create ec2 or have this pre-configured
-```
+## Download Tooling
+Now that our system is up, let's SSH into it and download the content we'll need to support our install on the high side.
 
-### Creating a Mirror Registry
-Next we're going to deploy the registry itself. First, ssh into your bastion host and 
+1. Grab the IP address for the prep system and SSH into it using `disco_key`:
+   ```bash
+   PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$PREP_SYSTEM_NAME" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
+   echo $PREP_SYSTEM_IP
 
-### Mirroring Content
+   ssh -i disco_key ec2-user@$PREP_SYSTEM_IP
+   ```
+2. Let's mount the EBS volume we attached so we can build our collection of stuff to ship to the high side:
+   ```bash
+   sudo mkfs -t xfs /dev/xvdh
+   sudo mount /dev/xvdh /mnt
+   sudo chown ec2-user:ec2-user /mnt
+
+   mkdir /mnt/high-side
+   ```
+3. Let's grab the tools we'll need for the bastion server - we'll use some of them on the prep system too. Life's good on the low side; we can download these from the Internet and tuck them into our high side gift basket at `/mnt/high-side`:
+   * `oc`: OpenShift CLI
+      ```bash
+      cd /mnt
+
+      curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz -L -o oc.tar.gz
+      tar -xzf oc.tar.gz
+      rm -f oc.tar.gz kubectl
+      cp oc /mnt/high-side
+      sudo mv oc /usr/local/bin/
+      ```
+   * `oc-mirror`: oc plugin for mirorring release, operator, and helm content
+     ```bash
+     curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/oc-mirror.tar.gz -L -o oc-mirror.tar.gz
+     tar -xzf oc-mirror.tar.gz
+     rm -f oc-mirror.tar.gz
+     chmod +x oc-mirror
+     cp oc-mirror /mnt/high-side
+     sudo mv oc-mirror /usr/local/bin/
+     ```
+   * `mirror-registry`: small-scale Quay registry designed for mirroring
+     ```bash
+     curl https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz -L -o mirror-registry.tar.gz
+     tar -xzf mirror-registry.tar.gz
+     rm -f mirror-registry.tar.gz
+     mv mirror-registry /mnt/high-side
+     ```
+   * `openshift-installer`: OpenShift Installer
+     ```bash
+     curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-install-linux.tar.gz -L -o openshift-installer.tar.gz
+     tar -xzf openshift-installer.tar.gz
+     rm -f openshift-installer.tar.gz
+     mv openshift-installer /mnt/high-side
+     ```
+## Mirrorring Content to Disk
+The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab. Instead, we'll mirror content to a tarball on disk that we can then sneakernet into the bastion server on the high side. We'll then mirror from the tarball into the mirror registry from there.
+
+1. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries. Grab yours from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) and save it to `~/.docker/config.json` on your prep system.
+2. Next, we need to generate an `ImageSetConfiguration` that describes the parameters of our mirror. You can generate one like this:
+   ```bash
+   oc mirror init > imageset-config.yaml
+   ```
+3. To save time and storage, we're going to remove the operator catalogs and mirror only the release images. So edit your `imageset-config.yaml` to look like this:
+   ```bash
+   kind: ImageSetConfiguration
+   apiVersion: mirror.openshift.io/v1alpha2
+   storageConfig:
+     local:
+       path: ./
+   mirror:
+     platform:
+       channels:
+       - name: stable-4.13
+         type: ocp
+   ```
+4. Now we're ready to kick off the mirror! This should take about 10 minutes, so grab a coffee while it's running, or start on the next lab in a new terminal.
+   ```bash
+   oc mirror --config imageset-config.yaml file:///mnt/high-side
+   ```

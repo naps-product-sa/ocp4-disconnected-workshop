@@ -1,17 +1,19 @@
 ---
 modules:
   lab01:
-    name: Lab 01 - Introduction
+    name: Introduction
   lab02:
-    name: Lab 02 - The Disconnected Installation Process
+    name: The Disconnected Installation Process
   lab03:
-    name: Lab 03 - Preparing the Low Side
+    name: Creating the Air Gap
   lab04:
-    name: Lab 04 - Preparing the High Side
+    name: Preparing the Low Side
   lab05:
-    name: Lab 05 - Running the Installation
+    name: Preparing the High Side
   lab06:
-    name: Lab 06 - Accessing the Cluster
+    name: Running the Installation
+  lab07:
+    name: Accessing the Cluster
 # config:
 #   vars:
 #     - name: GUID

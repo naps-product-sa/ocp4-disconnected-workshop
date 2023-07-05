@@ -1,1 +1,1 @@
-The cluster is up! But how to access it?
+We're finally ready to run the installation.
