@@ -84,6 +84,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
      rm -f openshift-installer.tar.gz
      mv openshift-installer /mnt/high-side
      ```
+
 ## Mirrorring Content to Disk
 The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab. Instead, we'll mirror content to a tarball on disk that we can then sneakernet into the bastion server on the high side. We'll then mirror from the tarball into the mirror registry from there.
 
