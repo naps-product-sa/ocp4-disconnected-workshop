@@ -73,9 +73,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
    * `mirror-registry`: small-scale Quay registry designed for mirroring
      ```bash
      curl https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz -L -o mirror-registry.tar.gz
-     tar -xzf mirror-registry.tar.gz
-     rm -f mirror-registry.tar.gz
-     mv mirror-registry /mnt/high-side
+     mv mirror-registry.tar.gz /mnt/high-side
      ```
    * `openshift-installer`: OpenShift Installer
      ```bash
