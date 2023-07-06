@@ -25,7 +25,37 @@ Image Builder, bundled with Red Hat Insights, enables you to create customized i
    ![image-builder-3](images/image-builder-3.png)
    > Use the right arrow in the middle of the pane to populate the Chosen packages section.
 7. Give your image a sweet name, like **AWS Disco Bastion Image** and click **Next**
-8. Click **Create Image** on the next screen, and sit back and relax as your image is built.
+8. Click **Create Image** on the next screen, and wait a few minutes for your image build to complete. Time for more coffee!
+
+## Creating a Bastion Server
+Once the image build is complete, we can create the bastion server.
+
+1. Grab the ID of a private subnet from the high side of our VPC:
+   ```execute
+   PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Private Subnet - disco").SubnetId' -r)
+   echo $PRIVATE_SUBNET
+   ```
+2. Obtain the AMI ID from the Cloud Provider Identifiers in Image Builder, and set it as an environment variable:
+   ![image-builder-4.png](images/image-builder-4.png)
+   ```copy
+   BASTION_AMI_ID=<your ami id>
+   ```
+3. Then spin up your EC2 instance. We're going to use a `t2.large` instance type which provides 2vCPU and 8GiB of RAM, along with a 50GiB volume to meet our storage requirements:
+   ```execute
+   BASTION_NAME="disco-bastion-server"
+   
+   aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t2.large --key-name $KEY_NAME --security-group-ids $PublicSecurityGroupId --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+   ```
+
+## Mirroring Content
+Now we need to access our bastion server on the high side. In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF. To make things a bit simpler for our lab, we're going to restrict access to our bastion
+
+4. Grab the bastion's IP:
+   ```execute
+   BASTION_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$BASTION_NAME" | jq -r '.Reservations[0].Instances[0].PrivateIpAddress')
+   echo $BASTION_IP
+   ```
+
 
 ## Mirroring Images
 Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the high side. You can use any registry you like for this as long as it supports Docker v2-2, such as:
