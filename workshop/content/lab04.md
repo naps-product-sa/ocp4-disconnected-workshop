@@ -1,6 +1,6 @@
 In this lab, we'll prepare the low side.
 
-## Create a Prep System
+## Creating a Prep System
 Let's start by creating a prep system so we can begin downloading content.
 
 1. Collect the IDs for your VPC and public subnet:
@@ -32,7 +32,7 @@ Let's start by creating a prep system so we can begin downloading content.
 
    aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.micro --key-name $KEY_NAME --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET --associate-public-ip-address --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$PREP_SYSTEM_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
 
-## Download Tooling
+## Downloading Tooling
 Now that our system is up, let's SSH into it and download the content we'll need to support our install on the high side.
 
 1. Grab the IP address for the prep system and SSH into it using `disco_key`:
