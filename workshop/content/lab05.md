@@ -47,17 +47,85 @@ Once the image build is complete, we can create the bastion server.
    aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t2.large --key-name $KEY_NAME --security-group-ids $PublicSecurityGroupId --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
    ```
 
-## Mirroring Content
-Now we need to access our bastion server on the high side. In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF. To make things a bit simpler for our lab, we're going to restrict access to our bastion
+## Accessing the High Side
+Now we need to access our bastion server on the high side. In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF. To make things a bit simpler for our lab, we're going to restrict access to our bastion to its *private IP address*. So we'll use the prep system as a sort of bastion-to-the-bastion.
 
-4. Grab the bastion's IP:
+1. Start by grabbing the bastion's private IP:
    ```execute
    BASTION_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$BASTION_NAME" | jq -r '.Reservations[0].Instances[0].PrivateIpAddress')
    echo $BASTION_IP
    ```
+2. Then let's `scp` our private key to the prep system so that we can SSH to the bastion from there. You may have to wait a minute for the VM to finish initializing:
+   ```execute
+   scp -i disco_key disco_key ec2-user@$PREP_SYSTEM_IP:/home/ec2-user/disco_key
+   ```
+3. Then set an environment variable on the prep system so that we can preserve the bastion's IP:
+   ```execute
+   ssh -i disco_key ec2-user@$PREP_SYSTEM_IP "echo export BASTION_IP=$(echo $BASTION_IP) >> /home/ec2-user/.bashrc"
+   ```
+4. SSH to the prep system, then over to the bastion server:
+   ```execute
+   ssh -i disco_key ec2-user@$PREP_SYSTEM_IP
+   ```
+   ```execute
+   ssh -i ~disco_key ec2-user@$BASTION_IP
+   ```
+   
+We're in! While we're on the bastion, let's confirm that `podman` is installed:
+```execute
+podman version
+```
+Example output:
+```bash
+[ec2-user@ip-10-0-52-68 ~]$ podman version
+Client:       Podman Engine
+Version:      4.4.1
+API Version:  4.4.1
+Go Version:   go1.19.6
+Built:        Thu Jun 15 14:39:56 2023
+OS/Arch:      linux/amd64
+```
 
+Nice! And come to think of it, let's also check that we have no Internet access:
+```execute
+curl google.com
+```
 
-## Mirroring Images
+Your output will contain something like this:
+```html
+...
+<blockquote id="error">
+<p><b>Access Denied.</b></p>
+</blockquote>
+
+<p>Access control configuration prevents your request from being allowed at this time. Please contact your service provider if you feel this is incorrect.</p>
+
+<p>Your cache administrator is <a href="mailto:root?subject=CacheErrorInfo%20-%20ERR_ACCESS_DENIED&amp;body=CacheHost%3A%20squid%0D%0AErrPage%3A%20ERR_ACCESS_DENIED%0D%0AErr%3A%20%5Bnone%5D%0D%0ATimeStamp%3A%20Thu,%2006%20Jul%202023%2013%3A45%3A11%20GMT%0D%0A%0D%0AClientIP%3A%2010.0.52.68%0D%0A%0D%0AHTTP%20Request%3A%0D%0AGET%20%2F%20HTTP%2F1.1%0AUser-Agent%3A%20curl%2F7.61.1%0D%0AAccept%3A%20*%2F*%0D%0AHost%3A%20google.com%0D%0A%0D%0A%0D%0A">root</a>.</p>
+<br>
+...
+```
+This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list.
+
+# Snakernetting Content to the High Side
+We'll now deliver the high side gift basket to the bastion server.
+
+1. Start by mounting our EBS volume to ensure that we don't run out of space:
+   ```execute
+   sudo mkfs -t xfs /dev/xvdh
+   sudo mount /dev/xvdh /mnt
+   sudo chown ec2-user:ec2-user /mnt
+   ```
+2. Then exit your SSH session on the bastion to return to the prep system:
+   ```execute
+   exit
+   ```
+3. Now we're back at the prep system. Let's send over our gift basket at `/mnt/high-side`:
+   ```bash
+   # TODO: this takes a really long time
+   scp -i ~/disco_key -r /mnt/high-side/ ec2-user@$BASTION_IP:/mnt
+   ```
+
+### Creating a Mirror Registry
 Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the high side. You can use any registry you like for this as long as it supports Docker v2-2, such as:
 * Red Hat Quay
 * JFrog Artifactory
@@ -66,22 +134,32 @@ Images used by operators and platform components must be mirrored from upstream 
 
 An OpenShift subscription includes access to the [mirror registry for Red Hat OpenShift](https://docs.openshift.com/container-platform/4.13/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry), which is a small-scale container registry designed specifically for mirroring images in disconnected installations. We'll make use of this option in this lab.
 
-### Creating a Mirror Host
-We're going to start by creating a host to house our registry. According to the [documentation](https://docs.openshift.com/container-platform/latest/installing/disconnected_install/installing-mirroring-creating-registry.html#prerequisites_installing-mirroring-creating-registry), our host must have the following characteristics:
-* Red Hat Enterprise Linux (RHEL) 8 and 9 with Podman 3.4.2 or later and OpenSSL installed.
-* 2 vCPUs
-* 8 GB RAM
-* About 12 GB for OpenShift Container Platform 4.13 release images, or about 358 GB for OpenShift Container Platform 4.13 release images and OpenShift Container Platform 4.13 Red Hat Operator images. Up to 1 TB per stream or more is suggested.
+Mirroring all release and operator images can take awhile depending on the network bandwidth. For this lab, recall that we're going to mirror just the release images to save time and resources.
 
-> Note that storage requirements are relatively modest for a bare-bones install, but a more future-proof setup has greater capacity to accommodate mirroring update streams when it comes time to upgrade the cluster.
-
-Mirroring all release and operator images can take awhile depending on the network bandwidth. For this lab, we're going to mirror  just the release images to save time and resources.
-
-```bash
-# TODO - create ec2 or have this pre-configured
+We should have both the mirror tarball and `mirror-registry` binaries available on the bastion in `/mnt/high-side`. Let's take care to create any storage within our `/mnt` volume to ensure we have enough space, and kick off our install:
+```execute
+./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/quay/quay-install --quayStorage /mnt/quay/quay-storage --pgStorage /mnt/quay/pg-data
 ```
 
-### Creating a Mirror Registry
-Next we're going to deploy the registry itself. First, ssh into your bastion host and 
+If all goes well, you should see something like:
+```bash
+INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in /mnt/quay/quay-install 
+INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, e1LY8WJbn92XI5UVcl76gN0hxTO3k4fq) 
+```
 
-### Mirroring Content
+Do a podman login to make sure your credentials work and generate an auth file at `/run/user/1000/containers/auth.json`:
+```execute
+podman login --tls-verify=false $(hostname):8443
+```
+
+## Mirroring Content
+Now we're ready to mirror images from disk into the registry. Let's add `oc` and `oc-mirror` to the path:
+```execute
+sudo mv /mnt/high-side/oc /usr/local/bin/
+sudo mv /mnt/high-side/oc-mirror /usr/local/bin/
+```
+
+And fire up the mirror! (~10 minutes)
+```execute
+oc mirror --from=/mnt/high-side/mirror_seq1_000000.tar --dest-skip-tls docker://$(hostname):8443
+```
