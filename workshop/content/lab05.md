@@ -2,7 +2,7 @@ In this lab, we'll prepare the High Side. Recall from our architecture diagram t
 
 However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed! We could rectify this by running `sudo dnf install -y podman` on the prep system, but the bastion server won't have Internet access, so we need another option. Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation is quite complex (`dnf` obscures this complexity).
 
-To solve this problem, we need to *build our own RHEL image* with `podman` pre-installed. One such approach is to use the **Image Builder** in the Hybrid Cloud Console, and that's exactly what we'll do.
+To solve this problem, we need to *build our own RHEL image* with `podman` pre-installed. One approach is to use the **Image Builder** in the Hybrid Cloud Console, and that's exactly what we'll do.
 
 ## Using Image Builder
 Image Builder, bundled with Red Hat Insights, enables you to create customized images and upload them to a variety of cloud environments, such as Amazon Web Services, Microsoft Azure and Google Cloud Platform. You also have the option to download the images you create for on-prem infrastructure environments. Let's get started:
@@ -15,9 +15,10 @@ Image Builder, bundled with Red Hat Insights, enables you to create customized i
    aws sts get-caller-identity --query "Account" --output text
    ```
    > You can also get this from the web console using the URL provided in your email from RHDP.
+
    Specify this in the **AWS account ID** and click **Next**. Image Builder will push the image to a Red Hat-owned AWS account and share it with the account ID you specify.
    ![image-builder-2](images/image-builder-2.png)
-4. Leave the default Registration method selected. If you already have an Activation Key available to use, click **Next** and skip to Step 5. Otherwise, let's go create one in [Remote Host Configuration](https://console.redhat.com/settings/connector/activation-keys)
+4. Leave the default Registration method selected. If you already have an Activation Key available to use, select it, click **Next**, and skip to Step 5. Otherwise, let's go create one in [Remote Host Configuration](https://console.redhat.com/settings/connector/activation-keys)
    * Click **Create activation key**, make the following selections and click **Create**:
       ![activation-key](images/activation-key.png)
 5. Leave the default File system configuration and click **Next**
@@ -106,7 +107,7 @@ Your output will contain something like this:
 ```
 This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list.
 
-# Snakernetting Content to the High Side
+## Snakernetting Content to the High Side
 We'll now deliver the high side gift basket to the bastion server.
 
 1. Start by mounting our EBS volume to ensure that we don't run out of space:
@@ -125,7 +126,7 @@ We'll now deliver the high side gift basket to the bastion server.
    scp -i ~/disco_key -r /mnt/high-side/ ec2-user@$BASTION_IP:/mnt
    ```
 
-### Creating a Mirror Registry
+## Creating a Mirror Registry
 Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the high side. You can use any registry you like for this as long as it supports Docker v2-2, such as:
 * Red Hat Quay
 * JFrog Artifactory
