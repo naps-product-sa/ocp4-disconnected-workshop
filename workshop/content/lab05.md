@@ -152,6 +152,7 @@ Do a podman login to make sure your credentials work and generate an auth file a
 ```execute
 podman login --tls-verify=false $(hostname):8443
 ```
+> We pass `--tls-verify=false` here for simplicity, but you can optionally add `/mnt/quay/quay-install/quay-rootCA/rootCA.pem` to the system trust store by following the guide in the Quay documentation [here](https://access.redhat.com/documentation/en-us/red_hat_quay/3/html/manage_red_hat_quay/using-ssl-to-protect-quay?extIdCarryOver=true&sc_cid=701f2000001OH74AAG#configuring_the_system_to_trust_the_certificate_authority).
 
 ## Mirroring Content
 Now we're ready to mirror images from disk into the registry. Let's add `oc` and `oc-mirror` to the path:
