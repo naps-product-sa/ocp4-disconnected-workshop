@@ -45,7 +45,7 @@ Once the image build is complete, we can create the bastion server.
    ```execute
    BASTION_NAME="disco-bastion-server"
    
-   aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t2.large --key-name $KEY_NAME --security-group-ids $PublicSecurityGroupId --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+   aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t2.large --key-name $KEY_NAME --security-group-ids $SG_ID --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
    ```
 
 ## Accessing the High Side
@@ -69,7 +69,7 @@ Now we need to access our bastion server on the high side. In real customer envi
    ssh -i disco_key ec2-user@$PREP_SYSTEM_IP
    ```
    ```execute
-   ssh -i ~disco_key ec2-user@$BASTION_IP
+   ssh -i disco_key ec2-user@$BASTION_IP
    ```
    
 We're in! While we're on the bastion, let's confirm that `podman` is installed:
@@ -165,3 +165,5 @@ And fire up the mirror! (~10 minutes)
 ```execute
 oc mirror --from=/mnt/high-side/mirror_seq1_000000.tar --dest-skip-tls docker://$(hostname):8443
 ```
+
+Once this has completed, there are only a few steps left to prepare the cluster installation. Let's get to it!

@@ -4,7 +4,7 @@ In this lab, we'll prepare the low side.
 Let's start by creating a prep system so we can begin downloading content.
 
 1. Collect the IDs for your VPC and public subnet:
-   ```bash
+   ```execute
    VPC_ID=$(aws ec2 describe-vpcs | jq '.Vpcs[] | select(.Tags[].Value=="disco").VpcId' -r)
    echo $VPC_ID
 
@@ -12,38 +12,42 @@ Let's start by creating a prep system so we can begin downloading content.
    echo $PUBLIC_SUBNET
    ```
 2. Create a Security Group and collect its ID:
-   ```bash
+   ```execute
    aws ec2 create-security-group --group-name disco-sg --description disco-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=disco-sg}]"
 
    SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=disco-sg" | jq -r '.SecurityGroups[0].GroupId')
    echo $SG_ID
    ```
 3. Allow SSH to hosts in this security group:
-   ```bash
+   ```execute
+   # TODO explain why we need 8443 for the mirror registry AND be better about creating separate security groups
    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+   aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 8443 --cidr 0.0.0.0/0
    ```
 4. Next we'll specify an Amazon Machine Image (AMI) to use for our prep server. For this lab, we'll just use the Marketplace AMI for RHEL 8 in `us-east-1`:
-   ```bash
+   ```execute
+   # TODO - add a link to AMI documentation
    AMI_ID="ami-06640050dc3f556bb"
    ```
 5. Ready to launch! We'll use the `t2.micro` instance type, which offers 1GiB of RAM and 1vCPU, along with a 50GiB volume to ensure we have enough storage for mirrored content:
-   ```bash
+   ```execute
    PREP_SYSTEM_NAME="disco-prep-system"
 
    aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t2.micro --key-name $KEY_NAME --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET --associate-public-ip-address --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$PREP_SYSTEM_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+   ```
 
 ## Downloading Tooling
 Now that our system is up, let's SSH into it and download the content we'll need to support our install on the high side.
 
 1. Grab the IP address for the prep system and SSH into it using `disco_key`:
-   ```bash
+   ```execute
    PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$PREP_SYSTEM_NAME" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
    echo $PREP_SYSTEM_IP
 
    ssh -i disco_key ec2-user@$PREP_SYSTEM_IP
    ```
 2. Let's mount the EBS volume we attached so we can build our collection of stuff to ship to the high side:
-   ```bash
+   ```execute
    sudo mkfs -t xfs /dev/xvdh
    sudo mount /dev/xvdh /mnt
    sudo chown ec2-user:ec2-user /mnt
@@ -80,7 +84,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
      curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-install-linux.tar.gz -L -o openshift-installer.tar.gz
      tar -xzf openshift-installer.tar.gz
      rm -f openshift-installer.tar.gz
-     mv openshift-installer /mnt/high-side
+     mv openshift-install /mnt/high-side
      ```
 
 ## Mirrorring Content to Disk
@@ -93,6 +97,7 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
    ```
 3. To save time and storage, we're going to remove the operator catalogs and mirror only the release images. So edit your `imageset-config.yaml` to look like this:
    ```bash
+   # TODO: do like one operator here just to show it
    kind: ImageSetConfiguration
    apiVersion: mirror.openshift.io/v1alpha2
    storageConfig:
