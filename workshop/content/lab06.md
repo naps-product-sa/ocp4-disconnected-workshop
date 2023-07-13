@@ -26,10 +26,10 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 
    That's it! The installer will generate `install-config.yaml` and drop it in `/mnt/install` for you.
 4. We need to make a couple changes to this config before we kick off the install:
-   * Add subnets to `platform.aws.networking`
-   * Add hosted zone
+   * Add private subnets to `platform.aws.networking`
+   * Change machine cidrs to match the cidrs from the private subnets
    * Add mirror registry to pull secret
-   * Add ICSP (here or after creating manifests)
+   * Add ICSP details (here or after creating manifests)
    * Add additionalTrustBundle from mirror registry
    * Change publish to Internal
 5. Then make a backup of your `install-config.yaml` since the installer will consume it:
@@ -40,5 +40,8 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 ## Running the Installation
 We're ready to run the install!
 ```execute
+/mnt/high-side openshift-install create cluster --log-level=DEBUG
 ```
+
+
 
