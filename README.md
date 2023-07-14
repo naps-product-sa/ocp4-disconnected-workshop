@@ -1,5 +1,5 @@
 # OpenShift 4 Disconnected Workshop
-This repository houses the labguides for the Red Hat NAPS OpenShift 4 Disconnected workshop.
+This repository houses the lab guides for the Red Hat NAPS OpenShift 4 Disconnected workshop.
 
 ## Deploy me
 Run this container with `podman`:

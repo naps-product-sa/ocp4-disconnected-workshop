@@ -1,10 +1,10 @@
 In this lab, we'll create an Air Gap in AWS.
 
-1. Configure your AWS CLI with the credentials you received from RHDP:
+1. Configure your AWS CLI with the credentials you received from RHDP. Be sure to use the `us-east-1` region:
    ```execute
    aws configure
    ```
-2. Create a key pair and import it to AWS:
+2. Create a key pair and import it to AWS. We're going to use this to SSH into our **prep system** and **bastion server**:
    ```execute
    ssh-keygen -f ./disco_key
 
@@ -24,7 +24,7 @@ In this lab, we'll create an Air Gap in AWS.
      ```bash
      podman machine ssh "sudo systemctl restart systemd-timesyncd.service"
      ```
-3. Instantiate a CloudFormationTemplate:
+3. Instantiate a CloudFormationTemplate. This creates a VPC that houses both sides of the air gap:
    ```execute
    aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM
    ```
@@ -45,3 +45,9 @@ In this lab, we'll create an Air Gap in AWS.
       "Public Subnet 3 - disco"
    ]
    ```
+   The high side protects outbound traffic with a [Squid proxy](http://www.squid-cache.org/) running in a NAT instance. The proxy prevents any egress traffic not listed in `/etc/squid/whitelist.txt` on that host. If you look at the template you'll notice our two entries are:
+   * `.amazonaws.com`
+   * `.cloudfront.net`
+   There may be situations where you wish to add more exceptions here, such as container or package repositories.
+
+Now that our air gap is in place, let's start prepping the low side.

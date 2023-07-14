@@ -11,7 +11,7 @@ modules:
   lab05:
     name: Preparing the High Side
   lab06:
-    name: Running the Installation
+    name: Preparing the Installation
   lab07:
     name: Accessing the Cluster
 # config:
