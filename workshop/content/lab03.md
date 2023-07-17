@@ -26,6 +26,10 @@ In this lab, we'll create an Air Gap in AWS.
      ```
 3. Instantiate a CloudFormationTemplate. This creates a VPC that houses both sides of the air gap:
    ```execute
+   # Grab the template file from the repo
+   curl https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/main/cloudformation.yaml -o cloudformation.yaml
+
+   # Create the stack
    aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM
    ```
 4. We just created a VPC with 3 public subnets, which will serve as our Low Side, and 3 private subnets, which will serve as our High Side. You can view them by running the command below:
