@@ -120,3 +120,12 @@ We're ready to run the install! Let's create the installation manifests and kick
 /mnt/high-side openshift-install create manifests
 /mnt/high-side openshift-install create cluster --log-level=DEBUG
 ```
+The installation process should take about 30 minutes. If you've done everything correctly, you should see something like this:
+```bash
+...
+INFO Install complete!
+INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/myuser/install_dir/auth/kubeconfig'
+INFO Access the OpenShift web-console here: https://console-openshift-console.apps.mycluster.example.com
+INFO Login to the console with user: "kubeadmin", and password: "password"
+INFO Time elapsed: 30m49s
+```
