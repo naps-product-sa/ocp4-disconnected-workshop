@@ -17,7 +17,8 @@ IPI is the recommended installation method because it leverages full automation 
 * **You may not have access to the infrastructure APIs.** Our lab is going to live in AWS, which requires connectivity to the `.amazonaws.com` domain. We accomplish this by using an *allowed list* on a Squid proxy running on the high side, but a similar approach may not be achievable or permissible for everyone. We'll discuss this further later in the lab.
 * **You may not have sufficient permissions with your infrastructure provider**. Our lab has full admin in our AWS enclave, so that's not a constraint we'll need to deal with. In real world environments, you'll need to ensure your account has the [appropriate permissions](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-account.html#installation-aws-permissions_installing-aws-account) which sometimes involves negotiating with security teams.
 
-Once configuration has been completed, we can kick off the OpenShift Installer and it will do all the work for us to provision the infrastructure and install OpenShift.
+Once configuration has been completed, we can kick off the OpenShift Installer and it will do all the work for us to provision the infrastructure and install OpenShift. Here's a diagram describing everything we've discussed so far:
+![disco diagram](images/disco-diagram.png)
 
 ## Accessing the Cluster
 Since the cluster we'll produce is in a disconnected environment, it won't be publicly accessible via the Internet. In many cases, cluster access is restricted to hosts within the high side themselves. In our lab, we'll use the bastion server as a **jumphost** so that we can access the cluster from our laptop.
