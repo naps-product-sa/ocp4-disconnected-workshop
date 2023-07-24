@@ -137,8 +137,9 @@ An OpenShift subscription includes access to the [mirror registry for Red Hat Op
 
 Mirroring all release and operator images can take awhile depending on the network bandwidth. For this lab, recall that we're going to mirror just the release images to save time and resources.
 
-We should have both the mirror tarball and `mirror-registry` binaries available on the bastion in `/mnt/high-side`. Let's take care to create any storage within our `/mnt` volume to ensure we have enough space, and kick off our install:
+We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side`. Let's take care to create any storage within our `/mnt` volume to ensure we have enough space, and kick off our install:
 ```execute
+cd /mnt/high-side
 ./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/quay/quay-install --quayStorage /mnt/quay/quay-storage --pgStorage /mnt/quay/pg-data
 ```
 
@@ -148,7 +149,7 @@ INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in 
 INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, e1LY8WJbn92XI5UVcl76gN0hxTO3k4fq) 
 ```
 
-Do a podman login to make sure your credentials work and generate an auth file at `/run/user/1000/containers/auth.json`:
+Do a podman login using the credentials output in the previous step to make sure they work and generate an auth file at `/run/user/1000/containers/auth.json`:
 ```execute
 podman login --tls-verify=false $(hostname):8443
 ```
