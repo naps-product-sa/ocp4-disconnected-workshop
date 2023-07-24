@@ -107,7 +107,7 @@ Your output will contain something like this:
 ```
 This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list.
 
-## Snakernetting Content to the High Side
+## Sneakernetting Content to the High Side
 We'll now deliver the high side gift basket to the bastion server.
 
 1. Start by mounting our EBS volume to ensure that we don't run out of space:

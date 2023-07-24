@@ -89,7 +89,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
      mv openshift-install /mnt/high-side
      ```
 
-## Mirrorring Content to Disk
+## Mirroring Content to Disk
 The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab. Instead, we'll mirror content to a tarball on disk that we can then sneakernet into the bastion server on the high side. We'll then mirror from the tarball into the mirror registry from there.
 
 1. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries. Grab yours from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) and save it to `~/.docker/config.json` on your prep system.
