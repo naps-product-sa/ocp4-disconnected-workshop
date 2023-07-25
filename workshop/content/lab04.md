@@ -56,7 +56,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
    ```
 3. Let's grab the tools we'll need for the bastion server - we'll use some of them on the prep system too. Life's good on the low side; we can download these from the Internet and tuck them into our high side gift basket at `/mnt/high-side`:
    * `oc`: OpenShift CLI
-      ```bash
+      ```execute
       cd /mnt
 
       curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz -L -o oc.tar.gz
@@ -66,7 +66,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
       sudo mv oc /usr/local/bin/
       ```
    * `oc-mirror`: oc plugin for mirorring release, operator, and helm content
-     ```bash
+     ```execute
      curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/oc-mirror.tar.gz -L -o oc-mirror.tar.gz
      tar -xzf oc-mirror.tar.gz
      rm -f oc-mirror.tar.gz
@@ -75,14 +75,14 @@ Now that our system is up, let's SSH into it and download the content we'll need
      sudo mv oc-mirror /usr/local/bin/
      ```
    * `mirror-registry`: small-scale Quay registry designed for mirroring
-     ```bash
+     ```execute
      curl https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz -L -o mirror-registry.tar.gz
      tar -xzf mirror-registry.tar.gz
      rm -f mirror-registry.tar.gz
      mv -t /mnt/high-side/ mirror-registry image-archive.tar execution-environment.tar
      ```
    * `openshift-installer`: OpenShift Installer
-     ```bash
+     ```execute
      curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-install-linux.tar.gz -L -o openshift-installer.tar.gz
      tar -xzf openshift-installer.tar.gz
      rm -f openshift-installer.tar.gz
@@ -94,7 +94,7 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
 
 1. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries. Grab yours from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) and save it to `~/.docker/config.json` on your prep system.
 2. Next, we need to generate an `ImageSetConfiguration` that describes the parameters of our mirror. You can generate one like this:
-   ```bash
+   ```execute
    oc mirror init > imageset-config.yaml
    ```
 3. To save time and storage, we're going to remove the operator catalogs and mirror only the release images. So edit your `imageset-config.yaml` to look like this:
@@ -112,6 +112,6 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
          type: ocp
    ```
 4. Now we're ready to kick off the mirror! This should take about 10 minutes, so grab a coffee while it's running, or start on the next lab in a new terminal.
-   ```bash
+   ```execute
    oc mirror --config imageset-config.yaml file:///mnt/high-side
    ```
