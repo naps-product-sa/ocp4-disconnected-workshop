@@ -1,15 +1,15 @@
 In this lab, we'll create an Air Gap in AWS.
 
-1. Configure your AWS CLI with the credentials you received from RHDP. Be sure to use the `us-east-1` region:
+1. Configure your AWS CLI with the credentials you received from RHDP. Be sure to use the `us-east-1` region and specify your output type as 'json':
    ```execute
    aws configure
    ```
 2. Create a key pair and import it to AWS. We're going to use this to SSH into our **prep system** and **bastion server**:
    ```execute
    ssh-keygen -f ./disco_key
-
+   ```
+   ```execute
    KEY_NAME=disco-key
-
    aws ec2 import-key-pair --key-name $KEY_NAME --public-key-material fileb://./disco_key.pub
    ```
    > Depending how you're running this workshop, you may receive the following error:
