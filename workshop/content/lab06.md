@@ -10,7 +10,12 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
    ```execute
    ssh-keygen -f ~/.ssh/disco-openshift-key
    ```
-3. Then generate `install-config.yaml`:
+3. Use the following Python code to minify your container registry pull secret:
+   ```execute
+   python3 -c $'import json\nimport sys\nwith open(sys.argv[1], "r") as f: print(json.dumps(json.load(f)))' /run/user/1000/containers/auth.json
+   ```
+   > For connected installations, you can get this secret from here: https://console.redhat.com/openshift/install/pull-secret.
+4. Then generate `install-config.yaml`:
    ```execute
    /mnt/high-side/openshift-install create install-config --log-level=DEBUG
    ```
@@ -18,17 +23,14 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
    The OpenShift installer will prompt you for a number of fields:
    * **SSH Public Key** - The SSH public key used to access all nodes within the cluster. Be sure to select the **disco-openshift-key** you just created.
    * **Platform** - The platform on which the cluster will run. Choose **aws**.
+   * **AWS Access Key** and **Secret Access Key** - Enter your AWS credentials from RHDP.
    * **Region** - The AWS region to be used for installation. Choose **us-east-1**.
    * **Base Domain** - The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name. Select the **sandboxXXXX.opentlc.com** option shown.
    * **Cluster Name** - The name of the cluster. This will be used when generating sub-domains. Let's use **disco**.
-   * **Pull Secret** - The container registry pull secret for this cluster, as a single line of JSON (e.g. `{"auths": {...}}`). Conveniently, we only need credentials to access your mirror registry which are currently stored on disk here: `/run/user/1000/containers/auth.json`. `auth.json` is pretty-printed, though, and we need it to be minified. We wrote some python to do this for you:
-     ```bash
-     python3 -c $'import json\nimport sys\nwith open(sys.argv[1], "r") as f: print(json.dumps(json.load(f)))' /run/user/1000/containers/auth.json
-     ```
-     > For connected installations, you can get this secret from here: https://console.redhat.com/openshift/install/pull-secret.
+   * **Pull Secret** - The container registry pull secret for this cluster (minified in the previous step)
 
    That's it! The installer will generate `install-config.yaml` and drop it in `/mnt/install` for you.
-4. We need to make a couple changes to this config before we kick off the install:
+5. We need to make a couple changes to this config before we kick off the install:
    * Add the subnet IDs for your private subnets to `platform.aws.subnets`. Otherwise, the installer will create its own VPC and subnets. You can retrieve them by running this command from your workstation:
      ```execute
      aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).SubnetId] | unique' -r
@@ -108,8 +110,9 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
        mRa1akgfPl+BvAo17AtOiWbhAjipf5kSBpmyJA==
        -----END CERTIFICATE-----
      ```
+   * If you get x509 errors regarding the mirror registry root CA, try using `cat` or `echo` to append the `rootCA.pem` file to your `install-config.yaml`, as copy and paste can introduce subtle formatting errors
    * Change `publish` from **External** to **Internal**. We're using private subnets to house the cluster, so it won't be publicly accessible.
-5. Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
+6. Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
    ```execute
    cp install-config.yaml install-config.yaml.bak
    ```
@@ -117,8 +120,8 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 ## Running the Installation
 We're ready to run the install! Let's create the installation manifests and kick off the cluster installation:
 ```execute
-/mnt/high-side openshift-install create manifests
-/mnt/high-side openshift-install create cluster --log-level=DEBUG
+/mnt/high-side/openshift-install create manifests
+/mnt/high-side/openshift-install create cluster --log-level=DEBUG
 ```
 The installation process should take about 30 minutes. If you've done everything correctly, you should see something like this:
 ```bash
