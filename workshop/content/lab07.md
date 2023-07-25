@@ -31,8 +31,8 @@ To mitigate this, we'll use our prep system as a **jump host**.
    Then add hostfile entries for the API server, console URL, and oauth endpoint. The password prompt here is for your local laptop password:
    ```execute
    sudo echo 127.0.0.1 api.$CLUSTER_DOMAIN >> /etc/hosts
-   sudo echo 127.0.0.1 console-openshift-console.apps.api.$CLUSTER_DOMAIN >> /etc/hosts
-   sudo echo 127.0.0.1 oauth-openshift.apps.api.$CLUSTER_DOMAIN >> /etc/hosts
+   sudo echo 127.0.0.1 console-openshift-console.apps.$CLUSTER_DOMAIN >> /etc/hosts
+   sudo echo 127.0.0.1 oauth-openshift.apps.$CLUSTER_DOMAIN >> /etc/hosts
    ```
 2. Then setup an SSH tunnel to the prep system:
    ```execute
