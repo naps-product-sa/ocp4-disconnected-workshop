@@ -1,6 +1,6 @@
 In this lab, we'll create an Air Gap in AWS.
 
-1. Configure your AWS CLI with the credentials you received from RHDP. Be sure to use the `us-east-1` region and specify your output type as 'json':
+1. Configure your AWS CLI with the credentials you received from RHDP. Be sure to use the `us-east-1` region and specify your output type as `json`:
    ```execute
    aws configure
    ```
