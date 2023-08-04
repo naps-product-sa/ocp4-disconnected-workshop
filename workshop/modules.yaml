@@ -14,6 +14,8 @@ modules:
     name: Preparing the Installation
   lab07:
     name: Accessing the Cluster
+  lab08:
+    name: Planning Ahead
 # config:
 #   vars:
 #     - name: GUID

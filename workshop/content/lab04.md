@@ -11,22 +11,20 @@ Let's start by creating a prep system so we can begin downloading content.
    PUBLIC_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Public Subnet - disco").SubnetId' -r)
    echo $PUBLIC_SUBNET
    ```
-2. Create a Security Group and collect its ID:
+2. Create a Security Group and collect its ID. We're going to use this for both the prep system, and later for the bastion server:
    ```execute
    aws ec2 create-security-group --group-name disco-sg --description disco-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=disco-sg}]"
 
    SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=disco-sg" | jq -r '.SecurityGroups[0].GroupId')
    echo $SG_ID
    ```
-3. Allow SSH to hosts in this security group:
+3. Open ports 22 and 8443 for our hosts. 22 is for SSH access, and 8443 is for mirror registry communication:
    ```execute
-   # TODO explain why we need 8443 for the mirror registry AND be better about creating separate security groups
    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 8443 --cidr 0.0.0.0/0
    ```
-4. Next we'll specify an Amazon Machine Image (AMI) to use for our prep server. For this lab, we'll just use the Marketplace AMI for RHEL 8 in `us-east-1`:
+4. Next we'll specify an Amazon Machine Image (AMI) to use for our prep system. For this lab, we'll just use the [Marketplace AMI for RHEL 8](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#ImageDetails:imageId=ami-06640050dc3f556bb) in `us-east-1`:
    ```execute
-   # TODO - add a link to AMI documentation
    AMI_ID="ami-06640050dc3f556bb"
    ```
 5. Ready to launch! We'll use the `t2.micro` instance type, which offers 1GiB of RAM and 1vCPU, along with a 50GiB volume to ensure we have enough storage for mirrored content:
@@ -37,7 +35,7 @@ Let's start by creating a prep system so we can begin downloading content.
    ```
 
 ## Downloading Tooling
-Now that our system is up, let's SSH into it and download the content we'll need to support our install on the high side.
+Now that our prep system is up, let's SSH into it and download the content we'll need to support our install on the high side.
 
 1. Grab the IP address for the prep system and SSH into it using `disco_key`:
    ```execute
@@ -46,6 +44,7 @@ Now that our system is up, let's SSH into it and download the content we'll need
 
    ssh -i disco_key ec2-user@$PREP_SYSTEM_IP
    ```
+   > If your `ssh` command times out here, your prep system is likely still booting up. Give it a minute and try again.
 2. Let's mount the EBS volume we attached so we can build our collection of stuff to ship to the high side:
    ```execute
    sudo mkfs -t xfs /dev/xvdh

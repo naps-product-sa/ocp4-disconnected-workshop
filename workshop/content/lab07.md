@@ -49,3 +49,4 @@ To mitigate this, we'll use our prep system as a **jump host**.
    ![console](images/console.png)<br/>
    Success!
 
+Now the cluster's up and we can successfully access it. But what comes next?
