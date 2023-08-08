@@ -31,10 +31,13 @@ Image Builder, bundled with Red Hat Insights, enables you to create customized i
 ## Creating a Bastion Server
 Once the image build is complete, we can create the bastion server. Your mirror may still be running from lab 4, so run these commands in a new terminal.
 
-1. Grab the ID of a private subnet from the high side of our VPC:
+1. Grab the ID of a private subnet from the high side of our VPC as well as our Security Group ID:
    ```execute-2
    PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Private Subnet - disco").SubnetId' -r)
    echo $PRIVATE_SUBNET
+
+   SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=disco-sg" | jq -r '.SecurityGroups[0].GroupId')
+   echo $SG_ID
    ```
 2. Obtain the AMI ID from the Cloud Provider Identifiers in Image Builder, and set it as an environment variable:
    ![image-builder-4.png](images/image-builder-4.png)
@@ -58,7 +61,7 @@ Now we need to access our bastion server on the high side. In real customer envi
    ```
 2. Then let's `scp` our private key to the prep system so that we can SSH to the bastion from there. You may have to wait a minute for the VM to finish initializing:
    ```execute-2
-   PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$PREP_SYSTEM_NAME" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
+   PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=disco-prep-system" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
 
    scp -i ~/disco_key disco_key ec2-user@$PREP_SYSTEM_IP:/home/ec2-user/disco_key
    ```
@@ -69,7 +72,7 @@ Now we need to access our bastion server on the high side. In real customer envi
 4. On your other terminal window, SSH from the prep system over to the bastion server:
    ```execute
    source ~/highside.env
-   ssh -i disco_key ec2-user@$HIGHSIDE_BASTION_IP
+   ssh -i ~/disco_key ec2-user@$HIGHSIDE_BASTION_IP
    ```
    
 We're in! While we're on the bastion, let's confirm that `podman` is installed:
