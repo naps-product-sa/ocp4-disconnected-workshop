@@ -8,7 +8,7 @@ First, ensure you have access to an AWS account with admin privileges. Our prefe
 The lab guides for this workshop are built using [OpenShift Homeroom](https://github.com/openshift-homeroom) to provide a super slick in-browser experience. The smoothest way to run the workshop is via a container in `podman`:
 
 ```bash
-podman run --rm -it -p 8080:10080 quay.io/akrohg/ocp4-disconnected-workshop-dashboard:latest
+podman run -d --name disco-dashboard -e TERMINAL_TAB=split -p 8080:10080 quay.io/akrohg/ocp4-disconnected-workshop-dashboard:latest
 ```
 
 Then open http://localhost:8080 in your browser.

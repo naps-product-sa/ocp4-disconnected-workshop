@@ -1,8 +1,8 @@
 In this lab, we'll prepare the High Side. Recall from our architecture diagram that our bastion server on the high side will host our mirror registry. To do this we're interested in using `podman`, since it simplifies operation of the registry to run it within a container. 
 
-However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed! We could rectify this by running `sudo dnf install -y podman` on the prep system, but the bastion server won't have Internet access, so we need another option. Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation is quite complex (`dnf` obscures this complexity).
+However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed! We could rectify this by running `sudo dnf install -y podman` on the prep system, but the bastion server won't have Internet access, so we need another option. Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation requires a number of dependencies.
 
-To solve this problem, we need to *build our own RHEL image* with `podman` pre-installed. One approach is to use the **Image Builder** in the Hybrid Cloud Console, and that's exactly what we'll do.
+To solve this problem, we need to *build our own RHEL image* with `podman` pre-installed. Real customer environments will likely already have a solution for this, but one approach is to use the **Image Builder** in the Hybrid Cloud Console, and that's exactly what we'll do.
 
 ## Using Image Builder
 Image Builder, bundled with Red Hat Insights, enables you to create customized images and upload them to a variety of cloud environments, such as Amazon Web Services, Microsoft Azure and Google Cloud Platform. You also have the option to download the images you create for on-prem infrastructure environments. Let's get started:
@@ -11,7 +11,7 @@ Image Builder, bundled with Red Hat Insights, enables you to create customized i
 2. Let's use the Red Hat Enterprise Linux (RHEL) 8 Release, and AWS for the target environment. Then click **Next**. 
    ![image-builder-1](images/image-builder-1.png)
 3. Grab your AWS account ID from your workstation by running:
-   ```execute
+   ```execute-2
    aws sts get-caller-identity --query "Account" --output text
    ```
    > You can also get this from the web console using the URL provided in your email from RHDP.
@@ -25,14 +25,14 @@ Image Builder, bundled with Red Hat Insights, enables you to create customized i
 6. Here's our opportunity to add some packages to the VM: let's search for `podman`, and `git` in case we need it later. Then click **Next**.
    ![image-builder-3](images/image-builder-3.png)
    > Use the right arrow in the middle of the pane to populate the Chosen packages section.
-7. Give your image a sweet name, like **AWS Disco Bastion Image** and click **Next**
+7. Give your image a sweet name, like **aws-disco-bastion-image** and click **Next**
 8. Click **Create Image** on the next screen, and wait a few minutes for your image build to complete. Time for more coffee!
 
 ## Creating a Bastion Server
-Once the image build is complete, we can create the bastion server.
+Once the image build is complete, we can create the bastion server. Your mirror may still be running from lab 4, so run these commands in a new terminal.
 
 1. Grab the ID of a private subnet from the high side of our VPC:
-   ```execute
+   ```execute-2
    PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Private Subnet - disco").SubnetId' -r)
    echo $PRIVATE_SUBNET
    ```
@@ -41,35 +41,35 @@ Once the image build is complete, we can create the bastion server.
    ```copy
    BASTION_AMI_ID=<your ami id>
    ```
-3. Then spin up your EC2 instance. We're going to use a `t2.large` instance type which provides 2vCPU and 8GiB of RAM, along with a 50GiB volume to meet our storage requirements:
-   ```execute
+3. Then spin up your EC2 instance. We're going to use a `t3.large` instance type which provides 2vCPU and 8GiB of RAM, along with a 50GiB volume to meet our storage requirements:
+   ```execute-2
    BASTION_NAME="disco-bastion-server"
    
-   aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t2.large --key-name $KEY_NAME --security-group-ids $SG_ID --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+   aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t3.large --key-name disco-key --security-group-ids $SG_ID --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
    ```
 
 ## Accessing the High Side
 Now we need to access our bastion server on the high side. In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF. To make things a bit simpler for our lab, we're going to restrict access to our bastion to its *private IP address*. So we'll use the prep system as a sort of bastion-to-the-bastion.
 
 1. Start by grabbing the bastion's private IP:
-   ```execute
-   BASTION_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$BASTION_NAME" | jq -r '.Reservations[0].Instances[0].PrivateIpAddress')
-   echo $BASTION_IP
+   ```execute-2
+   HIGHSIDE_BASTION_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$BASTION_NAME" | jq -r '.Reservations[0].Instances[0].PrivateIpAddress')
+   echo $HIGHSIDE_BASTION_IP
    ```
 2. Then let's `scp` our private key to the prep system so that we can SSH to the bastion from there. You may have to wait a minute for the VM to finish initializing:
-   ```execute
-   scp -i disco_key disco_key ec2-user@$PREP_SYSTEM_IP:/home/ec2-user/disco_key
+   ```execute-2
+   PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$PREP_SYSTEM_NAME" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
+
+   scp -i ~/disco_key disco_key ec2-user@$PREP_SYSTEM_IP:/home/ec2-user/disco_key
    ```
 3. Then set an environment variable on the prep system so that we can preserve the bastion's IP:
-   ```execute
-   ssh -i disco_key ec2-user@$PREP_SYSTEM_IP "echo export BASTION_IP=$(echo $BASTION_IP) >> /home/ec2-user/.bashrc"
+   ```execute-2
+   ssh -i ~/disco_key ec2-user@$PREP_SYSTEM_IP "echo HIGHSIDE_BASTION_IP=$(echo $HIGHSIDE_BASTION_IP) > /home/ec2-user/highside.env"
    ```
-4. SSH to the prep system, then over to the bastion server:
+4. On your other terminal window, SSH from the prep system over to the bastion server:
    ```execute
-   ssh -i disco_key ec2-user@$PREP_SYSTEM_IP
-   ```
-   ```execute
-   ssh -i disco_key ec2-user@$BASTION_IP
+   source ~/highside.env
+   ssh -i disco_key ec2-user@$HIGHSIDE_BASTION_IP
    ```
    
 We're in! While we're on the bastion, let's confirm that `podman` is installed:
@@ -110,11 +110,12 @@ This response comes from the squid proxy in the NAT server, and it's blocking th
 ## Sneakernetting Content to the High Side
 We'll now deliver the high side gift basket to the bastion server.
 
-1. Start by mounting our EBS volume to ensure that we don't run out of space:
+1. Start by mounting our EBS volume on the bastion server to ensure that we don't run out of space:
    ```execute
-   sudo mkfs -t xfs /dev/xvdh
-   sudo mount /dev/xvdh /mnt
-   sudo chown ec2-user:ec2-user /mnt
+   sudo mkfs -t xfs /dev/nvme1n1
+   sudo mkdir /mnt/high-side
+   sudo mount /dev/nvme1n1 /mnt/high-side
+   sudo chown ec2-user:ec2-user /mnt/high-side
    ```
 2. Then exit your SSH session on the bastion to return to the prep system:
    ```execute
@@ -122,7 +123,7 @@ We'll now deliver the high side gift basket to the bastion server.
    ```
 3. Now we're back at the prep system. Let's send over our gift basket at `/mnt/high-side`:
    ```execute
-   rsync -avP -e "ssh -i ~/disco_key" /mnt/high-side ec2-user@$BASTION_IP:/mnt
+   rsync -avP -e "ssh -i ~/disco_key" /mnt/high-side ec2-user@$HIGHSIDE_BASTION_IP:/mnt
    ```
 
 ## Creating a Mirror Registry
@@ -139,20 +140,20 @@ Mirroring all release and operator images can take awhile depending on the netwo
 We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side`. The 50GB /mnt we created should be enough to hold our mirror (without operators) and binaries. Now kick off our install:
 ```execute
 cd /mnt/high-side
-./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/quay/quay-install --quayStorage /mnt/quay/quay-storage --pgStorage /mnt/quay/pg-data
+./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/high-side/quay/quay-install --quayStorage /mnt/high-side/quay/quay-storage --pgStorage /mnt/high-side/quay/pg-data --initPassword discopass
 ```
 
 If all goes well, you should see something like:
 ```bash
 INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in /mnt/quay/quay-install 
-INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, e1LY8WJbn92XI5UVcl76gN0hxTO3k4fq) 
+INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, discopass) 
 ```
 
-Do a podman login using the credentials output in the previous step to make sure they work. This will generate an auth file at `/run/user/1000/containers/auth.json`:
+Login to the registry with `podman`. This will generate an auth file at `/run/user/1000/containers/auth.json`:
 ```execute
-podman login --tls-verify=false $(hostname):8443
+podman login -u init -p discopass --tls-verify=false $(hostname):8443
 ```
-> We pass `--tls-verify=false` here for simplicity, but you can optionally add `/mnt/quay/quay-install/quay-rootCA/rootCA.pem` to the system trust store by following the guide in the Quay documentation [here](https://access.redhat.com/documentation/en-us/red_hat_quay/3/html/manage_red_hat_quay/using-ssl-to-protect-quay?extIdCarryOver=true&sc_cid=701f2000001OH74AAG#configuring_the_system_to_trust_the_certificate_authority).
+> We pass `--tls-verify=false` here for simplicity, but you can optionally add `/mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem` to the system trust store by following the guide in the Quay documentation [here](https://access.redhat.com/documentation/en-us/red_hat_quay/3/html/manage_red_hat_quay/using-ssl-to-protect-quay?extIdCarryOver=true&sc_cid=701f2000001OH74AAG#configuring_the_system_to_trust_the_certificate_authority).
 
 ## Mirroring Content
 Now we're ready to mirror images from disk into the registry. Let's add `oc` and `oc-mirror` to the path:
