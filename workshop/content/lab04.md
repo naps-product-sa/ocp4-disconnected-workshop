@@ -42,7 +42,7 @@ Now that our prep system is up, let's SSH into it and download the content we'll
    PREP_SYSTEM_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$PREP_SYSTEM_NAME" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
    echo $PREP_SYSTEM_IP
 
-   ssh -i ./disco_key ec2-user@$PREP_SYSTEM_IP
+   ssh -i ~/disco_key ec2-user@$PREP_SYSTEM_IP
    ```
    > If your `ssh` command times out here, your prep system is likely still booting up. Give it a minute and try again.
 2. Let's mount the EBS volume we attached so we can build our collection of stuff to ship to the high side:

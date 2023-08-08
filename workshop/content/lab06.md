@@ -8,7 +8,7 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
    ```
 2. Then generate an SSH key pair for access to cluster nodes:
    ```execute
-   ssh-keygen -f ~/.ssh/disco-openshift-key
+   ssh-keygen -f ~/.ssh/disco-openshift-key -q -N ""
    ```
 3. Use the following Python code to minify your container registry pull secret. Copy this output to your clipboard, since you'll need it in a moment:
    ```execute

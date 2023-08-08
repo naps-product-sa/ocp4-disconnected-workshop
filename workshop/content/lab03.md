@@ -6,10 +6,10 @@ In this lab, we'll create an Air Gap in AWS.
    ```
 2. Create a key pair and import it to AWS. We're going to use this to SSH into our **prep system** and **bastion server**:
    ```execute
-   ssh-keygen -f ./disco_key -q -N ""
+   ssh-keygen -f ~/disco_key -q -N ""
    ```
    ```execute
-   aws ec2 import-key-pair --key-name disco-key --public-key-material fileb://./disco_key.pub
+   aws ec2 import-key-pair --key-name disco-key --public-key-material fileb://~/disco_key.pub
    ```
    > Depending how you're running this workshop, you may receive the following error:
    >
