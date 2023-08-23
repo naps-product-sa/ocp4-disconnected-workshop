@@ -91,7 +91,10 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 
    * Add the root CA of our mirror registry (`/mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field. This one's a little tricky to format so we scripted it for you :)
      ```execute
-     cat <<EOF >> install-config.yaml additionalTrustBundle: | $(cat /mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem | sed 's/^/  /') EOF
+     cat <<EOF >> install-config.yaml
+     additionalTrustBundle: |
+     $(cat /mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem | sed 's/^/  /')
+     EOF
      ```
      It should look something like this:
      ```bash
