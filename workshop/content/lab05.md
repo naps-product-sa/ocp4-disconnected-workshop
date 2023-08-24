@@ -26,7 +26,7 @@ Image Builder, bundled with Red Hat Insights, enables you to create customized i
    ![image-builder-3](images/image-builder-3.png)
    > Use the right arrow in the middle of the pane to populate the Chosen packages section.
 7. Give your image a sweet name, like **aws-disco-bastion-image** and click **Next**
-8. Click **Create Image** on the next screen, and wait a few minutes for your image build to complete. Time for more coffee!
+8. Click **Create Image** on the next screen, and wait a few minutes for your image build to complete. Now's a great time to grab a cup of coffee.
 
 ## Creating a Bastion Server
 Once the image build is complete, we can create the bastion server. Your mirror may still be running from lab 4, so run these commands in a new terminal.
@@ -69,7 +69,7 @@ Now we need to access our bastion server on the high side. In real customer envi
    ```execute-2
    ssh -i ~/disco_key ec2-user@$PREP_SYSTEM_IP "echo HIGHSIDE_BASTION_IP=$(echo $HIGHSIDE_BASTION_IP) > /home/ec2-user/highside.env"
    ```
-4. On your other terminal window, SSH from the prep system over to the bastion server:
+4. On your first terminal window, SSH from the prep system over to the bastion server. If your mirror is still running for some reason, you'll need to wait for it to complete before you continue:
    ```execute
    source ~/highside.env
    ssh -i ~/disco_key ec2-user@$HIGHSIDE_BASTION_IP

@@ -109,7 +109,7 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
      - name: registry.redhat.io/ubi8/ubi:latest
      helm: {}
    ```
-4. Now we're ready to kick off the mirror! This should take a few minutes, so grab a coffee while it's running, or start on the next lab in a new terminal.
+4. Now we're ready to kick off the mirror! This should take a few minutes, but we can get started on the next lab in a new terminal while it's running.
    ```execute
    oc mirror --config imageset-config.yaml file:///mnt/high-side
    ```
