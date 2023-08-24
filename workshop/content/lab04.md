@@ -93,7 +93,7 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
    ```
 3. To save time and storage, we're going to remove the operator catalogs and mirror only the release images. We'll still get a fully functional cluster, but **OperatorHub** will be empty. You'll want to have a strategy for mirroring operator content in a real world scenario.
  
-   Notice that you can specify `additionalImages` here, too. We'll leave in the `ubi` image that was generated so we can run some tests later. Remove the `operators` object from your `imageset-config.yaml` so that it looks like this:
+   Notice that you can specify `additionalImages` here, too. We'll leave in the `ubi` image that was generated so we can run some tests later. **Remove the `operators` object from your `imageset-config.yaml`** so that it looks like this:
    ```bash
    kind: ImageSetConfiguration
    apiVersion: mirror.openshift.io/v1alpha2
