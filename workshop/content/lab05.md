@@ -171,9 +171,10 @@ sudo mv /mnt/high-side/oc /usr/local/bin/
 sudo mv /mnt/high-side/oc-mirror /usr/local/bin/
 ```
 
-And fire up the mirror! (~10 minutes)
+And fire up the mirror! Let's send it to the background with `nohup` so we can get to work on the installation prep while this is running:
 ```execute
-oc mirror --from=/mnt/high-side/mirror_seq1_000000.tar --dest-skip-tls docker://$(hostname):8443
+nohup oc mirror --from=/mnt/high-side/mirror_seq1_000000.tar --dest-skip-tls docker://$(hostname):8443 &
 ```
+Press `ENTER` once more to get your prompt back. The log output will be streamed to a file called `nohup.out`, and your shell will notify you when the process has been completed after 10 minutes or so.
 
-Once this has completed, there are only a few steps left to prepare the cluster installation. Let's get to it!
+With the final mirror now running, there are only a few steps left to prepare the cluster installation. Let's get to it!
