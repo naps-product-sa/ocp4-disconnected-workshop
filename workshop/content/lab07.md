@@ -2,7 +2,7 @@ If you made it here, congratulations! You have officially stood up a disconnecte
 
 You should be able to access the API server from the bastion by leveraging the `kubeconfig` file the installer creates for you:
 ```execute
-export KUBECONFIG=/mnt/install/auth/kubeconfig
+export KUBECONFIG=/mnt/high-side/install/auth/kubeconfig
 oc status
 ```
 Example output:
@@ -24,13 +24,15 @@ To mitigate this, we'll use a handy SSH/DNS utility called `sshuttle` to setup a
 > You'll need administrative privileges on your laptop to achieve this.
 
 1. First, you'll need to install sshuttle following the instructions for your operating system [here](https://github.com/sshuttle/sshuttle#obtaining-sshuttle).
-2. Then setup an SSH tunnel to the prep system. This must be run from a terminal directly on your laptop:
+2. Then you'll need to **copy your disco_key to your laptop**, and set permissions appropriately (`chmod 600 disco_key`).
+3. Then setup an SSH tunnel to the prep system. This must be run from a terminal directly on your laptop:
    ```bash
-   $PREP_SYSTEM_IP=<your prep system's public IP>
+   PREP_SYSTEM_IP=<your prep system's public IP>
 
-   sshuttle --ssh-cmd 'ssh -i ~/.ssh/disco_key' -r ec2-user@$PREP_SYSTEM_IP 10.0.0.0/16 --dns
+   sshuttle --ssh-cmd 'ssh -i disco_key' -r ec2-user@$PREP_SYSTEM_IP 10.0.0.0/16 --dns
    ```
-3. Now you should be able to access the console in your browser:
+   > If you're prompted for a password here, enter your local laptop password.
+4. Now you should be able to access the console in your browser:
    ```execute
    oc whoami --show-console
    ```
