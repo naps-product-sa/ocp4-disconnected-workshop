@@ -62,7 +62,7 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
      networking:
        clusterNetwork:
        - cidr: 10.128.0.0/14
-       hostPrefix: 23
+         hostPrefix: 23
        machineNetwork:
        - cidr: 10.0.48.0/20
        - cidr: 10.0.64.0/20
