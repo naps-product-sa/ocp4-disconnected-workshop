@@ -35,10 +35,10 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 
    That's it! The installer will generate `install-config.yaml` and drop it in `/mnt/high-side/install` for you.
 5. We need to make a couple changes to this config before we kick off the install:
+   * Change `publish` from **External** to **Internal**. We're using private subnets to house the cluster, so it won't be publicly accessible.
    * Add the subnet IDs for your private subnets to `platform.aws.subnets`. Otherwise, the installer will create its own VPC and subnets. You can retrieve them by running this command from your workstation:
      ```execute-2
-     aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).SubnetId] | unique
-' -r | yq read - -P
+     aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).SubnetId] | unique' -r | yq read - -P
      ```
      Then add them to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
      ```bash
@@ -54,9 +54,9 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
      ```
    * Modify the `machineNetwork` to match the IPv4 CIDR blocks from the private subnets. Otherwise your control plane and compute nodes will be assigned IP addresses that are out of range and break the install. You can retrieve them by running this command from your workstation:
      ```execute-2
-     aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).CidrBlock] | unique | map("cidr: " + .)' | yq read -P -     
+     aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).CidrBlock] | unique | map("cidr: " + .)' | yq read -P - | sed "s/'//g"  
      ```
-     Then add them to `networking.machineNetwork` in your `install-config.yaml` so that they look something like this:
+     Then use them to **replace the existing** `networking.machineNetwork` **entry** in your `install-config.yaml` so that they look something like this:
      ```bash
      ...
      networking:
@@ -69,11 +69,14 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
        - cidr: 10.0.80.0/20
      ...
      ```
-   * Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly. You can find them by running this command:
+   * Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly. You can append them to your `install-config.yaml` by running this command:
      ```execute
-     grep "mirror" -A 2 --no-group-separator /mnt/high-side/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml
+     cat <<EOF >> install-config.yaml
+     imageContentSources:
+     $(grep "mirror" -A 2 --no-group-separator /mnt/high-side/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
+     EOF
      ```
-     Then add them to your `install-config.yaml` so that they look something like this:
+     They'll look something like this:
      ```bash
      imageContentSources:
        - mirrors:
@@ -89,7 +92,7 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 
      > Instead of adding this field to the `install-config.yaml` you could drop the `imageContentSourcePolicy.yaml` file in the manifests directory after running `openshift-install create manifests` to achieve the same result.
 
-   * Add the root CA of our mirror registry (`/mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field. This one's a little tricky to format so we scripted it for you :)
+   * Add the root CA of our mirror registry (`/mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field by running this command:
      ```execute
      cat <<EOF >> install-config.yaml
      additionalTrustBundle: |
@@ -124,7 +127,6 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
        mRa1akgfPl+BvAo17AtOiWbhAjipf5kSBpmyJA==
        -----END CERTIFICATE-----
      ```
-   * Change `publish` from **External** to **Internal**. We're using private subnets to house the cluster, so it won't be publicly accessible.
 6. Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
    ```execute
    cp install-config.yaml install-config.yaml.bak

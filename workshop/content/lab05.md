@@ -140,7 +140,13 @@ An OpenShift subscription includes access to the [mirror registry for Red Hat Op
 
 Mirroring all release and operator images can take awhile depending on the network bandwidth. For this lab, recall that we're going to mirror just the release images to save time and resources.
 
-We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side`. The 50GB /mnt we created should be enough to hold our mirror (without operators) and binaries. Now kick off our install:
+We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side`. The 50GB /mnt we created should be enough to hold our mirror (without operators) and binaries. 
+
+First, let's SSH back into the bastion from the prep system:
+```execute
+ssh -i ~/disco_key ec2-user@$HIGHSIDE_BASTION_IP
+```
+And kick off our install:
 ```execute
 cd /mnt/high-side
 ./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/high-side/quay/quay-install --quayStorage /mnt/high-side/quay/quay-storage --pgStorage /mnt/high-side/quay/pg-data --initPassword discopass
