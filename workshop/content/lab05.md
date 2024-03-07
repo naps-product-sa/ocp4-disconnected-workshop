@@ -1,54 +1,29 @@
 In this lab, we'll prepare the High Side. Recall from our architecture diagram that our bastion server on the high side will host our mirror registry. To do this we're interested in using `podman`, since it simplifies operation of the registry to run it within a container. 
 
-However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed! We could rectify this by running `sudo dnf install -y podman` on the prep system, but the bastion server won't have Internet access, so we need another option. Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation requires a number of dependencies.
+However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed! Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation requires a number of dependencies.
 
-To solve this problem, we need to *build our own RHEL image* with `podman` pre-installed. Real customer environments will likely already have a solution for this, but one approach is to use the **Image Builder** in the Hybrid Cloud Console, and that's exactly what we'll do.
-
-## Using Image Builder
-Image Builder, bundled with Red Hat Insights, enables you to create customized images and upload them to a variety of cloud environments, such as Amazon Web Services, Microsoft Azure and Google Cloud Platform. You also have the option to download the images you create for on-prem infrastructure environments. Let's get started:
-
-1. Visit the Image Builder service in the [Hybrid Cloud Console](https://console.redhat.com/insights/image-builder) and click **Create Image**.
-2. Let's use the Red Hat Enterprise Linux (RHEL) 8 Release, and AWS for the target environment. Then click **Next**. 
-   ![image-builder-1](images/image-builder-1.png)
-3. Grab your AWS account ID from your workstation by running:
-   ```execute-2
-   aws sts get-caller-identity --query "Account" --output text
-   ```
-   > You can also get this from the web console using the URL provided in your email from RHDP.
-
-   Specify this in the **AWS account ID** and click **Next**. Image Builder will push the image to a Red Hat-owned AWS account and share it with the account ID you specify.
-   ![image-builder-2](images/image-builder-2.png)
-4. Leave the default Registration method selected. If you already have an Activation Key available to use, select it, click **Next**, and skip to Step 5. Otherwise, let's go create one in [Remote Host Configuration](https://console.redhat.com/settings/connector/activation-keys)
-   * Click **Create activation key**, make the following selections and click **Create**:
-      ![activation-key](images/activation-key.png)
-5. Leave the default File system configuration and click **Next**
-6. Here's our opportunity to add some packages to the VM: let's search for `podman`, and `git` in case we need it later. Then click **Next**.
-   ![image-builder-3](images/image-builder-3.png)
-   > Use the right arrow in the middle of the pane to populate the Chosen packages section.
-7. Give your image a sweet name, like **aws-disco-bastion-image** and click **Next**
-8. Click **Create Image** on the next screen, and wait a few minutes for your image build to complete. Now's a great time to grab a cup of coffee.
+To solve this problem, most customers either *build a custom RHEL image* with `podman` pre-installed, **or** create a firewall exception in the high side to enable access to [RHUI](https://access.redhat.com/articles/4720861) (Red Hat Update Infrastructure). Recall from (Lab 2)[lab02.md] that RHUI is part of our squid proxy's allowed list, so we'll be opting for the latter approach here.
 
 ## Creating a Bastion Server
-Once the image build is complete, we can create the bastion server. Your mirror may still be running from lab 4, so run these commands in a new terminal.
+Let's start by creating the bastion server. Your mirror may still be running from lab 4, so run these commands in a new terminal.
 
 1. Grab the ID of a private subnet from the high side of our VPC as well as our Security Group ID:
    ```execute-2
-   PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Private Subnet - disco").SubnetId' -r)
+   PRIVATE_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="disco-private-us-east-1a").SubnetId' -r)
    echo $PRIVATE_SUBNET
 
    SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=disco-sg" | jq -r '.SecurityGroups[0].GroupId')
    echo $SG_ID
    ```
-2. Obtain the AMI ID from the Cloud Provider Identifiers in Image Builder, and set it as an environment variable:
-   ![image-builder-4.png](images/image-builder-4.png)
-   ```copy
-   BASTION_AMI_ID=<your ami id>
+2. Set an environment variable for your AMI_ID. We'll use the same one as we did for the prep system.
+   ```execute-2
+   AMI_ID="ami-06640050dc3f556bb"
    ```
 3. Then spin up your EC2 instance. We're going to use a `t3.large` instance type which provides 2vCPU and 8GiB of RAM, along with a 50GiB volume to meet our storage requirements:
    ```execute-2
    BASTION_NAME="disco-bastion-server"
    
-   aws ec2 run-instances --image-id $BASTION_AMI_ID --count 1 --instance-type t3.large --key-name disco-key --security-group-ids $SG_ID --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
+   aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t3.large --key-name disco-key --security-group-ids $SG_ID --subnet-id $PRIVATE_SUBNET --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$BASTION_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
    ```
 
 ## Accessing the High Side
@@ -74,41 +49,45 @@ Now we need to access our bastion server on the high side. In real customer envi
    source ~/highside.env
    ssh -i ~/disco_key ec2-user@$HIGHSIDE_BASTION_IP
    ```
+5. We're in! While we're on the bastion, let's go ahead and install `podman` and `jq`, which will come in handy for later:
+   ```execute
+   sudo yum install -y jq podman
+   ```
    
-We're in! While we're on the bastion, let's confirm that `podman` is installed:
-```execute
-podman version
-```
-Example output:
-```bash
-[ec2-user@ip-10-0-52-68 ~]$ podman version
-Client:       Podman Engine
-Version:      4.4.1
-API Version:  4.4.1
-Go Version:   go1.19.6
-Built:        Thu Jun 15 14:39:56 2023
-OS/Arch:      linux/amd64
-```
+6. Once that completes, let's confirm that `podman` installed successfully:
+   ```execute
+   podman version
+   ```
+   Example output:
+   ```bash
+   [ec2-user@ip-10-0-52-68 ~]$ podman version
+   Client:       Podman Engine
+   Version:      4.4.1
+   API Version:  4.4.1
+   Go Version:   go1.19.6
+   Built:        Thu Jun 15 14:39:56 2023
+   OS/Arch:      linux/amd64
+   ```
 
-Nice! And come to think of it, let's also check that we have no Internet access:
-```execute
-curl google.com
-```
+   Nice! And come to think of it, let's also check that we have no Internet access:
+   ```execute
+   curl google.com
+   ```
 
-Your output will contain something like this:
-```html
-...
-<blockquote id="error">
-<p><b>Access Denied.</b></p>
-</blockquote>
+   Your output will contain something like this:
+   ```html
+   ...
+   <blockquote id="error">
+   <p><b>Access Denied.</b></p>
+   </blockquote>
 
-<p>Access control configuration prevents your request from being allowed at this time. Please contact your service provider if you feel this is incorrect.</p>
+   <p>Access control configuration prevents your request from being allowed at this time. Please contact your service provider if you feel this is incorrect.</p>
 
-<p>Your cache administrator is <a href="mailto:root?subject=CacheErrorInfo%20-%20ERR_ACCESS_DENIED&amp;body=CacheHost%3A%20squid%0D%0AErrPage%3A%20ERR_ACCESS_DENIED%0D%0AErr%3A%20%5Bnone%5D%0D%0ATimeStamp%3A%20Thu,%2006%20Jul%202023%2013%3A45%3A11%20GMT%0D%0A%0D%0AClientIP%3A%2010.0.52.68%0D%0A%0D%0AHTTP%20Request%3A%0D%0AGET%20%2F%20HTTP%2F1.1%0AUser-Agent%3A%20curl%2F7.61.1%0D%0AAccept%3A%20*%2F*%0D%0AHost%3A%20google.com%0D%0A%0D%0A%0D%0A">root</a>.</p>
-<br>
-...
-```
-This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list.
+   <p>Your cache administrator is <a href="mailto:root?subject=CacheErrorInfo%20-%20ERR_ACCESS_DENIED&amp;body=CacheHost%3A%20squid%0D%0AErrPage%3A%20ERR_ACCESS_DENIED%0D%0AErr%3A%20%5Bnone%5D%0D%0ATimeStamp%3A%20Thu,%2006%20Jul%202023%2013%3A45%3A11%20GMT%0D%0A%0D%0AClientIP%3A%2010.0.52.68%0D%0A%0D%0AHTTP%20Request%3A%0D%0AGET%20%2F%20HTTP%2F1.1%0AUser-Agent%3A%20curl%2F7.61.1%0D%0AAccept%3A%20*%2F*%0D%0AHost%3A%20google.com%0D%0A%0D%0A%0D%0A">root</a>.</p>
+   <br>
+   ...
+   ```
+   This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list.
 
 ## Sneakernetting Content to the High Side
 We'll now deliver the high side gift basket to the bastion server.

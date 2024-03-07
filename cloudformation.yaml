@@ -1,481 +1,758 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Best Practice VPC with 1-3 AZs
-
-# 192.168.0.0/16
+Description: >
+  This template is used to simulate a disconnected environment. It deploys a
+  VPC with a single public subnet and three (3) private subnets, spread across
+  three (3) Availability Zones. It deploys an internet gateway, with a default
+  route on the public subnet. A NAT instance running a Squid proxy is deployed
+  in the public subnet and is configured to block all traffic except for access
+  to the AWS APIs. The NAT instance is configured as the default route for the
+  private subnets, which effectively makes the private subnets simulate a
+  disconnected environment. A jump host is also deployed in the public subnet
+  and is configured to allow access to the VPC.
 
 Parameters:
-
   VpcCidr:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
-    Default: 10.0.0.0/16
-    Description: CIDR block for VPC.
+    Description: The IP range (CIDR notation) for this VPC
     Type: String
+    Default: 10.0.0.0/16
 
-  AvailabilityZoneCount:
-    ConstraintDescription: "The number of availability zones. (Min: 1, Max: 3)"
-    MinValue: 1
-    MaxValue: 3
-    Default: 3
-    Description: "How many AZs to create VPC subnets for. (Min: 1, Max: 3)"
-    Type: Number
+  KeyName:
+    Description: The name of EC2 key pair to use for the NAT instance
+    Type: AWS::EC2::KeyPair::KeyName
 
-  SubnetBits:
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/19-27.
-    MinValue: 5
-    MaxValue: 13
-    Default: 12
-    Description: "Size of each subnet to create within the availability zones. (Min: 5 = /27, Max: 13 = /19)"
-    Type: Number
+  S3TransferBucketName:
+    Description: The name of the S3 bucket that will be used to transfer files
+    Type: String
+    Default: autogenerate
 
-  AmiId:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
-    Description: AMI ID pointer in AWS Systems Manager Parameter Store. Default value points to the
-      latest Amazon Linux 2 AMI ID.
-
-  #KeyName:
-  #  Type: AWS::EC2::KeyPair::KeyName
-  #  Description: Name of RSA key for EC2 access for testing and troubleshooting.
-
-  InstanceType:
+  NatInstanceType:
+    Description: The instance type to use for the NAT instance
     Type: String
     Default: t3.small
-    Description: Instance type to use to launch the NAT instances.
     AllowedValues:
-    - t3.nano
-    - t3.micro
-    - t3.small
-    - t3.medium
-    - t3.large
-    - m4.large
-    - m4.xlarge
-    - m4.2xlarge
-    - m5.large
-    - m5.xlarge
-    - m5.2xlarge
-    - c4.large
-    - c4.xlarge
-    - c4.large
-    - c5.large
-    - c5.xlarge
-    - c5.large
+      - t3.small
+      - t3.medium
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+      - c4.large
+      - c4.xlarge
+      - c5.large
+      - c5.xlarge
 
+  JumpInstanceType:
+    Description: The instance type to use for the Jump instance
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.small
+      - t3.medium
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+      - c4.large
+      - c4.xlarge
+      - c5.large
+      - c5.xlarge
 
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-    - Label:
-        default: "Network Configuration"
-      Parameters:
-      - VpcCidr
-      - SubnetBits
-    - Label:
-        default: "Availability Zones"
-      Parameters:
-      - AvailabilityZoneCount
-    ParameterLabels:
-      AvailabilityZoneCount:
-        default: "Availability Zone Count"
-      VpcCidr:
-        default: "VPC CIDR"
-      SubnetBits:
-        default: "Bits Per Subnet"
+  HighSideInstanceType:
+    Description: The instance type to use for the High Side instance
+    Type: String
+    Default: t3.large
+    AllowedValues:
+      - t3.large
+      - t3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+      - c4.large
+      - c4.xlarge
+      - c5.large
+      - c5.xlarge
+
+  JumpInstanceDataVolumeSize:
+    Description: The size of the data volume to attach to the Jump instance
+    Type: Number
+    Default: 150
+
+  HighSideInstanceDataVolumeSize:
+    Description: The size of the data volume to attach to the High Side instance
+    Type: Number
+    Default: 300
+
+Mappings:
+  RegionMap:
+    ap-south-1:
+      ami: ami-0c0c57e3703b50314
+    eu-north-1:
+      ami: ami-078433bb440ad8323
+    eu-west-3:
+      ami: ami-0f2a71b6170e045d8
+    eu-west-2:
+      ami: ami-070e87281ec7b1a4d
+    eu-west-1:
+      ami: ami-008609c5b9c86c915
+    ap-northeast-3:
+      ami: ami-00f970067534af873
+    ap-northeast-2:
+      ami: ami-08c3474db131766ea
+    ap-northeast-1:
+      ami: ami-01b760eab729a9f4c
+    ca-central-1:
+      ami: ami-05eeb0575804a82d2
+    sa-east-1:
+      ami: ami-02c7c2dafbcfda401
+    ap-southeast-1:
+      ami: ami-0cef209741bb92e90
+    ap-southeast-2:
+      ami: ami-03a01cc2ae9bd8483
+    eu-central-1:
+      ami: ami-029d7f7f77709899f
+    us-east-1:
+      ami: ami-033d3612433d4049b
+    us-east-2:
+      ami: ami-04617ae0baf90b791
+    us-west-1:
+      ami: ami-09b6a34cb89a8c924
+    us-west-2:
+      ami: ami-08e6ba516533a3ce8
 
 Conditions:
-  DoAz3: !Equals [3, !Ref AvailabilityZoneCount]
-  DoAz2: !Or [!Equals [2, !Ref AvailabilityZoneCount], Condition: DoAz3]
+  GenerateS3BucketName: !Equals [!Ref S3TransferBucketName, autogenerate]
 
 Resources:
-
-  VPC:
-    Type: "AWS::EC2::VPC"
+  Vpc:
+    Type: AWS::EC2::VPC
     Properties:
-      EnableDnsSupport: "true"
-      EnableDnsHostnames: "true"
       CidrBlock: !Ref VpcCidr
-
-#####################################################################
-# Public Subnets
-
-  PublicSubnet:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [0, !Cidr [!Ref VpcCidr, 6, !Ref SubnetBits]]
-      MapPublicIpOnLaunch: true
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       Tags:
-      - Key: Name
-        Value: !Sub 'Public Subnet - ${AWS::StackName}'
-      AvailabilityZone: !Select
-      - 0
-      - Fn::GetAZs: !Ref "AWS::Region"
-
-  PublicSubnet2:
-    Type: "AWS::EC2::Subnet"
-    Condition: DoAz2
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [1, !Cidr [!Ref VpcCidr, 6, !Ref SubnetBits]]
-      MapPublicIpOnLaunch: true
-      Tags:
-      - Key: Name
-        Value: !Sub 'Public Subnet 2 - ${AWS::StackName}'
-      AvailabilityZone: !Select
-      - 1
-      - Fn::GetAZs: !Ref "AWS::Region"
-
-  PublicSubnet3:
-    Type: "AWS::EC2::Subnet"
-    Condition: DoAz3
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [2, !Cidr [!Ref VpcCidr, 6, !Ref SubnetBits]]
-      MapPublicIpOnLaunch: true
-      Tags:
-      - Key: Name
-        Value: !Sub 'Public Subnet 3 - ${AWS::StackName}'
-      AvailabilityZone: !Select
-      - 2
-      - Fn::GetAZs: !Ref "AWS::Region"
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-vpc
 
   InternetGateway:
-    Type: "AWS::EC2::InternetGateway"
-
-  GatewayToInternet:
-    Type: "AWS::EC2::VPCGatewayAttachment"
+    Type: AWS::EC2::InternetGateway
     Properties:
-      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-igw
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
       InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref Vpc
+
+  #############################################################################
+  # Public Subnet
+  #############################################################################
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCidr, 6, 12]]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-public
 
   PublicRouteTable:
-    Type: "AWS::EC2::RouteTable"
+    Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-public
 
-  PublicRoute:
-    Type: "AWS::EC2::Route"
-    DependsOn: GatewayToInternet
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  PublicSubnetRouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnetRouteTableAssociation2:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Condition: DoAz2
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnetRouteTableAssociation3:
-    Condition: DoAz3
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      SubnetId: !Ref PublicSubnet3
-      RouteTableId: !Ref PublicRouteTable
-
-####################################################################3
-# Private Subnets
-
-  PrivateSubnet:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [3, !Cidr [!Ref VpcCidr, 6, !Ref SubnetBits]]
-      Tags:
-      - Key: Name
-        Value: !Sub 'Private Subnet - ${AWS::StackName}'
-      AvailabilityZone: !Select
-      - 0
-      - Fn::GetAZs: !Ref "AWS::Region"
-
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-      - Key: Name
-        Value: !Sub 'Private Route Table - ${AWS::StackName}'
-
-  PrivateRouteTableSubnetAssociation:
+  PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
 
-  PrivateSubnetNATRoute:
-    Type: AWS::EC2::Route
-    DependsOn: NATInstance
+  #############################################################################
+  # Private Subnets
+  #############################################################################
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
     Properties:
-       RouteTableId:
-         Ref: PrivateRouteTable
-       DestinationCidrBlock: 0.0.0.0/0
-       InstanceId: !Ref NATInstance
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs  '']
+      CidrBlock: !Select [3, !Cidr [!Ref VpcCidr, 6, 12]]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, "private", !Select [0, !GetAZs  '']]]
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, "private", !GetAtt PrivateSubnet1.AvailabilityZone]]
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: NatInstance
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId: !Ref NatInstance
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
 
   PrivateSubnet2:
-    Type: "AWS::EC2::Subnet"
-    Condition: DoAz2
+    Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [4, !Cidr [!Ref VpcCidr, 6, !Ref SubnetBits]]
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs  '']
+      CidrBlock: !Select [4, !Cidr [!Ref VpcCidr, 6, 12]]
+      MapPublicIpOnLaunch: false
       Tags:
-      - Key: Name
-        Value: !Sub 'Private Subnet 2 - ${AWS::StackName}'
-      AvailabilityZone: !Select
-      - 1
-      - Fn::GetAZs: !Ref "AWS::Region"
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, "private", !Select [1, !GetAZs  '']]]
 
   PrivateRouteTable2:
     Type: AWS::EC2::RouteTable
-    Condition: DoAz2
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref Vpc
       Tags:
-      - Key: Name
-        Value: !Sub 'Private Route Table 2 - ${AWS::StackName}'
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, "private", !GetAtt PrivateSubnet2.AvailabilityZone]]
 
-  PrivateRouteTableSubnetAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: DoAz2
-    Properties:
-      SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateRouteTable2
-
-  PrivateSubnetNATRoute2:
+  DefaultPrivateRoute2:
     Type: AWS::EC2::Route
-    Condition: DoAz2
-    DependsOn: NATInstance
+    DependsOn: NatInstance
     Properties:
-       RouteTableId:
-         Ref: PrivateRouteTable2
-       DestinationCidrBlock: 0.0.0.0/0
-       InstanceId: !Ref NATInstance
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId: !Ref NatInstance
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
 
   PrivateSubnet3:
-    Type: "AWS::EC2::Subnet"
-    Condition: DoAz3
+    Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [5, !Cidr [!Ref VpcCidr, 6, !Ref SubnetBits]]
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [2, !GetAZs  '']
+      CidrBlock: !Select [5, !Cidr [!Ref VpcCidr, 6, 12]]
+      MapPublicIpOnLaunch: false
       Tags:
-      - Key: Name
-        Value: !Sub 'Private Subnet 3 - ${AWS::StackName}'
-      AvailabilityZone: !Select
-      - 2
-      - Fn::GetAZs: !Ref "AWS::Region"
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, "private", !Select [2, !GetAZs  '']]]
 
   PrivateRouteTable3:
     Type: AWS::EC2::RouteTable
-    Condition: DoAz3
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref Vpc
       Tags:
-      - Key: Name
-        Value: !Sub 'Private Route Table 3 - ${AWS::StackName}'
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, "private", !GetAtt PrivateSubnet3.AvailabilityZone]]
 
-  PrivateRouteTableSubnetAssociation3:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: DoAz3
-    Properties:
-      SubnetId: !Ref PrivateSubnet3
-      RouteTableId: !Ref PrivateRouteTable3
-
-  PrivateSubnetNATRoute3:
+  DefaultPrivateRoute3:
     Type: AWS::EC2::Route
-    Condition: DoAz3
-    DependsOn: NATInstance
+    DependsOn: NatInstance
     Properties:
-       RouteTableId:
-         Ref: PrivateRouteTable3
-       DestinationCidrBlock: 0.0.0.0/0
-       InstanceId: !Ref NATInstance
+      RouteTableId: !Ref PrivateRouteTable3
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId: !Ref NatInstance
 
-##############################################################################
-#
-# NAT Instance
-########
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable3
+      SubnetId: !Ref PrivateSubnet3
 
-  NATInstanceRole:
+  DefaultInstanceRole:
     Type: AWS::IAM::Role
+    DependsOn: InstallIamUser
     Properties:
+      RoleName: !Sub ${AWS::StackName}-default-role
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - ec2.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-      - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-      Policies:
-      - PolicyName: root
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-#          - Effect: Allow
-#            Action:
-#            - s3:GetObject
-#            - s3:ListObject
-#            Resource: !Sub '${S3Bucket.Arn}*'
           - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
             Action:
-            - ec2:ModifyInstanceAttribute
-            Resource: '*'
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Join
+                      - ""
+                      - - "arn:aws:s3:::"
+                        - !If [GenerateS3BucketName, !Sub "ocp4-disconnected-${AWS::AccountId}-${AWS::Region}", !Ref S3TransferBucketName]
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Join
+                      - ""
+                      - - "arn:aws:s3:::"
+                        - !If [GenerateS3BucketName, !Sub "ocp4-disconnected-${AWS::AccountId}-${AWS::Region}", !Ref S3TransferBucketName]
+                        - "/*"
+              - Effect: Allow
+                Action:
+                  - iam:CreateAccessKey
+                Resource:
+                  - !GetAtt InstallIamUser.Arn
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - ec2:DescribeSubnets
+                Resource: "*"
 
-  NATInstanceProfile:
+  DefaultInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      Roles:
-      - !Ref NATInstanceRole
+      InstanceProfileName: !Sub ${AWS::StackName}-default-profile
       Path: /
+      Roles:
+        - !Ref DefaultInstanceRole
 
-  NATInstanceSG:
+  InstallIamUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub ${AWS::StackName}-install-user
+      Policies:
+        - PolicyName: AdministratorAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+
+  #############################################################################
+  # NAT Instance
+  #############################################################################
+
+  NatInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-nat-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:ModifyInstanceAttribute
+                Resource: "*"
+
+  NatInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub ${AWS::StackName}-nat-profile
+      Path: /
+      Roles:
+        - !Ref NatInstanceRole
+
+  NatInstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allows HTTP and HTTPS from private instances to NAT instances
+      GroupName: !Sub ${AWS::StackName}-nat-sg
+      GroupDescription: Allow HTTP and HTTPS from VPC to NAT instance
+      VpcId: !Ref Vpc
       SecurityGroupIngress:
-      - CidrIp: !Ref VpcCidr
-        FromPort: 80
-        ToPort: 80
-        IpProtocol: TCP
-      - CidrIp: !Ref VpcCidr
-        FromPort: 443
-        ToPort: 443
-        IpProtocol: TCP
-      - CidrIp: '10.0.0.0/25'
-        FromPort: 80
-        ToPort: 80
-        IpProtocol: TCP
-      - CidrIp: '10.0.0.0/25'
-        FromPort: 443
-        ToPort: 443
-        IpProtocol: TCP
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref VpcCidr
+          Description: HTTP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VpcCidr
+          Description: HTTPS
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref VpcCidr
+          Description: SSH
       Tags:
-      - Key: Name
-        Value: !Sub 'NAT Instance SG - ${AWS::StackName}'
-      VpcId: !Ref VPC
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-nat-sg
 
-  NATInstance:
+  NatInstanceWaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+
+  NatInstanceWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: NatInstance
+    Properties:
+      Handle: !Ref NatInstanceWaitHandle
+      Timeout: 900
+
+  NatInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref AmiId
-      InstanceType: !Ref InstanceType
-      IamInstanceProfile: !Ref NATInstanceProfile
-      KeyName: disco-key
+      ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
+      KeyName: !Ref KeyName
+      InstanceType: !Ref NatInstanceType
+      IamInstanceProfile: !Ref NatInstanceProfile
       NetworkInterfaces:
-      - AssociatePublicIpAddress: "true"
-        DeviceIndex: "0"
-        GroupSet:
-        - !Ref NATInstanceSG
-        SubnetId: !Ref PublicSubnet
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !Ref NatInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-nat
       UserData:
-        Fn::Base64:
-          !Sub |
-            #!/bin/bash -xe
-            # Redirect the user-data output to the console logs
-            exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          # Redirect the user-data output to the console logs
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
-            # Apply the latest security patches
-            yum update -y --security
+          # Display a friendly name in bash
+          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
+          sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
+          echo "export NICKNAME=nat" > /etc/profile.d/friendly_prompt.sh
 
-            # Disable source / destination check. It cannot be disabled from the launch configuration
-            region=${AWS::Region}
-            instanceid=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
-            aws ec2 modify-instance-attribute --no-source-dest-check --instance-id $instanceid --region $region
+          # Apply the latest security patches
+          yum update -y --security
+          yum install -y unzip vim firewalld
 
-            # Install and start Squid
-            yum install -y squid
-            systemctl enable --now squid
-            sleep 5
-            iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3129
-            iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3130
+          # Install the AWS CLI
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
 
-            cp -a /etc/squid /etc/squid_orig
+          # Disable source / destination check. It cannot be disabled from the launch configuration
+          region=${AWS::Region}
+          instanceid=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+          aws ec2 modify-instance-attribute --no-source-dest-check --instance-id $instanceid --region $region
 
-            # Create a SSL certificate for the SslBump Squid module
-            mkdir /etc/squid/ssl
-            pushd /etc/squid/ssl
-            openssl genrsa -out squid.key 4096
-            openssl req -new -key squid.key -out squid.csr -subj "/C=US/ST=VA/L=squid/O=squid/CN=squid"
-            openssl x509 -req -days 3650 -in squid.csr -signkey squid.key -out squid.crt
-            cat squid.key squid.crt >> squid.pem
+          # Add RHUI cert to trust bundle
+          trust anchor /etc/pki/rhui/cdn.redhat.com-chain.crt
+          update-ca-trust
 
-            echo '.amazonaws.com' > /etc/squid/whitelist.txt
-            echo '.cloudfront.net' >> /etc/squid/whitelist.txt
+          # Install and start Squid
+          yum install -y squid
+          /usr/lib64/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 4MB
+          systemctl enable --now squid
+          sleep 5
 
-            cat > /etc/squid/squid.conf << 'EOF'
+          cp -a /etc/squid /etc/squid_orig
 
-            visible_hostname squid
-            cache deny all
+          # Create a SSL certificate for the SslBump Squid module
+          mkdir /etc/squid/ssl
+          pushd /etc/squid/ssl
+          openssl genrsa -out squid.key 4096
+          openssl req -new -key squid.key -out squid.csr -subj "/C=US/ST=VA/L=squid/O=squid/CN=squid"
+          openssl x509 -req -days 3650 -in squid.csr -signkey squid.key -out squid.crt
+          cat squid.key squid.crt >> squid.pem
 
-            # Log format and rotation
-            logformat squid %ts.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru %ssl::>sni %Sh/%<a %mt
-            logfile_rotate 10
-            debug_options rotate=10
+          echo '.amazonaws.com' > /etc/squid/whitelist.txt
+          echo '.cloudfront.net' >> /etc/squid/whitelist.txt
+          echo '.aws.ce.redhat.com' >> /etc/squid/whitelist.txt
 
-            # Handle HTTP requests
-            http_port 3128
-            http_port 3129 intercept
+          cat > /etc/squid/squid.conf << 'EOF'
 
-            # Handle HTTPS requests
-            https_port 3130 cert=/etc/squid/ssl/squid.pem ssl-bump intercept
-            acl SSL_port port 443
-            http_access allow SSL_port
-            acl step1 at_step SslBump1
-            acl step2 at_step SslBump2
-            acl step3 at_step SslBump3
-            ssl_bump peek step1 all
+          visible_hostname squid
+          cache deny all
 
-            # Deny requests to proxy instance metadata
-            acl instance_metadata dst 169.254.169.254
-            http_access deny instance_metadata
+          # Log format and rotation
+          logformat squid %ts.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru %ssl::>sni %Sh/%<a %mt
+          logfile_rotate 10
+          debug_options rotate=10
 
-            # Filter HTTP requests based on the whitelist
-            acl allowed_http_sites dstdomain "/etc/squid/whitelist.txt"
-            http_access allow allowed_http_sites
+          # Handle HTTP requests
+          http_port 3128
+          http_port 3129 intercept
 
-            # Filter HTTPS requests based on the whitelist
-            acl allowed_https_sites ssl::server_name "/etc/squid/whitelist.txt"
-            ssl_bump peek step2 allowed_https_sites
-            ssl_bump splice step3 allowed_https_sites
-            ssl_bump terminate step2 all
+          # Handle HTTPS requests
+          https_port 3130 cert=/etc/squid/ssl/squid.pem ssl-bump intercept
+          acl SSL_port port 443
+          http_access allow SSL_port
+          acl step1 at_step SslBump1
+          acl step2 at_step SslBump2
+          acl step3 at_step SslBump3
+          ssl_bump peek step1 all
 
-            http_access deny all
+          # Deny requests to proxy instance metadata
+          acl instance_metadata dst 169.254.169.254
+          http_access deny instance_metadata
 
+          # Filter HTTP requests based on the whitelist
+          acl allowed_http_sites dstdomain "/etc/squid/whitelist.txt"
+          http_access allow allowed_http_sites
 
-            EOF
+          # Filter HTTPS requests based on the whitelist
+          acl allowed_https_sites ssl::server_name "/etc/squid/whitelist.txt"
+          ssl_bump peek step2 allowed_https_sites
+          ssl_bump splice step3 allowed_https_sites
+          ssl_bump terminate step2 all
 
-            /usr/sbin/squid -k parse && /usr/sbin/squid -k reconfigure
+          http_access deny all
 
-# End Nat Instance
-############################################################################
+          EOF
+
+          /usr/sbin/squid -k parse && /usr/sbin/squid -k reconfigure
+
+          # Configure firewalld
+          sysctl -w net.ipv4.ip_forward=1 >> /etc/sysctl.d/10-custom.conf
+          firewall-offline-cmd --add-forward-port=port=80:proto=tcp:toport=3129
+          firewall-offline-cmd --add-forward-port=port=443:proto=tcp:toport=3130
+          firewall-offline-cmd --add-masquerade
+          systemctl enable --now firewalld
+
+          curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS","Reason" : "Configuration Complete","UniqueId" : "8675309","Data" : "Application has completed configuration."}' "${NatInstanceWaitHandle}"
+
+  #############################################################################
+  # Jump Instance
+  #############################################################################
+
+  JumpInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${AWS::StackName}-jump-sg
+      GroupDescription: Allow SSH from everywhere to Jump instance
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-jump-sg
+
+  JumpInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
+      KeyName: !Ref KeyName
+      InstanceType: !Ref JumpInstanceType
+      IamInstanceProfile: !Ref DefaultInstanceProfile
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !Ref JumpInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdh
+          Ebs:
+            VolumeType: gp3
+            DeleteOnTermination: true
+            VolumeSize: !Ref JumpInstanceDataVolumeSize
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-jump
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          # Redirect the user-data output to the console logs
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          # Display a friendly name in bash
+          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
+          sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
+          echo "export NICKNAME=jump" > /etc/profile.d/friendly_prompt.sh
+
+          # Apply the latest security patches
+          yum update -y --security
+          yum install -y unzip vim lvm2 git podman
+
+          # Partition and mount data disk
+          pvcreate /dev/nvme1n1
+          vgcreate data /dev/nvme1n1
+          lvcreate --name ocp --extents 100%VG data
+          mkfs.xfs /dev/mapper/data-ocp
+          mkdir /mnt/ocp4_data
+          echo '/dev/mapper/data-ocp /mnt/ocp4_data xfs defaults 0 0' >> /etc/fstab
+          systemctl daemon-reload
+          mount /mnt/ocp4_data
+          chown ec2-user:ec2-user /mnt/ocp4_data
+
+          # Install the AWS CLI
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
+
+  JumpInstanceEip:
+    Type: AWS::EC2::EIP
+    DependsOn: JumpInstance
+    Properties:
+      InstanceId: !Ref JumpInstance
+
+  #############################################################################
+  # High Side Instance
+  #############################################################################
+
+  HighSideInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${AWS::StackName}-highside-sg
+      GroupDescription: Allow SSH from VPC to High Side instance
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref VpcCidr
+          Description: SSH
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: !Ref VpcCidr
+          Description: Mirror Registry
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-highside-sg
+
+  HighSideInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: NatInstanceWaitCondition
+    Properties:
+      ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
+      KeyName: !Ref KeyName
+      InstanceType: !Ref HighSideInstanceType
+      IamInstanceProfile: !Ref DefaultInstanceProfile
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: false
+          GroupSet:
+            - !Ref HighSideInstanceSecurityGroup
+          SubnetId: !Ref PrivateSubnet1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdh
+          Ebs:
+            VolumeType: gp3
+            DeleteOnTermination: true
+            VolumeSize: !Ref HighSideInstanceDataVolumeSize
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-highside
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          # Redirect the user-data output to the console logs
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          # Display a friendly name in bash
+          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
+          sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
+          echo "export NICKNAME=highside" > /etc/profile.d/friendly_prompt.sh
+
+          # Apply the latest security patches
+          yum update -y --security
+          yum install -y unzip vim lvm2 podman
+
+          # Partition and mount data disk
+          pvcreate /dev/nvme1n1
+          vgcreate data /dev/nvme1n1
+          lvcreate --name ocp --extents 100%VG data
+          mkfs.xfs /dev/mapper/data-ocp
+          mkdir /mnt/ocp4_data
+          echo '/dev/mapper/data-ocp /mnt/ocp4_data xfs defaults 0 0' >> /etc/fstab
+          systemctl daemon-reload
+          mount /mnt/ocp4_data
+          chown ec2-user:ec2-user /mnt/ocp4_data
+
+          # Install the AWS CLI
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
+
+  #############################################################################
+  # S3 Transfer Bucket
+  #############################################################################
+
+  S3TransferBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !If [GenerateS3BucketName, !Sub "${AWS::StackName}-${AWS::AccountId}-${AWS::Region}", !Ref S3TransferBucketName]
 
 Outputs:
-  VpcId:
-    Description: ID of the new VPC.
-    Value: !Ref VPC
-  PublicSubnetIds:
-    Description: Subnet IDs of the public subnets.
-    Value:
-      !Join [
-        ",",
-        [!Ref PublicSubnet, !If [DoAz2, !Ref PublicSubnet2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PublicSubnet3, !Ref "AWS::NoValue"]]
-      ]
-  PrivateSubnetIds:
-    Description: Subnet IDs of the private subnets.
-    Value:
-      !Join [
-        ",",
-        [!Ref PrivateSubnet, !If [DoAz2, !Ref PrivateSubnet2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PrivateSubnet3, !Ref "AWS::NoValue"]]
-      ]
+  Vpc:
+    Description: A reference to the created VPC
+    Value: !Ref Vpc
+
+  PrivateSubnets:
+    Description: A list of the private subnets
+    Value: !Join [",", [!Ref PrivateSubnet1, !Ref PrivateSubnet2, !Ref PrivateSubnet3]]
+
+  PublicSubnet1:
+    Description: A reference to the public subnet
+    Value: !Ref PublicSubnet
+
+  PrivateSubnet1:
+    Description: A reference to the private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Description: A reference to the private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
+
+  PrivateSubnet3:
+    Description: A reference to the private subnet in the 3rd Availability Zone
+    Value: !Ref PrivateSubnet3
+
+  S3TransferBucket:
+    Description: A reference to the S3 transfer bucket
+    Value: !Ref S3TransferBucket
+
+  JumpInstancePublicIp:
+    Description: A reference to the public EIP allocated to the Jump instance
+    Value: !Ref JumpInstanceEip
+
+  HighSideInstancePrivateIp:
+    Description: A reference to the private IP to the High Side instance
+    Value: !GetAtt HighSideInstance.PrivateIp
+
+  InstallIamUser:
+    Description: A reference to the IAM User to use for installing OpenShift
+    Value: !Ref InstallIamUser

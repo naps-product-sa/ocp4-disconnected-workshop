@@ -8,7 +8,7 @@ Let's start by creating a prep system so we can begin downloading content.
    VPC_ID=$(aws ec2 describe-vpcs | jq '.Vpcs[] | select(.Tags[].Value=="disco").VpcId' -r)
    echo $VPC_ID
 
-   PUBLIC_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="Public Subnet - disco").SubnetId' -r)
+   PUBLIC_SUBNET=$(aws ec2 describe-subnets | jq '.Subnets[] | select(.Tags[].Value=="disco-public").SubnetId' -r)
    echo $PUBLIC_SUBNET
    ```
 2. Create a Security Group and collect its ID. We're going to use this for both the prep system, and later for the bastion server:

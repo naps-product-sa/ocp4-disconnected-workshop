@@ -26,9 +26,9 @@ In this lab, we'll create an Air Gap in AWS.
    curl https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/main/cloudformation.yaml -o cloudformation.yaml
 
    # Create the stack
-   aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM
+   aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM --parameters "ParameterKey=KeyName,ParameterValue=disco-key"
    ```
-4. We just created a VPC with 3 public subnets, which will serve as our Low Side, and 3 private subnets, which will serve as our High Side. You can view them by running the command below:
+4. We just created a VPC with 1 public subnet, which will serve as our Low Side, and 3 private subnets, which will serve as our High Side. You can view them by running the command below:
    ```execute
    aws ec2 describe-subnets | jq '[.Subnets[].Tags[] | select(.Key=="Name").Value] | sort'
    ```
@@ -37,17 +37,16 @@ In this lab, we'll create an Air Gap in AWS.
    Example output:
    ```bash
    [
-      "Private Subnet - disco",
-      "Private Subnet 2 - disco",
-      "Private Subnet 3 - disco",
-      "Public Subnet - disco",
-      "Public Subnet 2 - disco",
-      "Public Subnet 3 - disco"
+     "disco-private-us-east-1a",
+     "disco-private-us-east-1b",
+     "disco-private-us-east-1c",
+     "disco-public"
    ]
    ```
    The high side protects outbound traffic with a [Squid proxy](http://www.squid-cache.org/) running in a NAT instance. The proxy prevents any egress traffic not listed in `/etc/squid/whitelist.txt` on that host. If you look at the template you'll notice our two entries are:
    * `.amazonaws.com`
    * `.cloudfront.net`
+   * `.aws.ce.redhat.com`
 
    There may be situations where you wish to add more exceptions here, such as container or package repositories.
 

@@ -69,7 +69,14 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
        - cidr: 10.0.80.0/20
      ...
      ```
-   * Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly. You can append them to your `install-config.yaml` by running this command:
+   * Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly. 
+   
+     **Before continuing**, make sure the second stage of your mirror is `Done` (not `Running`):
+     ```execute
+     jobs
+     ```
+
+     Then you can append the relevant snippet to your `install-config.yaml` by running this command:
      ```execute
      cat <<EOF >> install-config.yaml
      imageContentSources:
