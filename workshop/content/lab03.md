@@ -1,10 +1,15 @@
 In this lab, we'll create an Air Gap in AWS.
 
-1. Configure your AWS CLI with the credentials you received from RHDP. Be sure to use the `us-east-1` region and specify your output type as `json`:
+1. Configure your AWS CLI with the credentials you received from RHDP.
    ```execute
    aws configure
    ```
-2. Create a key pair and import it to AWS. We're going to use this to SSH into our **prep system** and **bastion server**:
+2. Set the `region` and `output` to `us-east-1` and `json`, respectively:
+   ```execute
+   aws configure set region us-east-1
+   aws configure set output json
+   ```
+3. Create a key pair and import it to AWS. We're going to use this to SSH into our **prep system** and **bastion server**:
    ```execute
    ssh-keygen -f ~/disco_key -q -N ""
    ```
@@ -20,7 +25,7 @@ In this lab, we'll create an Air Gap in AWS.
    > If the system date is too far behind, AWS will reject any requests to its API with a 405. If you're running `podman machine`, this can be fixed by running:
    >
    >     podman machine ssh "sudo systemctl restart systemd-timesyncd.service"
-3. Instantiate a CloudFormationTemplate. This creates a VPC that houses both sides of the air gap:
+4. Instantiate a CloudFormationTemplate. This creates a VPC that houses both sides of the air gap:
    ```execute
    # Grab the template file from the repo
    curl https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/main/cloudformation.yaml -o cloudformation.yaml
@@ -28,7 +33,7 @@ In this lab, we'll create an Air Gap in AWS.
    # Create the stack
    aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM --parameters "ParameterKey=KeyName,ParameterValue=disco-key"
    ```
-4. We just created a VPC with 1 public subnet, which will serve as our Low Side, and 3 private subnets, which will serve as our High Side. You can view them by running the command below:
+5. We just created a VPC with 1 public subnet, which will serve as our Low Side, and 3 private subnets, which will serve as our High Side. You can view them by running the command below:
    ```execute
    aws ec2 describe-subnets | jq '[.Subnets[].Tags[] | select(.Key=="Name").Value] | sort'
    ```
