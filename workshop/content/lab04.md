@@ -33,6 +33,7 @@ Let's start by creating a prep system so we can begin downloading content.
 
    aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type t3.micro --key-name disco-key --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET --associate-public-ip-address --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$PREP_SYSTEM_NAME}]" --block-device-mappings "DeviceName=/dev/sdh,Ebs={VolumeSize=50}"
    ```
+   > If you see `An error occurred (InvalidAMIID.NotFound) when calling the RunInstances operation: The image id '[ami-06640050dc3f556bb]' does not exist`, it may be because you're running in a region other than `us-east-1`. You'll need to either switch to `us-east-1` or else substitute the correct RHEL AMI for your region [here](https://us-east-1.console.aws.amazon.com/ec2/home).
 
 ## Downloading Tooling
 Now that our prep system is up, let's SSH into it and download the content we'll need to support our install on the high side.
