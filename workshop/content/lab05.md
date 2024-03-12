@@ -2,7 +2,7 @@ In this lab, we'll prepare the High Side. Recall from our architecture diagram t
 
 However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed! Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation requires a number of dependencies.
 
-To solve this problem, most customers either *build a custom RHEL image* with `podman` pre-installed, **or** create a firewall exception in the high side to enable access to [RHUI](https://access.redhat.com/articles/4720861) (Red Hat Update Infrastructure). Recall from (Lab 2)[lab02.md] that RHUI is part of our squid proxy's allowed list, so we'll be opting for the latter approach here.
+To solve this problem, most customers either *build a custom RHEL image* with `podman` pre-installed, **or** create a firewall exception in the high side to enable access to a content repository, like [RHUI](https://access.redhat.com/articles/4720861) (Red Hat Update Infrastructure). Recall from [Lab 2](lab02.md) that RHUI is part of our squid proxy's allowed list, so we'll be opting for the latter approach here.
 
 ## Creating a Bastion Server
 Let's start by creating the bastion server. Your mirror may still be running from lab 4, so run these commands in a new terminal.
