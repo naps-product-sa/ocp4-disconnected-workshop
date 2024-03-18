@@ -31,7 +31,7 @@ In this lab, we'll create an Air Gap in AWS.
    curl https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/main/cloudformation.yaml -o cloudformation.yaml
 
    # Create the stack
-   aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_IAM --parameters "ParameterKey=KeyName,ParameterValue=disco-key"
+   aws cloudformation create-stack --stack-name disco --template-body file://./cloudformation.yaml --capabilities CAPABILITY_NAMED_IAM --parameters "ParameterKey=KeyName,ParameterValue=disco-key"
    ```
 5. We just created a VPC with 1 public subnet, which will serve as our Low Side, and 3 private subnets, which will serve as our High Side. You can view them by running the command below:
    ```execute
