@@ -104,7 +104,7 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
    mirror:
      platform:
        channels:
-       - name: stable-4.13
+       - name: stable-4.15
          type: ocp
      additionalImages:
      - name: registry.redhat.io/ubi8/ubi:latest
