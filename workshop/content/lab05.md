@@ -17,7 +17,7 @@ Let's start by creating the bastion server. Your mirror may still be running fro
    ```
 2. Set an environment variable for your AMI_ID. We'll use the same one as we did for the prep system.
    ```execute-2
-   AMI_ID="ami-06640050dc3f556bb"
+   AMI_ID="ami-0fe630eb857a6ec83"
    ```
 3. Then spin up your EC2 instance. We're going to use a `t3.large` instance type which provides 2vCPU and 8GiB of RAM, along with a 50GiB volume to meet our storage requirements:
    ```execute-2

@@ -23,9 +23,9 @@ Let's start by creating a prep system so we can begin downloading content.
    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 8443 --cidr 0.0.0.0/0
    ```
-4. Next we'll specify an Amazon Machine Image (AMI) to use for our prep system. For this lab, we'll just use the [Marketplace AMI for RHEL 8](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#ImageDetails:imageId=ami-06640050dc3f556bb) in `us-east-1`:
+4. Next we'll specify an Amazon Machine Image (AMI) to use for our prep system. For this lab, we'll just use the [Marketplace AMI for RHEL 9](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#ImageDetails:imageId=ami-0fe630eb857a6ec83) in `us-east-1`:
    ```execute
-   AMI_ID="ami-06640050dc3f556bb"
+   AMI_ID="ami-0fe630eb857a6ec83"
    ```
 5. Ready to launch! 🚀 We'll use the `t3.micro` instance type, which offers 1GiB of RAM and 2vCPUs, along with a 50GiB volume to ensure we have enough storage for mirrored content:
    ```execute
