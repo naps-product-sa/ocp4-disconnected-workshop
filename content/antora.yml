@@ -1,0 +1,14 @@
+---
+name: modules
+title: OpenShift Disco Lab - Installing OpenShift in a Disconnected Environment
+version: master
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    page-links:
+    - url: https://redhat.com
+      text: Red Hat
+    - url: https://www.redhat.com/en/summit
+      text: Summit
