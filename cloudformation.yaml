@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
 
+  Password:
+    Description: The password for the user account on the instances
+    Type: String
+
   KeyName:
     Description: The name of EC2 key pair to use for the NAT instance
     Type: AWS::EC2::KeyPair::KeyName
@@ -437,7 +441,6 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
-      KeyName: !Ref KeyName
       InstanceType: !Ref NatInstanceType
       IamInstanceProfile: !Ref NatInstanceProfile
       NetworkInterfaces:
@@ -454,6 +457,13 @@ Resources:
           #!/bin/bash -xe
           # Redirect the user-data output to the console logs
           exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          sed 's/PasswordAuthentication no/PasswordAuthentication yes/' -i /etc/ssh/sshd_config
+          systemctl restart sshd
+
+          useradd lab-user 
+          echo "${Password}" | passwd --stdin lab-user
+          usermod -aG wheel lab-user
 
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
@@ -574,7 +584,6 @@ Resources:
     DependsOn: InternetGatewayAttachment
     Properties:
       ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
-      KeyName: !Ref KeyName
       InstanceType: !Ref JumpInstanceType
       IamInstanceProfile: !Ref DefaultInstanceProfile
       NetworkInterfaces:
@@ -597,6 +606,13 @@ Resources:
           #!/bin/bash -xe
           # Redirect the user-data output to the console logs
           exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          sed 's/PasswordAuthentication no/PasswordAuthentication yes/' -i /etc/ssh/sshd_config
+          systemctl restart sshd
+
+          useradd lab-user 
+          echo "${Password}" | passwd --stdin lab-user
+          usermod -aG wheel lab-user
 
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
@@ -658,7 +674,6 @@ Resources:
     DependsOn: NatInstanceWaitCondition
     Properties:
       ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
-      KeyName: !Ref KeyName
       InstanceType: !Ref HighSideInstanceType
       IamInstanceProfile: !Ref DefaultInstanceProfile
       NetworkInterfaces:
@@ -681,6 +696,13 @@ Resources:
           #!/bin/bash -xe
           # Redirect the user-data output to the console logs
           exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          sed 's/PasswordAuthentication no/PasswordAuthentication yes/' -i /etc/ssh/sshd_config
+          systemctl restart sshd
+
+          useradd lab-user 
+          echo "${Password}" | passwd --stdin lab-user
+          usermod -aG wheel lab-user
 
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
