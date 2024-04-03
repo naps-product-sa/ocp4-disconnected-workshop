@@ -597,6 +597,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-jump
+        - Key: AnsibleGroup
+          Value: bastions
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
