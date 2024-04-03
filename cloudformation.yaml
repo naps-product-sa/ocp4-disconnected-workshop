@@ -19,10 +19,6 @@ Parameters:
     Description: The password for the user account on the instances
     Type: String
 
-  KeyName:
-    Description: The name of EC2 key pair to use for the NAT instance
-    Type: AWS::EC2::KeyPair::KeyName
-
   S3TransferBucketName:
     Description: The name of the S3 bucket that will be used to transfer files
     Type: String
