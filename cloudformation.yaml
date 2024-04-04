@@ -16,7 +16,7 @@ Parameters:
     Default: 10.0.0.0/16
 
   Password:
-    Description: The password for the user account on the instances
+    Description: The password for the lab-user account on the instances
     Type: String
 
   S3TransferBucketName:
@@ -459,7 +459,7 @@ Resources:
 
           useradd lab-user 
           echo "${Password}" | passwd --stdin lab-user
-          usermod -aG wheel lab-user
+          echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
@@ -610,7 +610,7 @@ Resources:
 
           useradd lab-user 
           echo "${Password}" | passwd --stdin lab-user
-          usermod -aG wheel lab-user
+          echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
@@ -700,7 +700,7 @@ Resources:
 
           useradd lab-user 
           echo "${Password}" | passwd --stdin lab-user
-          usermod -aG wheel lab-user
+          echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
