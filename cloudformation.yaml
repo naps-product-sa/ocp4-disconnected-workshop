@@ -652,15 +652,21 @@ Resources:
 
           mkdir -pv /home/$USER/.config
           echo "yes" > /home/$USER/.config/gnome-initial-setup-done
-          chown -vR $USER.$USER /home/$USER/.config
+          chown -vR $USER:$USER /home/$USER/.config
 
           sudo -u $USER  dbus-launch --exit-with-session gsettings set org.gnome.shell welcome-dialog-last-shown-version '40.10'
 
           echo "$DISPLAY=$USER" >> /etc/tigervnc/vncserver.users
           mkdir -pv /home/$USER/.vnc
           echo $VNCPASSWD | vncpasswd -f > /home/$USER/.vnc/passwd
+          echo "session=gnome-classic" >> /home/$USER/.vnc/config
           chmod -v 0600 /home/$USER/.vnc/passwd
-          chown -vR $USER.$USER /home/$USER/.vnc
+          chown -vR $USER:$USER /home/$USER/.vnc
+
+          systemctl --global mask org.gnome.SettingsDaemon.Subscription.service
+          mkdir -pv /home/$USER/.config/autostart
+          cp -v /usr/share/applications/firefox.desktop /home/$USER/.config/autostart/
+          chown -vR $USER:$USER /home/$USER/.config/autostart
 
           mkdir -pv /etc/systemd/system/vncserver\@.service.d
           echo -e "[Service]\nRestart=always\n" >> /etc/systemd/system/vncserver\@.service.d/override.conf
