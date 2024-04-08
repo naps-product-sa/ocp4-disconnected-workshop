@@ -44,11 +44,11 @@ Parameters:
   JumpInstanceType:
     Description: The instance type to use for the Jump instance
     Type: String
-    Default: t3.small
+    Default: t3.large
     AllowedValues:
-      - t3.small
-      - t3.medium
-      - t3.large
+      - t3.small   #2vCPU & 2GiB - too small for GNOME + VNC + Firefox
+      - t3.medium  #2vCPU & 4GiB
+      - t3.large   #2vCPU & 8GiB
       - m4.large
       - m4.xlarge
       - m5.large
@@ -115,7 +115,7 @@ Mappings:
     us-east-1:
       ami: ami-033d3612433d4049b
     us-east-2:
-      ami: ami-04617ae0baf90b791
+      ami: ami-05e5be364adedee9c #Use RHEL9.3 instead of RHEL8 at ami-04617ae0baf90b791
     us-west-1:
       ami: ami-09b6a34cb89a8c924
     us-west-2:
@@ -571,6 +571,11 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
           Description: SSH
+        - IpProtocol: tcp
+          FromPort: 5900
+          ToPort: 5900
+          CidrIp: 0.0.0.0/0
+          Description: VNC
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-jump-sg
@@ -635,6 +640,32 @@ Resources:
           # Install the AWS CLI
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
+
+          # Setup VNC
+          yum -y install "@GNOME" firefox tigervnc-server
+
+          firewall-cmd --add-service vnc-server --permanent  &&  firewall-cmd --reload  ||  echo "firewalld not installed"
+
+          export USER=lab-user   #USER=ec2-user
+          export DISPLAY=:0
+          export VNCPASSWD=${Password}
+
+          mkdir -pv /home/$USER/.config
+          echo "yes" > /home/$USER/.config/gnome-initial-setup-done
+          chown -vR $USER.$USER /home/$USER/.config
+
+          sudo -u $USER  dbus-launch --exit-with-session gsettings set org.gnome.shell welcome-dialog-last-shown-version '40.10'
+
+          echo "$DISPLAY=$USER" >> /etc/tigervnc/vncserver.users
+          mkdir -pv /home/$USER/.vnc
+          echo $VNCPASSWD | vncpasswd -f > /home/$USER/.vnc/passwd
+          chmod -v 0600 /home/$USER/.vnc/passwd
+          chown -vR $USER.$USER /home/$USER/.vnc
+
+          mkdir -pv /etc/systemd/system/vncserver\@.service.d
+          echo -e "[Service]\nRestart=always\n" >> /etc/systemd/system/vncserver\@.service.d/override.conf
+          systemctl enable --now vncserver@$DISPLAY
+
 
   JumpInstanceEip:
     Type: AWS::EC2::EIP
