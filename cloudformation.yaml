@@ -643,7 +643,6 @@ Resources:
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
 
-<<<<<<< HEAD
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
 
@@ -675,9 +674,7 @@ Resources:
           echo -e "[Service]\nRestart=always\n" >> /etc/systemd/system/vncserver\@.service.d/override.conf
           systemctl enable --now vncserver@$DISPLAY
 
-=======
           loginctl enable-linger lab-user
->>>>>>> 785753d (Huge content update with jcall and akrohg)
 
   JumpInstanceEip:
     Type: AWS::EC2::EIP
