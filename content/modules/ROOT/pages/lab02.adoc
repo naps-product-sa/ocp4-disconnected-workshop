@@ -1,3 +1,5 @@
+= The Disconnected Installation Process
+
 Let's start with an overview of the disconnected installation process.
 
 == Creating an Air Gap
@@ -18,6 +20,22 @@ It is in the high side where sensitive data and production systems (like the clu
 During this phase, we'll transfer the content and tooling from the low side to the high side, a process which may entail use of a VPN or physical media like a DVD or USB.
 Once our transfer is complete, we'll start a *mirror registry* on the bastion server which will supply the container images needed for our OpenShift installation, since our installer can't reach out to quay.io or registry.redhat.io directly from here.
 
+=== Proxy
+
+The high side protects outbound traffic with a http://www.squid-cache.org/[Squid proxy] running in a NAT instance.
+The proxy prevents any egress traffic not listed in `/etc/squid/whitelist.txt` on that host.
+If you look at the template you'll notice our entries are:
+
+ ** `.amazonaws.com`
+ ** `.cloudfront.net`
+ ** `.aws.ce.redhat.com`
+
++
+There may be situations where you wish to add more exceptions here, such as container or package repositories.
+
+Now that our air gap is in place, let's start prepping the low side.
+
+
 == Preparing the Installation
 
 The OpenShift installation process is initiated from the bastion server.
@@ -25,12 +43,13 @@ There are a handful of different ways to install OpenShift, but for this lab we'
 By default, the installation program acts as an installation wizard, prompting you for values that it cannot determine on its own and providing reasonable default values for the remaining parameters.
 We'll then customize the `install-config.yaml` file that is produced to specify advanced configuration for our disconnected installation.
 The installation program then provisions the underlying infrastructure for the cluster.
-Here's a diagram describing the inputs and outputs of the installation configuration process: image:install-overview.png[Install Overview]
+Here's a diagram describing the inputs and outputs of the installation configuration process: 
 
-____
+image::install-overview.png[Install Overview]
+
+[TIP]
 You may notice that nodes are provisioned through a process called _Ignition_.
 This concept is out of scope for this workshop, but if you're interested to learn more about it, you can read up on it in the documentation https://docs.openshift.com/container-platform/4.13/installing/index.html#about-rhcos[here].
-____
 
 IPI is the recommended installation method in most cases because it leverages full automation in installation and cluster management, but there are some key considerations to keep in mind when planning a production installation in a real world scenario.
 
@@ -42,7 +61,9 @@ Our lab has full admin in our AWS enclave, so that's not a constraint we'll need
 In real world environments, you'll need to ensure your account has the https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-account.html#installation-aws-permissions_installing-aws-account[appropriate permissions] which sometimes involves negotiating with security teams.
 
 Once configuration has been completed, we can kick off the OpenShift Installer and it will do all the work for us to provision the infrastructure and install OpenShift.
-Here's a diagram describing everything we've discussed so far: image:disco-diagram.png[disco diagram]
+Here's a diagram describing everything we've discussed so far: 
+
+image::disco-diagram.png[disco diagram]
 
 == Accessing the Cluster
 

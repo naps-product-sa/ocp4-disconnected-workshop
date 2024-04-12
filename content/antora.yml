@@ -1,6 +1,6 @@
 ---
 name: modules
-title: OpenShift Disco Lab - Installing OpenShift in a Disconnected Environment
+title: OpenShift Disconnected Workshop
 version: master
 nav:
   - modules/ROOT/nav.adoc

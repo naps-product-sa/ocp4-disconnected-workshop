@@ -624,23 +624,26 @@ Resources:
 
           # Apply the latest security patches
           yum update -y --security
-          yum install -y unzip vim lvm2 git podman
+          yum install -y unzip vim lvm2 git podman tmux jq
+
+          echo "set -g mouse on" >> /etc/tmux.conf
 
           # Partition and mount data disk
           pvcreate /dev/nvme1n1
           vgcreate data /dev/nvme1n1
           lvcreate --name ocp --extents 100%VG data
           mkfs.xfs /dev/mapper/data-ocp
-          mkdir /mnt/ocp4_data
-          echo '/dev/mapper/data-ocp /mnt/ocp4_data xfs defaults 0 0' >> /etc/fstab
+          mkdir /mnt/low-side-data
+          echo '/dev/mapper/data-ocp /mnt/low-side-data xfs defaults 0 0' >> /etc/fstab
           systemctl daemon-reload
-          mount /mnt/ocp4_data
-          chown ec2-user:ec2-user /mnt/ocp4_data
+          mount /mnt/low-side-data
+          chown lab-user:lab-user /mnt/low-side-data
 
           # Install the AWS CLI
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
 
+<<<<<<< HEAD
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
 
@@ -672,6 +675,9 @@ Resources:
           echo -e "[Service]\nRestart=always\n" >> /etc/systemd/system/vncserver\@.service.d/override.conf
           systemctl enable --now vncserver@$DISPLAY
 
+=======
+          loginctl enable-linger lab-user
+>>>>>>> 785753d (Huge content update with jcall and akrohg)
 
   JumpInstanceEip:
     Type: AWS::EC2::EIP
@@ -746,22 +752,26 @@ Resources:
 
           # Apply the latest security patches
           yum update -y --security
-          yum install -y unzip vim lvm2 podman
+          yum install -y unzip vim lvm2 podman tmux jq
+
+          echo "set -g mouse on" >> /etc/tmux.conf
 
           # Partition and mount data disk
           pvcreate /dev/nvme1n1
           vgcreate data /dev/nvme1n1
           lvcreate --name ocp --extents 100%VG data
           mkfs.xfs /dev/mapper/data-ocp
-          mkdir /mnt/ocp4_data
-          echo '/dev/mapper/data-ocp /mnt/ocp4_data xfs defaults 0 0' >> /etc/fstab
+          mkdir /mnt/high-side-data
+          echo '/dev/mapper/data-ocp /mnt/high-side-data xfs defaults 0 0' >> /etc/fstab
           systemctl daemon-reload
-          mount /mnt/ocp4_data
-          chown ec2-user:ec2-user /mnt/ocp4_data
+          mount /mnt/high-side-data
+          chown lab-user:lab-user /mnt/high-side-data
 
           # Install the AWS CLI
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
+
+          loginctl enable-linger lab-user
 
   #############################################################################
   # S3 Transfer Bucket

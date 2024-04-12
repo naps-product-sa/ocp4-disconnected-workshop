@@ -1,9 +1,8 @@
-If you made it here, congratulations!
-You have officially stood up a disconnected cluster!
+= Accessing the Cluster
 
 You should be able to access the API server from the bastion by leveraging the `kubeconfig` file the installer creates for you:
 
-[,execute]
+[source,bash,role=execute]
 ----
 export KUBECONFIG=/mnt/high-side/install/auth/kubeconfig
 oc status
@@ -11,9 +10,8 @@ oc status
 
 Example output:
 
-[,bash]
+[source,bash,role=execute]
 ----
-[ec2-user@ip-10-0-51-206 install]$ oc status
 In project default on server https://api.disco.sandbox2099.opentlc.com:6443
 
 svc/openshift - kubernetes.default.svc.cluster.local
@@ -24,40 +22,22 @@ View details with 'oc describe <resource>/<name>' or list resources with 'oc get
 
 == Accessing the Web Console
 
-Hitting the web console is a little bit trickier.
-Our cluster not only lacks direct _egress_ to the Internet, but because it lives in a private subnet, we don't have _ingress_ either.
-Notice that if you try to navigate to the address shown by running `oc whoami --show-console` in your laptop's browser, the request will fail.
-
-To mitigate this, we'll use a handy SSH/DNS utility called `sshuttle` to setup an SSH tunnel to the prep system.
-
-____
-You'll need administrative privileges on your laptop to achieve this.
-____
-
-. First, you'll need to install sshuttle following the instructions for your operating system https://github.com/sshuttle/sshuttle#obtaining-sshuttle[here].
-. Then you'll need to *copy your disco_key to your laptop*, and set permissions appropriately (`chmod 600 disco_key`).
-. Then setup an SSH tunnel to the prep system.
-This must be run from a terminal directly on your laptop:
-+
-[,bash]
-----
-PREP_SYSTEM_IP=<your prep system's public IP>
-
-sshuttle --ssh-cmd 'ssh -i disco_key' -r ec2-user@$PREP_SYSTEM_IP 10.0.0.0/16 --dns
-----
-+
-____
-If you're prompted for a password here, enter your local laptop password.
-____
-
-. Now you should be able to access the console in your browser:
-+
-[,execute]
+. Now you should be able to access the console in the VNC session:
+[source,bash,role=execute]
 ----
 oc whoami --show-console
 ----
-+
-image:console.png[console] + Success!
+
+image::console.png[console]
+
+Success!
 
 Now the cluster's up and we can successfully access it.
-But what comes next?
+
+== What's next?
+
+There's much work to be done after the initial installation.
+As a cluster administrator, you need to be mindful of how to manage operators, upgrades, patching, configuration, and much more.
+Stay tuned for future workshop modules where we'll examine these areas more closely.
+
+Happy coding!

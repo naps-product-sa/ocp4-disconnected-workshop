@@ -1,28 +1,30 @@
+= Preparing the Installation
+
 In this lab, we'll make final preparations and execute the OpenShift Installer.
 
 == Building install-config.yaml
 
 . Let's start by creating a workspace on the bastion to house our installation materials:
 +
-[,execute]
+[source,bash,role=execute,subs="attributes"]
 ----
-mkdir /mnt/high-side/install
-cd /mnt/high-side/install
+mkdir /mnt/high-side-data/install
+cd /mnt/high-side-data/install
 ----
 
 . Then generate an SSH key pair for access to cluster nodes:
 +
-[,execute]
+[source,bash,role=execute,subs="attributes"]
 ----
-ssh-keygen -f ~/.ssh/disco-openshift-key -q -N ""
+ssh-keygen -N ""
 ----
 
 . Use the following Python code to minify your container registry pull secret.
 Copy this output to your clipboard, since you'll need it in a moment:
 +
-[,execute]
+[source,bash,role=execute,subs="attributes"]
 ----
-python3 -c $'import json\nimport sys\nwith open(sys.argv[1], "r") as f: print(json.dumps(json.load(f)))' /run/user/1000/containers/auth.json
+jq -c . /run/user/1000/containers/auth.json
 ----
 +
 ____
@@ -31,15 +33,15 @@ ____
 
 . Then generate `install-config.yaml`:
 +
-[,execute]
+[source,bash,role=execute,subs="attributes"]
 ----
-/mnt/high-side/openshift-install create install-config --dir /mnt/high-side/install --log-level=DEBUG
+/mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install --log-level=DEBUG
 ----
 +
 The OpenShift installer will prompt you for a number of fields;
 enter the values below:
 
- ** *SSH Public Key*: `/home/ec2-user/.ssh/disco-openshift-key.pub`
+ ** *SSH Public Key*: `/home/lab-user/.ssh/id_rsa.pub`
 +
 ____
 The SSH public key used to access all nodes within the cluster.
@@ -54,7 +56,7 @@ ____
  ** *AWS Access Key ID* and *Secret Access Key*: Enter your AWS credentials from RHDP.
  ** *Region*: `us-east-1 (US East (N.
 Virginia))`
- ** *Base Domain*: `sandboxXXXX.opentlc.com`
+ ** *Base Domain*: `{aws_route53_domain}`
 +
 ____
 The base domain of the cluster.
@@ -72,23 +74,19 @@ ____
 
 +
 That's it!
-The installer will generate `install-config.yaml` and drop it in `/mnt/high-side/install` for you.
+The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
 
 . We need to make a couple changes to this config before we kick off the install:
  ** Change `publish` from *External* to *Internal*.
 We're using private subnets to house the cluster, so it won't be publicly accessible.
  ** Add the subnet IDs for your private subnets to `platform.aws.subnets`.
 Otherwise, the installer will create its own VPC and subnets.
-You can retrieve them by running this command from your workstation:
-+
-[,execute-2]
-----
-aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).SubnetId] | unique' -r | yq read - -P
-----
-+
+
+Private subnet IDs: `{PrivateSubnets}`
+
 Then add them to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
-+
-[,bash]
+
+[source,yaml,role=execute,subs="attributes"]
 ----
 ...
 platform:
@@ -101,46 +99,45 @@ platform:
  ...
 ----
 
- ** Modify the `machineNetwork` to match the IPv4 CIDR blocks from the private subnets.
-Otherwise your control plane and compute nodes will be assigned IP addresses that are out of range and break the install.
-You can retrieve them by running this command from your workstation:
-+
-[,execute-2]
-----
-aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).CidrBlock] | unique | map("cidr: " + .)' | yq read -P - | sed "s/'//g"
-----
-+
-Then use them to *replace the existing* `networking.machineNetwork` *entry* in your `install-config.yaml` so that they look something like this: ```bash ...
-networking:   clusterNetwork:
+//  ** Modify the `machineNetwork` to match the IPv4 CIDR blocks from the private subnets.
+// Otherwise your control plane and compute nodes will be assigned IP addresses that are out of range and break the install.
+// You can retrieve them by running this command from your workstation:
+// +
+// [source,bash,role=execute,subs="attributes"]
+// ----
+// aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).CidrBlock] | unique | map("cidr: " + .)' | yq read -P - | sed "s/'//g"
+// ----
+// +
+// Then use them to *replace the existing* `networking.machineNetwork` *entry* in your `install-config.yaml` so that they look something like this: ```bash ...
+// networking:   clusterNetwork:
 
-  *** cidr: 10.128.0.0/14 hostPrefix: 23   machineNetwork:
-  *** cidr: 10.0.48.0/20
-  *** cidr: 10.0.64.0/20
-  *** cidr: 10.0.80.0/20 ...
-```
+//   *** cidr: 10.128.0.0/14 hostPrefix: 23   machineNetwork:
+//   *** cidr: 10.0.48.0/20
+//   *** cidr: 10.0.64.0/20
+//   *** cidr: 10.0.80.0/20 ...
 
- ** Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly.
-+
-*Before continuing*, make sure the second stage of your mirror is `Done` (not `Running`):
-+
-[,execute]
+=== Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly.
+
+*Before continuing*, make sure the second stage of your mirror is done by checking that the `imageContentSourcePolicy.yaml` file exists on disk.
+
+[source,bash,role=execute,subs="attributes"]
 ----
-jobs
+while true ; do if (test -e /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml) ; then break; fi; sleep 5; done
 ----
-+
+
 Then you can append the relevant snippet to your `install-config.yaml` by running this command:
-+
-[,execute]
+
+[source,bash,role=execute]
 ----
 cat <<EOF >> install-config.yaml
 imageContentSources:
-$(grep "mirror" -A 2 --no-group-separator /mnt/high-side/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
+$(grep "mirrors:" -A 2 --no-group-separator /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
 EOF
 ----
-+
+
 They'll look something like this:
-+
-[,bash]
+
+[source,yaml,role=execute,subs="attributes"]
 ----
 imageContentSources:
   - mirrors:
@@ -153,72 +150,56 @@ imageContentSources:
      - ip-10-0-51-206.ec2.internal:8443/openshift/release
      source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 ----
-+
-____
-Instead of adding this field to the `install-config.yaml` you could drop the `imageContentSourcePolicy.yaml` file in the manifests directory after running `openshift-install create manifests` to achieve the same result.
-____
 
- ** Add the root CA of our mirror registry (`/mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field by running this command:
-+
-[,execute]
+// [NOTE]
+// Instead of adding this field to the `install-config.yaml` you could drop the `imageContentSourcePolicy.yaml` file in the manifests directory after running `openshift-install create manifests` to achieve the same result.
+
+** Add the root CA of our mirror registry (`/mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field by running this command:
+
+[source,bash,role=execute,subs="attributes"]
 ----
 cat <<EOF >> install-config.yaml
 additionalTrustBundle: |
-$(cat /mnt/high-side/quay/quay-install/quay-rootCA/rootCA.pem | sed 's/^/  /')
+$(sed 's/^/  /' /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem)
 EOF
 ----
-+
+
 It should look something like this:
-+
-[,bash]
+
+[source,yaml,role=execute,subs="attributes"]
 ----
 ...
 additionalTrustBundle: |
   -----BEGIN CERTIFICATE-----
-  MIID2DCCAsCgAwIBAgIUbL/naWCJ48BEL28wJTvMhJEz/C8wDQYJKoZIhvcNAQEL
-  BQAwdTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAlZBMREwDwYDVQQHDAhOZXcgWW9y
-  azENMAsGA1UECgwEUXVheTERMA8GA1UECwwIRGl2aXNpb24xJDAiBgNVBAMMG2lw
-  LTEwLTAtNTEtMjA2LmVjMi5pbnRlcm5hbDAeFw0yMzA3MTExODIyMjNaFw0yNjA0
-  MzAxODIyMjNaMHUxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJWQTERMA8GA1UEBwwI
-  TmV3IFlvcmsxDTALBgNVBAoMBFF1YXkxETAPBgNVBAsMCERpdmlzaW9uMSQwIgYD
-  VQQDDBtpcC0xMC0wLTUxLTIwNi5lYzIuaW50ZXJuYWwwggEiMA0GCSqGSIb3DQEB
-  AQUAA4IBDwAwggEKAoIBAQDEz/8Pi4UYf/zanB4GHMlo4nbJYIJsyDWx+dPITTMd
-  J3pdOo5BMkkUQL8rSFkc3RjY/grdk2jejVPQ8sVnSabsTl+ku7hT0t1w7E0uPY8d
-  RTeGoa5QvdFOxWz6JsLo+C+JwVOWI088tYX1XZ86TD5FflOEeOwWvs5cmQX6L5O9
-  QGO4PHBc9FWpmaHvFBiRJN3AQkMK4C9XB82G6mCp3c1cmVwFOo3vX7h5738PKXWg
-  KYUTGXHxd/41DBhhY7BpgiwRF1idfLv4OE4bzsb42qaU4rKi1TY+xXIYZ/9DPzTN
-  nQ2AHPWbVxI+m8DZa1DAfPvlZVxAm00E1qPPM30WrU4nAgMBAAGjYDBeMAsGA1Ud
-  DwQEAwIC5DATBgNVHSUEDDAKBggrBgEFBQcDATAmBgNVHREEHzAdghtpcC0xMC0w
-  LTUxLTIwNi5lYzIuaW50ZXJuYWwwEgYDVR0TAQH/BAgwBgEB/wIBATANBgkqhkiG
-  9w0BAQsFAAOCAQEAkkV7/+YhWf1vq//N0Ms0td0WDJnqAlbZUgGkUu/6XiUToFtn
-  OE58KCudP0cAQtvl0ISfw0c7X/Ve11H5YSsVE9afoa0whEO1yntdYQagR0RLJnyo
-  Dj9xhQTEKAk5zXlHS4meIgALi734N2KRu+GJDyb6J0XeYS2V1yQ2Ip7AfCFLdwoY
-  cLtooQugLZ8t+Kkqeopy4pt8l0/FqHDidww1FDoZ+v7PteoYQfx4+R5e8ko/vKAI
-  OCALo9gecCXc9U63l5QL+8z0Y/CU9XYNDfZGNLSKyFTsbQFAqDxnCcIngdnYFbFp
-  mRa1akgfPl+BvAo17AtOiWbhAjipf5kSBpmyJA==
+...
   -----END CERTIFICATE-----
 ----
+
 . Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
-+
-[,execute]
+[source,bash,role=execute,subs="attributes"]
 ----
-cp install-config.yaml install-config.yaml.bak
+cd /mnt/high-side-data/install
+cp install-config.yaml install-config.yaml.backup
 ----
+
+== Check your work
+
+TODO add complete install-config.yaml
 
 == Running the Installation
 
 We're ready to run the install!
 Let's kick off the cluster installation:
 
-[,execute]
+[source,bash,role=execute,subs="attributes"]
 ----
-/mnt/high-side/openshift-install create cluster --log-level=DEBUG
+/mnt/high-side-data/openshift-install create cluster --log-level=DEBUG --dir /mnt/high-side-data/install
 ----
 
 The installation process should take about 30 minutes.
 If you've done everything correctly, you should see something like this:
 
-[,bash]
+[source,bash,role=execute,subs="attributes"]
 ----
 ...
 INFO Install complete!
