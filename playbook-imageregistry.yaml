@@ -1,0 +1,319 @@
+---
+- name: Configure host
+  hosts: localhost
+  gather_facts: false
+  become: false
+  vars:
+    mirror_uri: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients"
+    ocp_maj_ver: "4.14"
+    ocp_min_ver: "4.14.18"
+    ocp_max_ver: "4.14.20"
+  tasks:
+
+    - name: Install container-management module
+      ansible.builtin.dnf:
+        name: '@container-management'
+
+    - name: Install other required packages
+      ansible.builtin.dnf:
+        name:
+          - git
+          - vim
+          - jq
+
+    - name: Pull OpenShfit dependencies
+      ansible.builtin.unarchive:
+        src: "{{ item }}"
+        dest: /bin
+        remote_src: true
+      loop:
+        - "{{ mirror_uri }}/mirror-registry/latest/mirror-registry.tar.gz"
+        - "{{ mirror_uri }}/ocp/{{ ocp_min_ver }}/openshift-install-linux-{{ ocp_min_ver }}.tar.gz"
+        - "{{ mirror_uri }}/ocp/{{ ocp_min_ver }}/openshift-client-linux-{{ ocp_min_ver }}.tar.gz"
+        - "{{ mirror_uri }}/ocp/{{ ocp_min_ver }}/oc-mirror.tar.gz"
+
+    - name: Change file ownership, group and permissions
+      ansible.builtin.file:
+        path: "/bin/{{ item }}"
+        owner: root
+        group: root
+        mode: "0755"
+        state: file
+      loop:
+        - openshift-install
+        - oc
+        - kubectl
+        - oc-mirror
+        - mirror-registry
+
+    - name: Restore SELinux context
+      ansible.builtin.command: restorecon -v /bin/{{ item }}
+      loop:
+        - openshift-install
+        - oc
+        - kubectl
+        - oc-mirror
+        - mirror-registry
+      tags:
+        - skip_ansible_lint
+
+    - name: Set up log files
+      ansible.builtin.copy:
+        dest: "/var/log/{{ item }}"
+        owner: lab-user
+        group: lab-user
+        mode: "0644"
+        content: ""
+      loop:
+        - mirror-registry-init.log
+        - cluster-init.log
+
+    - name: Put ImageSetConfiguration in place
+      copy:
+        dest: /home/lab-user/imageset-config.yaml
+        mode: "0644"
+        owner: lab-user
+        group: lab-user
+        content: |
+          apiVersion: mirror.openshift.io/v1alpha2
+          kind: ImageSetConfiguration
+          storageConfig:
+            local:
+              path: /home/lab-user/
+          mirror:
+            platform:
+              channels:
+                - name: stable-{{ ocp_maj_ver }}
+                  minVersion: {{ ocp_min_ver }}
+                  maxVersion: {{ ocp_max_ver }}
+              graph: true
+            operators:
+              - catalog: registry.redhat.io/redhat/redhat-operator-index:v{{ ocp_maj_ver }}
+                packages:
+                  - name: web-terminal
+                    channels:
+                    - name: fast
+                  - name: cincinnati-operator
+                    channels:
+                      - name: v1
+                  - name: cluster-logging
+                    channels:
+                      - name: stable-5.9
+            additionalImages:
+              - name: registry.redhat.io/rhel8/support-tools
+
+    - name: Make cluster config directory
+      file:
+        path: /home/lab-user/cluster
+        mode: "0755"
+        owner: lab-user
+        group: lab-user
+        state: directory
+
+    - name: Place install-config.yaml.template
+      copy:
+        dest: /home/lab-user/cluster/install-config.yaml.template
+        mode: "0644"
+        owner: lab-user
+        group: lab-user
+        content: |
+          additionalTrustBundlePolicy: Always
+          apiVersion: v1
+          baseDomain: lab
+          compute:
+          - architecture: amd64
+            hyperthreading: Enabled
+            name: worker
+            platform: {}
+            replicas: 0
+          controlPlane:
+            architecture: amd64
+            hyperthreading: Enabled
+            name: master
+            platform:
+              aws:
+                rootVolume:
+                  iops: 2000
+                  size: 500
+                  type: io1
+                type: c5.4xlarge
+                zones:
+                - us-east-2a
+            replicas: 1
+          metadata:
+            name: salsa
+          networking:
+            clusterNetwork:
+            - cidr: 10.128.0.0/14
+              hostPrefix: 23
+            machineNetwork:
+            - cidr: 10.0.0.0/16
+            networkType: OVNKubernetes
+            serviceNetwork:
+            - 172.30.0.0/16
+          platform:
+            aws:
+              region: us-east-2
+              subnets:
+                - SUBNETID
+          publish: Internal
+          pullSecret: 'PULLSECRET'
+          sshKey: SSHKEY
+
+    - name: Place mirror-registry-init.sh
+      copy:
+        dest: /bin/mirror-registry-init.sh
+        mode: "0755"
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash -xe
+          exec > >(tee /var/log/mirror-registry-init.log) 2>&1
+
+          echo "$(date) : Starting mirror-registry-init..."
+
+          # Set the HOME env var missing in systemd
+          export HOME="/home/lab-user"
+          export USER="lab-user"
+          cd ${HOME}
+
+          export REG_USER=init
+          export REG_PASS=salsapass
+
+          # STIG hardening makes the umask for root 0077
+          umask 0022
+
+          mirror-registry install --verbose --quayRoot ${HOME}/quay/ --initUser ${REG_USER} --initPassword ${REG_PASS}
+
+          echo "$(date) : Completed install of quay mirror registry"
+
+          # Remove any existing quay certificate
+          sudo rm -f /etc/pki/ca-trust/source/anchors/quay.cert
+          # Import quay certificate generated during install
+          sudo cp -f ${HOME}/quay/quay-config/ssl.cert /etc/pki/ca-trust/source/anchors/quay.cert
+          sudo chown root:root /etc/pki/ca-trust/source/anchors/quay.cert
+          sudo chmod 0444 /etc/pki/ca-trust/source/anchors/quay.cert
+          sudo restorecon -v /etc/pki/ca-trust/source/anchors/quay.cert
+          sudo update-ca-trust
+          sudo update-ca-trust extract
+
+          echo "$(date) : Updated system certificate trust store"
+
+          # Login to local quay registry
+          mkdir ${HOME}/.docker || true
+          podman login --authfile=${HOME}/.docker/config.json -u=${REG_USER} -p=${REG_PASS} ${HOSTNAME}:8443
+
+          echo "$(date) : Mirroring Content..."
+          oc-mirror --config ${HOME}/imageset-config.yaml --continue-on-error docker://${HOSTNAME}:8443 || true
+
+          # Ensure quay init does not run again
+          touch ${HOME}/mirror-registry-init-finished
+
+          echo "$(date) : Finished mirror-registry-init"
+          exit 0
+
+    - name: Add mirror-registry-init service
+      copy:
+        dest: /etc/systemd/system/mirror-registry-init.service
+        mode: "0644"
+        owner: root
+        group: root
+        content: |
+          [Unit]
+          Description=Configure Mirror Quay on first boot
+          Wants=network.target
+          After=network-online.target
+          ConditionPathExists=!/home/lab-user/mirror-registry-init-finished
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/mirror-registry-init.sh
+          User=lab-user
+          Group=lab-user
+
+          [Install]
+          WantedBy=multi-user.target default.target
+
+    - name: Ensure mirror-registry-init is enabled
+      ansible.builtin.systemd_service:
+        state: started
+        enabled: true
+        daemon_reload: true
+        no_block: true
+        name: mirror-registry-init
+
+    - name: Place cluster-init.sh
+      copy:
+        dest: /bin/cluster-init.sh
+        mode: "0755"
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash -xe
+          exec > >(tee /var/log/cluster-init.log) 2>&1
+
+          echo "$(date) : Starting cluster-init..."
+
+          # Set the HOME env var missing in systemd
+          export HOME="/home/lab-user"
+          export USER="lab-user"
+
+          cp ${HOME}/cluster/install-config.yaml.template ${HOME}/cluster/install-config.yaml
+
+          cat <<EOF >> ${HOME}/cluster/install-config.yaml
+          imageContentSources:
+          $(grep "mirrors:" -A 2 --no-group-separator ${HOME}/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
+          EOF
+
+          cat <<EOF >> ${HOME}/cluster/install-config.yaml
+          additionalTrustBundle: |
+          $(sed 's/^/  /' ${HOME}/quay/quay-rootCA/rootCA.pem)
+          EOF
+
+          if [ ! -f ${HOME}/.ssh/id_rsa ]; then
+            /usr/bin/ssh-keygen -q -N '' -f ${HOME}/.ssh/id_rsa
+          fi
+
+          sed -i "s/PULLSECRET/$(jq -c . ${HOME}/.docker/config.json)/" ${HOME}/cluster/install-config.yaml
+          sed -i "s/SUBNETID/$(cat ${HOME}/private-subnet-id)/" ${HOME}/cluster/install-config.yaml
+          sed -i "s|SSHKEY|$(cat ${HOME}/.ssh/id_rsa.pub)|" ${HOME}/cluster/install-config.yaml
+
+          cp ${HOME}/cluster/install-config.yaml ${HOME}/cluster/install-config.yaml.backup
+
+          openshift-install create cluster --log-level=DEBUG --dir ${HOME}/cluster
+
+          touch ${HOME}/cluster-init-finished
+
+          echo "$(date) : Finished cluster-init"
+          exit 0
+
+    - name: Add cluster-init service
+      copy:
+        dest: /etc/systemd/system/cluster-init.service
+        mode: "0644"
+        owner: root
+        group: root
+        content: |
+          [Unit]
+          Description=Configure cluster
+          Wants=network.target
+          After=mirror-registry-init.service
+          ConditionPathExists=/home/lab-user/mirror-registry-init-finished
+          ConditionPathExists=!/home/lab-user/cluster-init-finished
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/cluster-init.sh
+          User=lab-user
+          Group=lab-user
+
+          [Install]
+          WantedBy=multi-user.target default.target
+
+    - name: Ensure cluster-init is enabled
+      ansible.builtin.systemd_service:
+        state: started
+        enabled: true
+        daemon_reload: true
+        no_block: true
+        name: cluster-init
