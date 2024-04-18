@@ -19,7 +19,7 @@ cd /mnt/high-side-data/install
 ssh-keygen -N ""
 ----
 
-. Use the following Python code to minify your container registry pull secret.
+. Use `jq` to minify your container registry pull secret.
 Copy this output to your clipboard, since you'll need it in a moment:
 +
 [source,bash,role=execute,subs="attributes"]

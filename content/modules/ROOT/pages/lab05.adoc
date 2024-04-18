@@ -8,7 +8,7 @@ However, we have a dilemma: the AMI we used for the prep system does not have `p
 Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation requires a number of dependencies.
 
 To solve this problem, most customers either _build a custom RHEL image_ with `podman` pre-installed, *or* create a firewall exception in the high side to enable access to a content repository, like https://access.redhat.com/articles/4720861[RHUI] (Red Hat Update Infrastructure).
-Recall from xref:lab02.adoc[Lab 2] that RHUI is part of our squid proxy's allowed list, so we'll be opting for the latter approach here.
+Recall from xref:lab02.adoc[Lab 2] that RHUI is part of our squid proxy's allowed list, so we've opted for the latter approach here. In fact, we've pre-installed `podman` on your bastion server during the lab creation.
 
 == Accessing the High Side
 
@@ -16,15 +16,13 @@ Now we need to access our bastion server on the high side.
 In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF.
 To make things a bit simpler for our lab, we're going to restrict access to our bastion to its _private IP address_.
 So we'll use the prep system as a sort of bastion-to-the-bastion.
-
-. Start by grabbing the high side bastion's private IP: `{HighSideInstancePrivateIp}`
-
-. On your first terminal window, SSH from the prep system over to the bastion server.
-If your mirror is still running for some reason, you'll need to wait for it to complete before you continue:
++
+If your mirror is still running, you'll need to wait for it to complete before you continue. Once it's done, SSH into from the prep system over to the bastion server:
 +
 [source,bash,role=execute,subs="attributes"]
 ----
 ssh lab-user@{HighSideInstancePrivateIp}
+{bastion_ssh_password}
 ----
 
 == Prove we do not have internet access
@@ -52,17 +50,23 @@ Your output will contain something like this:
 ...
 ----
 +
-This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list.
+This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list. Let's go back to the prep system to start the sneakernet:
++
+[source,bash,role=execute,subs="attributes"]
+----
+exit
+----
 
 == Sneakernetting Content to the High Side
 
 We'll now deliver the high side gift basket to the bastion server.
 
-Let's send over our gift basket at `/mnt/high-side-data`:
+Let's send over our payload and store it in `/mnt/high-side-data` on the bastion:
 +
 [source,bash,role=execute,subs="attributes"]
 ----
 rsync -avP /mnt/low-side-data/ lab-user@{HighSideInstancePrivateIp}:/mnt/high-side-data/
+{bastion_ssh_password}
 ----
 
 == Creating a Mirror Registry
@@ -81,14 +85,14 @@ We'll make use of this option in this lab.
 Mirroring all release and operator images can take awhile depending on the network bandwidth.
 For this lab, recall that we're going to mirror just the release images to save time and resources.
 
-We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side`.
-The 50GB /mnt we created should be enough to hold our mirror (without operators) and binaries.
+We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side-data`.
 
 First, let's SSH back into the bastion from the prep system:
 
 [source,bash,role=execute,subs="attributes"]
 ----
 ssh lab-user@{HighSideInstancePrivateIp}
+{bastion_ssh_password}
 ----
 
 And kick off our install:
@@ -109,7 +113,7 @@ INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.interna
 
 Copy the CA into the root trust
 
-[source]
+[source,bash,role=execute]
 ----
 sudo cp /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust
