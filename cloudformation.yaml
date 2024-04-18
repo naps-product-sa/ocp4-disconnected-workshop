@@ -84,6 +84,16 @@ Parameters:
     Type: Number
     Default: 300
 
+  AccessKey:
+    Type: String
+
+  SecretKey:
+    Type: String
+
+  PullSecret:
+    Description: Base64 of the pull secret
+    Type: String
+
 Mappings:
   RegionMap:
     ap-south-1:
@@ -461,6 +471,8 @@ Resources:
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
+          rm -f /etc/motd.d/insights-client
+
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
           sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
@@ -594,9 +606,8 @@ Resources:
             - !Ref JumpInstanceSecurityGroup
           SubnetId: !Ref PublicSubnet
       BlockDeviceMappings:
-        - DeviceName: /dev/sdh
+        - DeviceName: /dev/sda1
           Ebs:
-            VolumeType: gp3
             DeleteOnTermination: true
             VolumeSize: !Ref JumpInstanceDataVolumeSize
       Tags:
@@ -617,6 +628,8 @@ Resources:
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
+          rm -f /etc/motd.d/insights-client
+
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
           sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
@@ -628,15 +641,17 @@ Resources:
 
           echo "set -g mouse on" >> /etc/tmux.conf
 
-          # Partition and mount data disk
-          pvcreate /dev/nvme1n1
-          vgcreate data /dev/nvme1n1
-          lvcreate --name ocp --extents 100%VG data
-          mkfs.xfs /dev/mapper/data-ocp
+          # # Partition and mount data disk
+          # pvcreate /dev/nvme1n1
+          # vgcreate data /dev/nvme1n1
+          # lvcreate --name ocp --extents 100%VG data
+          # mkfs.xfs /dev/mapper/data-ocp
+          # mkdir /mnt/low-side-data
+          # echo '/dev/mapper/data-ocp /mnt/low-side-data xfs defaults 0 0' >> /etc/fstab
+          # systemctl daemon-reload
+          # mount /mnt/low-side-data
+
           mkdir /mnt/low-side-data
-          echo '/dev/mapper/data-ocp /mnt/low-side-data xfs defaults 0 0' >> /etc/fstab
-          systemctl daemon-reload
-          mount /mnt/low-side-data
           chown lab-user:lab-user /mnt/low-side-data
 
           # Install the AWS CLI
@@ -645,6 +660,10 @@ Resources:
 
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
+
+          # disable search functionality in firefox address bar
+          echo 'pref("browser.urlbar.suggest.searches", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("keyword.enabled", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
 
           firewall-cmd --add-service vnc-server --permanent  &&  firewall-cmd --reload  ||  echo "firewalld not installed"
 
@@ -721,9 +740,8 @@ Resources:
             - !Ref HighSideInstanceSecurityGroup
           SubnetId: !Ref PrivateSubnet1
       BlockDeviceMappings:
-        - DeviceName: /dev/sdh
+        - DeviceName: /dev/sda1
           Ebs:
-            VolumeType: gp3
             DeleteOnTermination: true
             VolumeSize: !Ref HighSideInstanceDataVolumeSize
       Tags:
@@ -742,6 +760,8 @@ Resources:
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
+          rm -f /etc/motd.d/insights-client
+
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
           sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
@@ -753,15 +773,17 @@ Resources:
 
           echo "set -g mouse on" >> /etc/tmux.conf
 
-          # Partition and mount data disk
-          pvcreate /dev/nvme1n1
-          vgcreate data /dev/nvme1n1
-          lvcreate --name ocp --extents 100%VG data
-          mkfs.xfs /dev/mapper/data-ocp
+          # # Partition and mount data disk
+          # pvcreate /dev/nvme1n1
+          # vgcreate data /dev/nvme1n1
+          # lvcreate --name ocp --extents 100%VG data
+          # mkfs.xfs /dev/mapper/data-ocp
+          # mkdir /mnt/high-side-data
+          # echo '/dev/mapper/data-ocp /mnt/high-side-data xfs defaults 0 0' >> /etc/fstab
+          # systemctl daemon-reload
+          # mount /mnt/high-side-data
+
           mkdir /mnt/high-side-data
-          echo '/dev/mapper/data-ocp /mnt/high-side-data xfs defaults 0 0' >> /etc/fstab
-          systemctl daemon-reload
-          mount /mnt/high-side-data
           chown lab-user:lab-user /mnt/high-side-data
 
           # Install the AWS CLI
@@ -769,6 +791,93 @@ Resources:
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
 
           loginctl enable-linger lab-user
+
+  #############################################################################
+  # Salsa Cluster Registry
+  #############################################################################
+
+  SalsaImageRegistrySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${AWS::StackName}-salsaregistry-sg
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: !Ref VpcCidr
+          Description: Mirror Registry
+
+  SalsaImageRegistryInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
+      InstanceType: !Ref HighSideInstanceType
+      IamInstanceProfile: !Ref DefaultInstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            DeleteOnTermination: true
+            VolumeSize: !Ref HighSideInstanceDataVolumeSize
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !Ref SalsaImageRegistrySecurityGroup
+          SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-salsaregistry
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          # Redirect the user-data output to the console logs
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/01-disco-workshop.conf
+          systemctl restart sshd
+
+          useradd lab-user
+          echo "${Password}" | passwd --stdin lab-user
+          echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
+
+          loginctl enable-linger lab-user
+
+          rm -f /etc/motd.d/insights-client
+          cat <<EOF > /etc/motd.d/salsa-cluster
+          This instance manages the mirror registry and install of the salsa cluster. You can check the progress with:
+
+          sudo systemctl status mirror-registry-init.service cluster-init.service -u cloud-final.service
+          sudo journalctl -f -u mirror-registry-init.service -u cluster-init.service -u cloud-final.service
+
+          EOF
+
+          # Apply the latest security patches
+          yum update -y --security
+          yum install -y unzip vim git podman tmux jq ansible-core python3-pip
+
+          mkdir /home/lab-user/.aws
+          cat <<EOF > /home/lab-user/.aws/config
+          [default]
+          aws_access_key_id=${AccessKey}
+          aws_secret_access_key=${SecretKey}
+          region=us-east-2
+          EOF
+          chown -R lab-user:lab-user /home/lab-user/.aws
+
+          mkdir /home/lab-user/.docker
+          echo ${PullSecret} | base64 -d > /home/lab-user/.docker/config.json
+          chown -R lab-user:lab-user /home/lab-user/.docker
+          echo ${PrivateSubnet1} > /home/lab-user/private-subnet-id
+          chown -R lab-user:lab-user /home/lab-user/private-subnet-id
+
+          curl -Lo /root/playbook.yaml https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/automate-sno/playbook-imageregistry.yaml
+          ansible-playbook -v /root/playbook.yaml
 
   #############################################################################
   # S3 Transfer Bucket
@@ -820,3 +929,6 @@ Outputs:
   InstallIamUser:
     Description: A reference to the IAM User to use for installing OpenShift
     Value: !Ref InstallIamUser
+
+  SalsaImageRegistryPublicIp:
+    Value: !GetAtt SalsaImageRegistryInstance.PublicIp
