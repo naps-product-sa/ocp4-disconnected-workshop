@@ -863,7 +863,7 @@ Resources:
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
           sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
-          echo "export NICKNAME=salsa-imageregistry" > /etc/profile.d/friendly_prompt.sh
+          echo "export NICKNAME=salsa-registry" > /etc/profile.d/friendly_prompt.sh
 
           cat <<EOF > /etc/motd.d/salsa-cluster
           This instance manages the mirror registry and install of the salsa cluster. You can check the progress with:
