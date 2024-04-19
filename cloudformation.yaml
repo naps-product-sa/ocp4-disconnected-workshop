@@ -458,6 +458,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-nat
+        - Key: AnsibleGroup
+          Value: nat
         - Key: DnsName
           Value: nat
       UserData:
