@@ -458,6 +458,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-nat
+        - Key: DnsName
+          Value: nat
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -615,6 +617,8 @@ Resources:
           Value: !Sub ${AWS::StackName}-jump
         - Key: AnsibleGroup
           Value: bastions
+        - Key: DnsName
+          Value: jump
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -747,6 +751,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-highside
+        - Key: DnsName
+          Value: highside
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -833,6 +839,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-salsaregistry
+        - Key: DnsName
+          Value: salsa-registry
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -849,10 +857,17 @@ Resources:
           loginctl enable-linger lab-user
 
           rm -f /etc/motd.d/insights-client
+
+          # Display a friendly name in bash
+          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
+          sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
+          echo "export NICKNAME=salsa-imageregistry" > /etc/profile.d/friendly_prompt.sh
+
           cat <<EOF > /etc/motd.d/salsa-cluster
           This instance manages the mirror registry and install of the salsa cluster. You can check the progress with:
 
           sudo systemctl status mirror-registry-init.service cluster-init.service -u cloud-final.service
+
           sudo journalctl -f -u mirror-registry-init.service -u cluster-init.service -u cloud-final.service
 
           EOF
