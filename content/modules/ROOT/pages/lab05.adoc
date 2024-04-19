@@ -16,9 +16,9 @@ Now we need to access our bastion server on the high side.
 In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF.
 To make things a bit simpler for our lab, we're going to restrict access to our bastion to its _private IP address_.
 So we'll use the prep system as a sort of bastion-to-the-bastion.
-+
+
 If your mirror is still running, you'll need to wait for it to complete before you continue. Once it's done, SSH into from the prep system over to the bastion server:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 ssh lab-user@{HighSideInstancePrivateIp}
@@ -28,14 +28,14 @@ ssh lab-user@{HighSideInstancePrivateIp}
 == Prove we do not have internet access
 
 Let's check that we have no Internet access:
-+
+
 [source,bash,role=execute]
 ----
 curl google.com
 ----
-+
+
 Your output will contain something like this:
-+
+
 [source,html]
 ----
 ...
@@ -49,9 +49,9 @@ Your output will contain something like this:
 <br>
 ...
 ----
-+
+
 This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list. Let's go back to the prep system to start the sneakernet:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 exit
@@ -62,7 +62,7 @@ exit
 We'll now deliver the high side gift basket to the bastion server.
 
 Let's send over our payload and store it in `/mnt/high-side-data` on the bastion:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 rsync -avP /mnt/low-side-data/ lab-user@{HighSideInstancePrivateIp}:/mnt/high-side-data/

@@ -30,7 +30,6 @@ If you look at the template you'll notice our entries are:
  ** `.cloudfront.net`
  ** `.aws.ce.redhat.com`
 
-+
 There may be situations where you wish to add more exceptions here, such as container or package repositories.
 
 Now that our air gap is in place, let's start prepping the low side.

@@ -1,5 +1,5 @@
 // * xref:lab01.adoc[1. Introduction]
-* xref:index.adoc[Index]
+* xref:index.adoc[Home]
 * xref:lab02.adoc[2. The Disconnected Installation Process]
 // * xref:lab03.adoc[3. Creating the Air Gap]
 * xref:lab04.adoc[4. Preparing the Low Side]

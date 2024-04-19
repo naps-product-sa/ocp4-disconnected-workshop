@@ -5,7 +5,7 @@ In this lab, we'll make final preparations and execute the OpenShift Installer.
 == Building install-config.yaml
 
 . Let's start by creating a workspace on the bastion to house our installation materials:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 mkdir /mnt/high-side-data/install
@@ -13,7 +13,7 @@ cd /mnt/high-side-data/install
 ----
 
 . Then generate an SSH key pair for access to cluster nodes:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 ssh-keygen -N ""
@@ -21,34 +21,34 @@ ssh-keygen -N ""
 
 . Use `jq` to minify your container registry pull secret.
 Copy this output to your clipboard, since you'll need it in a moment:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 jq -c . /run/user/1000/containers/auth.json
 ----
-+
+
 ____
 For connected installations, you'd use the secret from the Hybrid Cloud Console, but for our use case, the mirror registry is the only one OpenShift will need to authenticate to.
 ____
 
 . Then generate `install-config.yaml`:
-+
+
 [source,bash,role=execute,subs="attributes"]
 ----
 /mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install --log-level=DEBUG
 ----
-+
+
 The OpenShift installer will prompt you for a number of fields;
 enter the values below:
 
  ** *SSH Public Key*: `/home/lab-user/.ssh/id_rsa.pub`
-+
+
 ____
 The SSH public key used to access all nodes within the cluster.
 ____
 
  ** *Platform*: `aws`
-+
+
 ____
 The platform on which the cluster will run.
 ____
@@ -57,14 +57,14 @@ ____
  ** *Region*: `us-east-1 (US East (N.
 Virginia))`
  ** *Base Domain*: `{aws_route53_domain}`
-+
+
 ____
 The base domain of the cluster.
 All DNS records will be sub-domains of this base and will also include the cluster name.
 ____
 
  ** *Cluster Name*: `disco`
-+
+
 ____
 The name of the cluster.
 This will be used when generating sub-domains.
@@ -72,7 +72,7 @@ ____
 
  ** *Pull Secret*: Paste the output from minifying this in Step 3.
 
-+
+
 That's it!
 The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
 
@@ -156,7 +156,7 @@ imageContentSources:
 
 ** Add the root CA of our mirror registry (`/mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field by running this command:
 
-[source,bash,role=execute,subs="attributes"]
+[source,bash,role=execute]
 ----
 cat <<EOF >> install-config.yaml
 additionalTrustBundle: |
