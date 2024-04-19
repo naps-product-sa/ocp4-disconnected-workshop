@@ -888,7 +888,7 @@ Resources:
           chown -R lab-user:lab-user /home/lab-user/.aws
 
           mkdir /home/lab-user/.docker
-          echo ${PullSecret} | base64 -d > /home/lab-user/.docker/config.json
+          echo ${PullSecret} | base64 -d | tr "'" '"' > /home/lab-user/.docker/config.json
           chown -R lab-user:lab-user /home/lab-user/.docker
           echo ${PrivateSubnet1} > /home/lab-user/private-subnet-id
           chown -R lab-user:lab-user /home/lab-user/private-subnet-id
