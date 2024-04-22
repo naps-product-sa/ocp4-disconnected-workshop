@@ -889,8 +889,8 @@ Resources:
 
           mkdir /home/lab-user/.docker
           echo ${PullSecret} | base64 -d | tr "'" '"' > /home/lab-user/.docker/config.json
-          chown -R lab-user:lab-user /home/lab-user/.docker
           podman logout --authfile /home/lab-user/.docker/config.json cloud.openshift.com
+          chown -R lab-user:lab-user /home/lab-user/.docker
 
           echo ${PrivateSubnet1} > /home/lab-user/private-subnet-id
           chown -R lab-user:lab-user /home/lab-user/private-subnet-id
