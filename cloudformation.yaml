@@ -876,7 +876,7 @@ Resources:
 
           # Apply the latest security patches
           yum update -y --security
-          yum install -y unzip vim git podman tmux jq ansible-core python3-pip
+          yum install -y unzip vim git podman tmux jq ansible-core python3-pip httpd-tools
 
           mkdir /home/lab-user/.aws
           cat <<EOF > /home/lab-user/.aws/config

@@ -195,7 +195,6 @@
           sudo chmod 0444 /etc/pki/ca-trust/source/anchors/quay.cert
           sudo restorecon -v /etc/pki/ca-trust/source/anchors/quay.cert
           sudo update-ca-trust
-          sudo update-ca-trust extract
 
           echo "$(date) : Updated system certificate trust store"
 
@@ -281,6 +280,27 @@
           cp ${HOME}/cluster/install-config.yaml ${HOME}/cluster/install-config.yaml.backup
 
           openshift-install create cluster --log-level=DEBUG --dir ${HOME}/cluster
+
+          export KUBECONFIG=${HOME}/cluster/auth/kubeconfig
+
+          htpasswd -Bbc ./htpasswd admin admin
+          htpasswd -Bb ./htpasswd user user
+          oc create secret generic htpasswd --from-file htpasswd -n openshift-config
+          cat << EOF | oc apply -f -
+          apiVersion: config.openshift.io/v1
+          kind: OAuth
+          metadata:
+            name: cluster
+          spec:
+            identityProviders:
+            - htpasswd:
+                fileData:
+                  name: htpasswd
+              mappingMethod: claim
+              name: local-users
+              type: HTPasswd
+          EOF
+          oc delete -n kube-system secret kubeadmin
 
           touch ${HOME}/cluster-init-finished
 
