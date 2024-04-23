@@ -1,2 +1,6 @@
 .vscode
 venv
+
+# antora output
+output
+.cache
