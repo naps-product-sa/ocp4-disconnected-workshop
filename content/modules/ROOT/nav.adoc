@@ -6,4 +6,4 @@
 * xref:lab05.adoc[5. Preparing the High Side]
 * xref:lab06.adoc[6. Preparing the Installation]
 * xref:lab07.adoc[7. Accessing the Cluster]
-//* xref:lab08.adoc[8. Planning Ahead]
+* xref:lab08.adoc[8. Post-Install Cluster Configuration]
