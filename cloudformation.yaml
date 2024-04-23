@@ -895,7 +895,7 @@ Resources:
           echo ${PrivateSubnet1} > /home/lab-user/private-subnet-id
           chown -R lab-user:lab-user /home/lab-user/private-subnet-id
 
-          curl -Lo /root/playbook.yaml https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/automate-sno/playbook-imageregistry.yaml
+          curl -Lo /root/playbook.yaml https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/main/playbook-imageregistry.yaml
           ansible-playbook -v /root/playbook.yaml
 
   #############################################################################
