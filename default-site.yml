@@ -11,7 +11,7 @@ content:
 
 ui:
   bundle:
-    url: https://github.com/rhpds/showroom_theme_summit/releases/download/v0.0.1/ui-bundle.zip
+    url: https://github.com/rhpds/showroom_theme_summit/releases/download/v0.0.2-pre1/ui-bundle.zip
 
 runtime:
   cache_dir: ./.cache/antora
