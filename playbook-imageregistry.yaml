@@ -287,9 +287,9 @@
 
           export KUBECONFIG=${HOME}/cluster/auth/kubeconfig
 
-          htpasswd -Bbc ./htpasswd admin admin
-          htpasswd -Bb ./htpasswd user user
-          oc create secret generic htpasswd --from-file htpasswd -n openshift-config
+          htpasswd -Bbc ${HOME}/htpasswd admin admin
+          htpasswd -Bb ${HOME}/htpasswd user user
+          oc create secret generic htpasswd --from-file ${HOME}/htpasswd -n openshift-config
           cat << EOF | oc apply -f -
           apiVersion: config.openshift.io/v1
           kind: OAuth
