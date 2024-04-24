@@ -630,7 +630,11 @@ Resources:
           # Redirect the user-data output to the console logs
           exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
-          echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/01-disco-workshop.conf
+          cat <<EOF > /etc/ssh/sshd_config.d/01-disco-workshop.conf
+          PasswordAuthentication yes
+          ClientAliveInterval 15
+          ClientAliveCountMax 3
+          EOF
           systemctl restart sshd
 
           useradd lab-user 
