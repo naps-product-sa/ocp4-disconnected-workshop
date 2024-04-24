@@ -203,7 +203,7 @@
           podman login --authfile=${HOME}/.docker/config.json -u=${REG_USER} -p=${REG_PASS} ${HOSTNAME}:8443
 
           # Remove the Insights / Telemetry credential to cloud.openshift.com
-          podman logout --authfile /home/lab-user/.docker/config.json cloud.openshift.com
+          podman logout --authfile /home/lab-user/.docker/config.json cloud.openshift.com || true
           chown -Rv lab-user:lab-user /home/lab-user/.docker
 
           echo "$(date) : Mirroring Content..."
