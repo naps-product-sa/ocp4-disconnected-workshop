@@ -305,6 +305,7 @@
               type: HTPasswd
           EOF
           oc delete -n kube-system secret kubeadmin
+          oc adm policy add-cluster-role-to-user cluster-admin admin
 
           touch ${HOME}/cluster-init-finished
 
