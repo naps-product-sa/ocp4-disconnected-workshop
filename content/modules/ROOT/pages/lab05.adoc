@@ -19,10 +19,19 @@ So we'll use the prep system as a sort of bastion-to-the-bastion.
 
 If your mirror is still running, you'll need to wait for it to complete before you continue. Once it's done, SSH into from the prep system over to the bastion server:
 
+First, copy your SSH key to the high side
+
 [source,bash,role=execute,subs="attributes"]
 ----
-ssh lab-user@{HighSideInstancePrivateIp}
+ssh-copy-id highside
 {bastion_ssh_password}
+----
+
+Then test it by SSHing to the high side
+
+[source,bash,role=execute,subs="attributes"]
+----
+ssh lab-user@highside
 ----
 
 == Prove we do not have internet access
@@ -31,7 +40,7 @@ Let's check that we have no Internet access:
 
 [source,bash,role=execute]
 ----
-curl google.com
+curl -vso /dev/null google.com
 ----
 
 Your output will contain something like this:
@@ -39,14 +48,19 @@ Your output will contain something like this:
 [source,html]
 ----
 ...
-<blockquote id="error">
-<p><b>Access Denied.</b></p>
-</blockquote>
-
-<p>Access control configuration prevents your request from being allowed at this time. Please contact your service provider if you feel this is incorrect.</p>
-
-<p>Your cache administrator is <a href="mailto:root?subject=CacheErrorInfo%20-%20ERR_ACCESS_DENIED&amp;body=CacheHost%3A%20squid%0D%0AErrPage%3A%20ERR_ACCESS_DENIED%0D%0AErr%3A%20%5Bnone%5D%0D%0ATimeStamp%3A%20Thu,%2006%20Jul%202023%2013%3A45%3A11%20GMT%0D%0A%0D%0AClientIP%3A%2010.0.52.68%0D%0A%0D%0AHTTP%20Request%3A%0D%0AGET%20%2F%20HTTP%2F1.1%0AUser-Agent%3A%20curl%2F7.61.1%0D%0AAccept%3A%20*%2F*%0D%0AHost%3A%20google.com%0D%0A%0D%0A%0D%0A">root</a>.</p>
-<br>
+< HTTP/1.1 403 Forbidden
+< Server: squid/5.5
+< Mime-Version: 1.0
+< Date: Tue, 23 Apr 2024 23:44:53 GMT
+< Content-Type: text/html;charset=utf-8
+< Content-Length: 3432
+< X-Squid-Error: ERR_ACCESS_DENIED 0
+< Vary: Accept-Language
+< Content-Language: en
+< X-Cache: MISS from squid
+< X-Cache-Lookup: NONE from squid:3128
+< Via: 1.1 squid (squid/5.5)
+< Connection: keep-alive
 ...
 ----
 
@@ -59,14 +73,13 @@ exit
 
 == Sneakernetting Content to the High Side
 
-We'll now deliver the high side gift basket to the bastion server.
+We'll now deliver the high side gift basket to the high side server.
 
-Let's send over our payload and store it in `/mnt/high-side-data` on the bastion:
+Let's send over our payload and store it in `/mnt/high-side-data` on highside:
 
 [source,bash,role=execute,subs="attributes"]
 ----
-rsync -avP /mnt/low-side-data/ lab-user@{HighSideInstancePrivateIp}:/mnt/high-side-data/
-{bastion_ssh_password}
+rsync -avP /mnt/low-side-data/ lab-user@highside:/mnt/high-side-data/
 ----
 
 == Creating a Mirror Registry
@@ -85,17 +98,16 @@ We'll make use of this option in this lab.
 Mirroring all release and operator images can take awhile depending on the network bandwidth.
 For this lab, recall that we're going to mirror just the release images to save time and resources.
 
-We should have the `mirror-registry` binary along with the required container images available on the bastion in `/mnt/high-side-data`.
+We should have the `mirror-registry` binary along with the required container images available on highside in `/mnt/high-side-data`.
 
-First, let's SSH back into the bastion from the prep system:
+First, let's SSH back into highside:
 
 [source,bash,role=execute,subs="attributes"]
 ----
-ssh lab-user@{HighSideInstancePrivateIp}
-{bastion_ssh_password}
+ssh lab-user@highside
 ----
 
-And kick off our install:
+And kick off our mirror registry install:
 
 [source,bash,role=execute]
 ----
