@@ -53,10 +53,11 @@ ____
 The platform on which the cluster will run.
 ____
 
- ** *AWS Access Key ID* and *Secret Access Key*: Enter your AWS credentials from RHDP.
- ** *Region*: `us-east-1 (US East (N.
-Virginia))`
- ** *Base Domain*: `{aws_route53_domain}`
+ ** *AWS Access Key ID*: `{aws_access_key_id}`
+ ** *Secret Access Key*: `{aws_secret_access_key}`
+
+ ** *Region*: `{aws_default_region}`
+ ** *Base Domain*: lab
 
 ____
 The base domain of the cluster.
@@ -78,24 +79,22 @@ The installer will generate `install-config.yaml` and drop it in `/mnt/high-side
 
 . We need to make a couple changes to this config before we kick off the install:
  ** Change `publish` from *External* to *Internal*.
-We're using private subnets to house the cluster, so it won't be publicly accessible.
- ** Add the subnet IDs for your private subnets to `platform.aws.subnets`.
+We're using a private subnet to house the cluster, so it won't be publicly accessible.
+ ** Add the subnet ID for the private subnet to `platform.aws.subnets`.
 Otherwise, the installer will create its own VPC and subnets.
 
-Private subnet IDs: `{PrivateSubnets}`
+Private subnet ID: `{PrivateSubnet1}`
 
-Then add them to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
+Then add to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
 
 [source,yaml,role=execute,subs="attributes"]
 ----
 ...
 platform:
   aws:
-    region: us-east-1
+    region: {aws_default_region}
     subnets:
-    - subnet-00f28bbc11d25d523
-    - subnet-07b4de5ea3a39c0fd
-    - subnet-07b4de5ea3a39c0fd
+    - {PrivateSubnet1}
  ...
 ----
 
@@ -171,7 +170,7 @@ It should look something like this:
 ...
 additionalTrustBundle: |
   -----BEGIN CERTIFICATE-----
-...
+  ...
   -----END CERTIFICATE-----
 ----
 
@@ -204,7 +203,7 @@ If you've done everything correctly, you should see something like this:
 ...
 INFO Install complete!
 INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/myuser/install_dir/auth/kubeconfig'
-INFO Access the OpenShift web-console here: https://console-openshift-console.apps.mycluster.example.com
+INFO Access the OpenShift web-console here: https://console-openshift-console.apps.disco.lab
 INFO Login to the console with user: "kubeadmin", and password: "password"
 INFO Time elapsed: 30m49s
 ----

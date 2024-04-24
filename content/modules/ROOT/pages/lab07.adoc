@@ -12,7 +12,7 @@ Example output:
 
 [source,bash,role=execute]
 ----
-In project default on server https://api.disco.sandbox2099.opentlc.com:6443
+In project default on server https://api.disco.lab:6443
 
 svc/openshift - kubernetes.default.svc.cluster.local
 svc/kubernetes - 172.30.0.1:443 -> 6443
