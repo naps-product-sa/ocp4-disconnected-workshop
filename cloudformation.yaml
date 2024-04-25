@@ -867,7 +867,7 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-salsaregistry
         - Key: AnsibleGroup
-          Value: salsa-registry
+          Value: salsa
         - Key: DnsName
           Value: salsa-registry
       UserData:
