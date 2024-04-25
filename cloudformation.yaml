@@ -416,6 +416,10 @@ Resources:
       GroupDescription: Allow HTTP and HTTPS from VPC to NAT instance
       VpcId: !Ref Vpc
       SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: !Ref VpcCidr
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
@@ -474,7 +478,7 @@ Resources:
           echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/01-disco-workshop.conf
           systemctl restart sshd
 
-          useradd lab-user 
+          useradd -G systemd-journal lab-user 
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
@@ -585,6 +589,10 @@ Resources:
       GroupDescription: Allow SSH from everywhere to Jump instance
       VpcId: !Ref Vpc
       SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: !Ref VpcCidr
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
@@ -637,7 +645,7 @@ Resources:
           EOF
           systemctl restart sshd
 
-          useradd lab-user 
+          useradd -G systemd-journal lab-user 
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
@@ -725,6 +733,10 @@ Resources:
       GroupDescription: Allow SSH from VPC to High Side instance
       VpcId: !Ref Vpc
       SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: !Ref VpcCidr
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
@@ -760,6 +772,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-highside
+        - Key: AnsibleGroup
+          Value: highside          
         - Key: DnsName
           Value: highside
       UserData:
@@ -771,7 +785,7 @@ Resources:
           echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/01-disco-workshop.conf
           systemctl restart sshd
 
-          useradd lab-user 
+          useradd -G systemd-journal lab-user 
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
@@ -817,10 +831,14 @@ Resources:
       GroupDescription: !Sub ${AWS::StackName}-salsaregistry-sg
       VpcId: !Ref Vpc
       SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: !Ref VpcCidr
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: !Ref VpcCidr
           Description: SSH
         - IpProtocol: tcp
           FromPort: 8443
@@ -859,7 +877,7 @@ Resources:
           echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/01-disco-workshop.conf
           systemctl restart sshd
 
-          useradd lab-user
+          useradd -G systemd-journal lab-user
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
@@ -875,9 +893,9 @@ Resources:
           cat <<EOF > /etc/motd.d/salsa-cluster
           This instance manages the mirror registry and install of the salsa cluster. You can check the progress with:
 
-          sudo systemctl status mirror-registry-init.service cluster-init.service cloud-final.service
+          systemctl status mirror-registry-init.service cluster-init.service cloud-final.service
 
-          sudo journalctl -f -u mirror-registry-init.service -u cluster-init.service -u cloud-final.service
+          journalctl -f -u mirror-registry-init.service -u cluster-init.service -u cloud-final.service
 
           EOF
 
