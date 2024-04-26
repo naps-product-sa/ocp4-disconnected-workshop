@@ -579,6 +579,17 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-jump-sg
 
+  JumpInstanceWaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+
+  JumpInstanceWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: JumpInstance
+    Properties:
+      Handle: !Ref JumpInstanceWaitHandle
+      Timeout: 900
+
   JumpInstance:
     Type: AWS::EC2::Instance
     DependsOn: InternetGatewayAttachment
@@ -630,7 +641,7 @@ Resources:
 
           # Apply the latest security patches
           yum update -y --security
-          yum install -y unzip vim lvm2 git podman tmux jq
+          yum install -y unzip vim lvm2 git podman tmux jq bind-utils
 
           echo "set -g mouse on" >> /etc/tmux.conf
 
@@ -688,6 +699,8 @@ Resources:
 
           loginctl enable-linger lab-user
 
+          curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS","Reason" : "Configuration Complete","UniqueId" : "8675309","Data" : "Application has completed configuration."}' "${JumpInstanceWaitHandle}"
+
   JumpInstanceEip:
     Type: AWS::EC2::EIP
     DependsOn: JumpInstance
@@ -722,6 +735,17 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-highside-sg
+
+  HighSideInstanceWaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+
+  HighSideInstanceWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: HighSideInstance
+    Properties:
+      Handle: !Ref HighSideInstanceWaitHandle
+      Timeout: 900
 
   HighSideInstance:
     Type: AWS::EC2::Instance
@@ -760,6 +784,8 @@ Resources:
           useradd -G systemd-journal lab-user 
           echo "${Password}" | passwd --stdin lab-user
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
+
+          curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS","Reason" : "Configuration Complete","UniqueId" : "8675309","Data" : "Application has completed configuration."}' "${HighSideInstanceWaitHandle}"
 
           rm -f /etc/motd.d/insights-client
 
@@ -818,6 +844,17 @@ Resources:
           CidrIp: !Ref VpcCidr
           Description: Mirror Registry
 
+  SalsaImageRegistryInstanceWaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+
+  SalsaImageRegistryInstanceWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: SalsaImageRegistryInstance
+    Properties:
+      Handle: !Ref SalsaImageRegistryInstanceWaitHandle
+      Timeout: 900
+
   SalsaImageRegistryInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -856,6 +893,8 @@ Resources:
           echo "lab-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/50-lab-user
 
           loginctl enable-linger lab-user
+
+          curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS","Reason" : "Configuration Complete","UniqueId" : "8675309","Data" : "Application has completed configuration."}' "${SalsaImageRegistryInstanceWaitHandle}"
 
           rm -f /etc/motd.d/insights-client
 
