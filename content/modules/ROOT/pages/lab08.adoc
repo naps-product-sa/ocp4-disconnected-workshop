@@ -40,10 +40,12 @@ TODO
 
 TODO
 
-== Add images with `podman`
+// == Add images with `podman`
 // https://docs.openshift.com/container-platform/4.14/post_installation_configuration/cluster-tasks.html#post-install-must-gather-disconnected
-
-TODO
 
 // == Remove default samples operator
 // https://docs.openshift.com/container-platform/4.14/openshift_images/configuring-samples-operator.html#configuring-samples-operator
+
+== Update cluster
+
+TODO
