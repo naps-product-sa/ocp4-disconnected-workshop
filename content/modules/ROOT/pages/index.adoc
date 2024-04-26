@@ -18,7 +18,7 @@ Before we begin, consider a few use cases for disconnected networks:
 
 There are of course many different options for installing OpenShift in a restricted network, this is just one fairly opinionated approach using AWS infrastructure. We will do our best to point out where there is the potential for variability along the way.
 
-image::disco-4.png[disco diagram]
+image::disco-4.svg[disco diagram,800]
 
 === Lab Access
 

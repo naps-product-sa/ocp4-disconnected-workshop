@@ -2,7 +2,7 @@
 
 In this lab, we'll make final preparations and execute the OpenShift Installer.
 
-image::disco-3.png[disco diagram]
+image::disco-3.svg[disco diagram,800]
 
 == Building install-config.yaml
 

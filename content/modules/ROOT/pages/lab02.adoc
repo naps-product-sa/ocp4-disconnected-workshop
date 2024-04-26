@@ -59,7 +59,7 @@ In real world environments, you'll need to ensure your account has the https://d
 Once configuration has been completed, we can kick off the OpenShift Installer and it will do all the work for us to provision the infrastructure and install OpenShift.
 Here's a diagram describing everything we've discussed so far: 
 
-image::disco-1.png[disco diagram]
+image::disco-1.svg[disco diagram,800]
 
 == Accessing the Cluster
 
