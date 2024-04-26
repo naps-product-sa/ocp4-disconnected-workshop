@@ -2,7 +2,13 @@
 
 In this lab, we'll make final preparations and execute the OpenShift Installer.
 
+image::disco-3.png[disco diagram]
+
 == Building install-config.yaml
+
+Here's a diagram describing the inputs and outputs of the installation configuration process: 
+
+image::install-overview.png[Install Overview]
 
 . Let's start by creating a workspace on the bastion to house our installation materials:
 

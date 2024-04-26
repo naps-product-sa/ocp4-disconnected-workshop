@@ -3,6 +3,8 @@
 Now that we have a cluster up and running (or we are using the pre-made salsa.lab cluster) we can perform some
 post-install steps that are specific to a disconnected environment.
 
+image::disco-4.png[disco diagram]
+
 First, lets log in to our cluster
 
 [cols="a,a",options="header"]

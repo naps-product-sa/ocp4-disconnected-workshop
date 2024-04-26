@@ -10,6 +10,8 @@ Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're
 To solve this problem, most customers either _build a custom RHEL image_ with `podman` pre-installed, *or* create a firewall exception in the high side to enable access to a content repository, like https://access.redhat.com/articles/4720861[RHUI] (Red Hat Update Infrastructure).
 Recall from xref:lab02.adoc[Lab 2] that RHUI is part of our squid proxy's allowed list, so we've opted for the latter approach here. In fact, we've pre-installed `podman` on your bastion server during the lab creation.
 
+image::disco-2.png[disco diagram]
+
 == Accessing the High Side
 
 Now we need to access our bastion server on the high side.
