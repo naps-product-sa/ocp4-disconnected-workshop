@@ -137,8 +137,6 @@
                   size: 500
                   type: io1
                 type: c5.4xlarge
-                zones:
-                - us-east-2a
             replicas: 1
           metadata:
             name: salsa
@@ -153,7 +151,7 @@
             - 172.30.0.0/16
           platform:
             aws:
-              region: us-east-2
+              region: REGION
               subnets:
                 - SUBNETID
           publish: Internal
@@ -277,6 +275,9 @@
             /usr/bin/ssh-keygen -q -N '' -f ${HOME}/.ssh/id_rsa
           fi
 
+          AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/\(.*\)[a-z]/\1/')
+
+          sed -i "s/REGION/$AWS_REGION/" ${HOME}/cluster/install-config.yaml
           sed -i "s/PULLSECRET/$(jq -c . ${HOME}/.docker/config.json)/" ${HOME}/cluster/install-config.yaml
           sed -i "s/SUBNETID/$(cat ${HOME}/private-subnet-id)/" ${HOME}/cluster/install-config.yaml
           sed -i "s|SSHKEY|$(cat ${HOME}/.ssh/id_rsa.pub)|" ${HOME}/cluster/install-config.yaml
