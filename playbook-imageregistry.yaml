@@ -275,7 +275,7 @@
             /usr/bin/ssh-keygen -q -N '' -f ${HOME}/.ssh/id_rsa
           fi
 
-          AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/\(.*\)[a-z]/\1/')
+          AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
 
           sed -i "s/REGION/$AWS_REGION/" ${HOME}/cluster/install-config.yaml
           sed -i "s/PULLSECRET/$(jq -c . ${HOME}/.docker/config.json)/" ${HOME}/cluster/install-config.yaml
