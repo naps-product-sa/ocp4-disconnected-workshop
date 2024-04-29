@@ -643,7 +643,13 @@ Resources:
           yum update -y --security
           yum install -y unzip vim lvm2 git podman tmux jq bind-utils
 
-          echo "set -g mouse on" >> /etc/tmux.conf
+          cat << EOF >> /etc/tmux.conf
+          set -g mouse on
+          set -g status 3
+          set -g status-format[1] '#[bg=yellow]#[align=centre]Welcome to tmux - press [Ctrl + b then d] to Disconnect or press [Ctrl + b then h] for additional Help'
+          set -g status-format[2] '#[bg=yellow]#[align=centre]Mouse mode has been turned on. Click to select your window/pane. Resize works too. Hold shift when selecting text.'
+          set-hook -g after-new-session "split-window"
+          EOF
 
           # # Partition and mount data disk
           # pvcreate /dev/nvme1n1
