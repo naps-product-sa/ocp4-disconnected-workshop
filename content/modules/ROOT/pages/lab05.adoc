@@ -26,7 +26,7 @@ Ensure that your mirror command `oc mirror` has completed successfully before pr
 
 First, copy your SSH key to the *highside* system
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 ssh-copy-id highside
 {bastion_ssh_password}
@@ -34,7 +34,7 @@ ssh-copy-id highside
 
 Then test it with SSH
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 ssh lab-user@highside
 ----
@@ -43,7 +43,7 @@ ssh lab-user@highside
 
 Check that we do not have Internet access:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 curl -vso /dev/null google.com
 ----
@@ -71,7 +71,7 @@ Your output will contain something like this:
 
 This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list. Let's go back to the *jump* system to start the sneakernet:
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 exit
 ----
@@ -80,7 +80,7 @@ exit
 
 We'll now deliver the high side gift basket. Let's send over our payload and store it in `/mnt/high-side-data` on the *highside* system:
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 rsync -avP /mnt/low-side-data/ lab-user@highside:/mnt/high-side-data/
 ----
@@ -109,14 +109,14 @@ We should have the `mirror-registry` binary along with the required container im
 
 First, let's SSH back into the *highside* system:
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 ssh lab-user@highside
 ----
 
 And kick off our mirror registry install:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 cd /mnt/high-side-data
 ./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/high-side-data/quay/quay-install --quayStorage /mnt/high-side-data/quay/quay-storage --pgStorage /mnt/high-side-data/quay/pg-data --initPassword discopass
@@ -132,7 +132,7 @@ INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.interna
 
 Copy the CA into the root trust
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 sudo cp /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust
@@ -141,7 +141,7 @@ sudo update-ca-trust
 Login to the registry with `podman`.
 This will generate an auth file at `/run/user/1000/containers/auth.json`:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 podman login -u init -p discopass $(hostname):8443
 ----
@@ -151,7 +151,7 @@ podman login -u init -p discopass $(hostname):8443
 Now we're ready to mirror images from disk into the registry.
 Let's add `oc` and `oc-mirror` to the path:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 sudo mv /mnt/high-side-data/oc /bin/
 sudo mv /mnt/high-side-data/oc-mirror /bin/
@@ -160,7 +160,7 @@ sudo mv /mnt/high-side-data/oc-mirror /bin/
 And fire up the mirror!
 Let's send it to the background with `nohup` so we can get to work on the installation prep while this is running:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 nohup oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443 &
 ----

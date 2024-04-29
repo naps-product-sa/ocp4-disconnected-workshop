@@ -2,7 +2,7 @@
 
 Welcome to the OpenShift 4 Disconnected Workshop!
 
-Here you will learn about how to install and operate an OpenShift 4 cluster in a disconnected network, or one without access to the Internet (even through a proxy or firewall).
+Here you will learn about how to install and operate an OpenShift 4 cluster in a [.highside]#disconnected network#, or one without access to the Internet (even through a proxy or firewall).
 This changes the way the cluster operates because things like container images, operator updates, and patches must be brought into the environment via *mirroring*.
 
 == Who uses disconnected networks?

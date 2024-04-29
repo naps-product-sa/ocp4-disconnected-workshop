@@ -14,9 +14,9 @@ Now that our prep system is up, let's SSH into it and download the content
 
 == Downloading Tooling
 
-Let's grab the tools we'll need for the *highside* system - we will also be using some of them on the *jump* system. 
+Let's grab the tools we'll need for the [.highside]#*highside* system# - we will also be using some of them on the [.lowside]#*jump* system#. 
 Before we begin, `cd` into the `/mnt/low-side-data/` directory:
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 cd /mnt/low-side-data/
 ----
@@ -25,7 +25,7 @@ Then download the following tools:
 
  ** `oc`: OpenShift CLI
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 curl -L -o oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-client-linux.tar.gz
 tar -xzf oc.tar.gz oc
@@ -35,7 +35,7 @@ sudo cp oc /bin
 
  ** `oc-mirror`: oc plugin for mirorring release, operator, and helm content
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 curl -L -o oc-mirror.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/oc-mirror.tar.gz
 tar -xzf oc-mirror.tar.gz
@@ -46,7 +46,7 @@ sudo cp oc-mirror /bin
 
  ** `mirror-registry`: small-scale Quay registry designed for mirroring
 
-[source,bash,role=execute]
+[.lowside,source,bash,role=execute]
 ----
 curl -L -o mirror-registry.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz
 tar -xzf mirror-registry.tar.gz
@@ -55,7 +55,7 @@ rm -f /mnt/low-side-data/mirror-registry.tar.gz
 
  ** `openshift-installer`: OpenShift Installer
 
-[source,bash,role=execute,subs="attributes"]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 curl -L -o openshift-installer.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-install-linux.tar.gz
 tar -xzf openshift-installer.tar.gz openshift-install
@@ -72,7 +72,7 @@ We'll then mirror from the tarball into the mirror registry from there.
 If you're in a guided workshop, your instructor may provide this for you.
 Otherwise, grab your own from the https://console.redhat.com/openshift/install/pull-secret[Hybrid Cloud Console].
 
-[source,bash,role=execute]
+[.lowside,source,bash,role=execute]
 ----
 mkdir ~/.docker
 cp pull-secret.txt ~/.docker/config.json
@@ -87,7 +87,7 @@ We'll still get a fully functional cluster, but *OperatorHub* will be empty. You
 We'll also include an `ubi` image so we can run some tests later.
 Create a file called `imageset-config.yaml` with the following contents:
 
-[source,yaml,subs="attributes"]
+[.lowside,source,yaml,subs="attributes"]
 ----
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
@@ -116,7 +116,7 @@ mirror:
 . Now we're ready to kick off the mirror!
 This should take a few minutes to complete.
 
-[source,bash,role=execute]
+[.lowside,source,bash,role=execute]
 ----
 oc mirror --config imageset-config.yaml file:///mnt/low-side-data
 ----

@@ -13,6 +13,17 @@ ui:
   bundle:
     url: https://github.com/rhpds/showroom_theme_summit/releases/download/v0.0.2-pre1/ui-bundle.zip
 
+  supplemental_files:
+  - path: partials/head-meta.hbs
+    contents: |
+      <link rel="stylesheet" href="/custom.css">
+  - path: custom.css
+    contents: content/styles/custom.css
+  - path: ui.yml
+    contents: |
+      static_files:
+      - custom.css
+
 runtime:
   cache_dir: ./.cache/antora
 
