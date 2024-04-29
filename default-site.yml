@@ -16,7 +16,7 @@ ui:
   supplemental_files:
   - path: partials/head-meta.hbs
     contents: |
-      <link rel="stylesheet" href="/custom.css">
+      <link rel="stylesheet" href="../custom.css">
   - path: custom.css
     contents: content/styles/custom.css
   - path: ui.yml
