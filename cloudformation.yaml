@@ -669,6 +669,61 @@ Resources:
           echo 'pref("browser.urlbar.suggest.searches", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
           echo 'pref("keyword.enabled", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
 
+          mkdir -vp /etc/firefox/policies
+          cat << EOF > /etc/firefox/policies/policies.json
+          {
+            "policies": {
+              "NoDefaultBookmarks": true,
+              "DisplayBookmarksToolbar": "always",
+              "DisableProfileImport": true,
+              "DisableTelemetry": true,
+              "Bookmarks": [
+                {
+                  "Title": "Salsa - Registry",
+                  "URL": "https://${SalsaImageRegistryInstance.PrivateDnsName}:8443",
+          	      "Favicon": "https://quay.io/static/img/quay_favicon.png",
+                  "Placement": "toolbar"
+                },
+                {
+                  "Title": "Salsa - OpenShift",
+                  "URL": "https://console-openshift-console.apps.salsa.lab",
+          	      "Favicon": "https://raw.githubusercontent.com/openshift/origin-web-catalog/master/app/assets/img/favicon.ico",
+                  "Placement": "toolbar"
+                },
+                {
+                  "Title": "DISCO - Registry",
+                  "URL": "https://${HighSideInstance.PrivateDnsName}:8443",
+          	      "Favicon": "https://quay.io/static/img/quay_favicon.png",
+                  "Placement": "toolbar"
+                },
+                {
+                  "Title": "DISCO - OpenShift",
+                  "URL": "https://console-openshift-console.apps.disco.lab:8443",
+          	      "Favicon": "https://raw.githubusercontent.com/openshift/origin-web-catalog/master/app/assets/img/favicon.ico",
+                  "Placement": "toolbar"
+                }
+              ],
+              "Homepage": {
+                "URL": "file:///home/lab-user/homepage.html",
+                "Locked": true,
+                "StartPage": "homepage-locked"
+              },
+              "UserMessaging": {
+                "WhatsNew": true,
+                "ExtensionRecommendations": true,
+                "FeatureRecommendations": true,
+                "UrlbarInterventions": true,
+                "SkipOnboarding": true,
+                "MoreFromMozilla": true,
+                "Locked": true
+              }
+            }
+          }
+          EOF
+          
+          touch /home/lab-user/homepage.html
+          chown lab-user:lab-user /home/lab-user/homepage.html
+
           firewall-cmd --add-service vnc-server --permanent  &&  firewall-cmd --reload  ||  echo "firewalld not installed"
 
           export USER=lab-user   #USER=ec2-user
