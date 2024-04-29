@@ -48,7 +48,7 @@ Keep in mind that *highside* is allowed to talk to:
 - nothing else
 
 The output for a blocked website (quay.io) will look similar to this:
-[source,html]
+[.highside,source,html]
 ----
 [lab-user@highside ~]$ curl -kI quay.io
 HTTP/1.1 403 Forbidden
@@ -61,7 +61,7 @@ X-Squid-Error: ERR_ACCESS_DENIED 0
 ----
 
 The output for an allowed website (Red Hat RPM repos in Amazon AWS) will look similar to this:
-[source,html]
+[.highside,source,html]
 ----
 [lab-user@highside ~]$ curl -kI https://rhui.us-east-2.aws.ce.redhat.com
 HTTP/1.1 200 OK
