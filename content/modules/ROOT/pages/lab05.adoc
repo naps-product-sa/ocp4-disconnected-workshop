@@ -1,27 +1,30 @@
 = Preparing the High Side
 
 In this lab, we'll prepare the High Side.
-Recall from our architecture diagram that our bastion server on the high side will host our mirror registry.
+Recall from our architecture diagram that our *highside* system on the high side will host our mirror registry.
 To do this we're interested in using `podman`, since it simplifies operation of the registry to run it within a container.
 
-However, we have a dilemma: the AMI we used for the prep system does not have `podman` installed!
-Unfortunately, `podman` cannot be sneakernetted into the bastion server as we're doing with other tools, because the installation requires a number of dependencies.
-
-To solve this problem, most customers either _build a custom RHEL image_ with `podman` pre-installed, *or* create a firewall exception in the high side to enable access to a content repository, like https://access.redhat.com/articles/4720861[RHUI] (Red Hat Update Infrastructure).
-Recall from xref:lab02.adoc[Lab 2] that RHUI is part of our squid proxy's allowed list, so we've opted for the latter approach here. In fact, we've pre-installed `podman` on your bastion server during the lab creation.
+[TIP]
+We need `podman` installed on the *highside* system. For this lab, recall from xref:lab02.adoc[Lab 2] that the AWS Red Hat Update Infrastructure is part of our squid proxy's allowed URL list
+and that `podman` has been preinstalled for you.
 
 image::disco-2.svg[disco diagram,800]
 
 == Accessing the High Side
 
-Now we need to access our bastion server on the high side.
+Now we need to access our *highside* system on the high side.
 In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF.
-To make things a bit simpler for our lab, we're going to restrict access to our bastion to its _private IP address_.
-So we'll use the prep system as a sort of bastion-to-the-bastion.
 
-If your mirror is still running, you'll need to wait for it to complete before you continue. Once it's done, SSH into from the prep system over to the bastion server:
+// TODO not sure what we are saying here?
+// To make things a bit simpler for our lab, we're going to restrict access to *highside* to its _private IP address_.
+// So we'll use the prep system as a sort of bastion-to-the-bastion.
 
-First, copy your SSH key to the high side
+If your mirror is still running, you'll need to wait for it to complete before you continue. Once it's done, SSH into from the *jump* system over to the *highside* system:
+
+[WARNING]
+Ensure that your mirror command `oc mirror` has completed successfully before proceeding in the lab.
+
+First, copy your SSH key to the *highside* system
 
 [source,bash,role=execute,subs="attributes"]
 ----
@@ -29,7 +32,7 @@ ssh-copy-id highside
 {bastion_ssh_password}
 ----
 
-Then test it by SSHing to the high side
+Then test it with SSH
 
 [source,bash,role=execute,subs="attributes"]
 ----
@@ -38,7 +41,7 @@ ssh lab-user@highside
 
 == Prove we do not have internet access
 
-Let's check that we have no Internet access:
+Check that we do not have Internet access:
 
 [source,bash,role=execute]
 ----
@@ -66,18 +69,16 @@ Your output will contain something like this:
 ...
 ----
 
-This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list. Let's go back to the prep system to start the sneakernet:
+This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list. Let's go back to the *jump* system to start the sneakernet:
 
 [source,bash,role=execute,subs="attributes"]
 ----
 exit
 ----
 
-== Sneakernetting Content to the High Side
+== Moving Content to the High Side
 
-We'll now deliver the high side gift basket to the high side server.
-
-Let's send over our payload and store it in `/mnt/high-side-data` on highside:
+We'll now deliver the high side gift basket. Let's send over our payload and store it in `/mnt/high-side-data` on the *highside* system:
 
 [source,bash,role=execute,subs="attributes"]
 ----
@@ -87,22 +88,26 @@ rsync -avP /mnt/low-side-data/ lab-user@highside:/mnt/high-side-data/
 == Creating a Mirror Registry
 
 Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the high side.
+
+An OpenShift subscription includes access to the https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry[mirror registry for Red Hat OpenShift], which is a small-scale container registry designed specifically for mirroring images in disconnected installations.
+We'll make use of this option in this lab.
+
+[NOTE]
+--
 You can use any registry you like for this as long as it supports Docker v2, such as:
 
 * Red Hat Quay
 * JFrog Artifactory
 * Sonatype Nexus Repository
 * Harbor
+--
 
-An OpenShift subscription includes access to the https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry[mirror registry for Red Hat OpenShift], which is a small-scale container registry designed specifically for mirroring images in disconnected installations.
-We'll make use of this option in this lab.
+Mirroring all release and operator images can take some time depending on the network bandwidth.
+For this lab, recall that we are only mirroring the release images to save time and resources.
 
-Mirroring all release and operator images can take awhile depending on the network bandwidth.
-For this lab, recall that we're going to mirror just the release images to save time and resources.
+We should have the `mirror-registry` binary along with the required container images available on *highside* in `/mnt/high-side-data`.
 
-We should have the `mirror-registry` binary along with the required container images available on highside in `/mnt/high-side-data`.
-
-First, let's SSH back into highside:
+First, let's SSH back into the *highside* system:
 
 [source,bash,role=execute,subs="attributes"]
 ----

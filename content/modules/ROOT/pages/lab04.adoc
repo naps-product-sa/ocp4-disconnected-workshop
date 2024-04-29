@@ -14,7 +14,8 @@ Now that our prep system is up, let's SSH into it and download the content
 
 == Downloading Tooling
 
-Let's grab the tools we'll need for the bastion server - we'll use some of them on the prep system too. Before we begin, `cd` into the `/mnt/low-side-data/` directory:
+Let's grab the tools we'll need for the *highside* system - we will also be using some of them on the *jump* system. 
+Before we begin, `cd` into the `/mnt/low-side-data/` directory:
 [source,bash,role=execute,subs="attributes"]
 ----
 cd /mnt/low-side-data/
@@ -64,10 +65,10 @@ rm -f openshift-installer.tar.gz
 == Mirroring Content to Disk
 
 The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab.
-Instead, we'll mirror content to a tarball on disk that we can then sneakernet into the bastion server on the high side.
+Instead, we'll mirror content to a tarball on disk that we can then sneaker net into the *highside* system on the high side.
 We'll then mirror from the tarball into the mirror registry from there.
 
-. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries.
+{counter:mirror}. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries.
 If you're in a guided workshop, your instructor may provide this for you.
 Otherwise, grab your own from the https://console.redhat.com/openshift/install/pull-secret[Hybrid Cloud Console].
 
@@ -77,8 +78,10 @@ mkdir ~/.docker
 cp pull-secret.txt ~/.docker/config.json
 ----
 
-. Next, we need to create a `ImageSetConfiguration` that describes the parameters of our mirror.
-. To save time and storage, we're going to omit the operator catalogs and mirror only the release images.
+{counter:mirror}. Next, we need to create a `ImageSetConfiguration` that describes the parameters of our mirror.
+
+{counter:mirror}. To save time and storage, we're going to omit the operator catalogs and mirror only the release images.
+
 We'll still get a fully functional cluster, but *OperatorHub* will be empty. You'll want to have a strategy for mirroring operator content in a real world scenario.
 
 We'll also include an `ubi` image so we can run some tests later.

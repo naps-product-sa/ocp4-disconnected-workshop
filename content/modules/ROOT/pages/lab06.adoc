@@ -10,7 +10,7 @@ Here's a diagram describing the inputs and outputs of the installation configura
 
 image::install-overview.png[Install Overview]
 
-. Let's start by creating a workspace on the bastion to house our installation materials:
+{counter:install}. Let's start by creating a workspace on the *highside* system to house our installation materials:
 
 [source,bash,role=execute,subs="attributes"]
 ----
@@ -18,14 +18,14 @@ mkdir /mnt/high-side-data/install
 cd /mnt/high-side-data/install
 ----
 
-. Then generate an SSH key pair for access to cluster nodes:
+{counter:install}. Then generate an SSH key pair for access to cluster nodes:
 
 [source,bash,role=execute,subs="attributes"]
 ----
 ssh-keygen -N ""
 ----
 
-. Use `jq` to minify your container registry pull secret.
+{counter:install}. Use `jq` to minify your container registry pull secret.
 Copy this output to your clipboard, since you'll need it in a moment:
 
 [source,bash,role=execute,subs="attributes"]
@@ -33,11 +33,12 @@ Copy this output to your clipboard, since you'll need it in a moment:
 jq -c . /run/user/1000/containers/auth.json
 ----
 
-____
-For connected installations, you'd use the secret from the Hybrid Cloud Console, but for our use case, the mirror registry is the only one OpenShift will need to authenticate to.
-____
+[NOTE]
+--
+For connected installations, you would use the secret from the Hybrid Cloud Console, but for our use case, the mirror registry is the only one OpenShift will need to authenticate to.
+--
 
-. Then generate `install-config.yaml`:
+Then generate `install-config.yaml`:
 
 [source,bash,role=execute,subs="attributes"]
 ----
@@ -47,47 +48,32 @@ ____
 The OpenShift installer will prompt you for a number of fields;
 enter the values below:
 
- ** *SSH Public Key*: `/home/lab-user/.ssh/id_rsa.pub`
 
-____
-The SSH public key used to access all nodes within the cluster.
-____
+[cols="a,a"]
+|===
+| *SSH Public Key*: `/home/lab-user/.ssh/id_rsa.pub`
+| _The SSH public key used to access all nodes within the cluster._
 
- ** *Platform*: `aws`
+| *Platform*: `aws`
+| _The platform on which the cluster will run._
 
-____
-The platform on which the cluster will run.
-____
+| *Base Domain*: `lab`
+| _The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name._
 
- ** *AWS Access Key ID*: `{aws_access_key_id}`
- ** *Secret Access Key*: `{aws_secret_access_key}`
+| *Cluster Name*: `disco`
+| _The name of the cluster. This will be used when generating sub-domains._
 
- ** *Region*: `{aws_default_region}`
- ** *Base Domain*: lab
+| *Pull Secret*: `(Paste the output from minifying this in Step 3.)`
+| _Pull secret for the disconnected registry running on *highside* system
 
-____
-The base domain of the cluster.
-All DNS records will be sub-domains of this base and will also include the cluster name.
-____
+|===
 
- ** *Cluster Name*: `disco`
-
-____
-The name of the cluster.
-This will be used when generating sub-domains.
-____
-
- ** *Pull Secret*: Paste the output from minifying this in Step 3.
-
-
-That's it!
 The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
 
-. We need to make a couple changes to this config before we kick off the install:
- ** Change `publish` from *External* to *Internal*.
-We're using a private subnet to house the cluster, so it won't be publicly accessible.
- ** Add the subnet ID for the private subnet to `platform.aws.subnets`.
-Otherwise, the installer will create its own VPC and subnets.
+We need to make a couple changes to this config before we kick off the install:
+
+ ** Change `publish` from *External* to *Internal*. We're using a private subnet to house the cluster, so it won't be publicly accessible.
+ ** Add the subnet ID for the private subnet to `platform.aws.subnets`. Otherwise, the installer will create its own VPC and subnets.
 
 Private subnet ID: `{PrivateSubnet1}`
 

@@ -5,20 +5,20 @@ Let's start with an overview of the disconnected installation process.
 == Creating an Air Gap
 
 According to the https://www.rfc-editor.org/rfc/rfc4949[Internet Security Glossary], an Air Gap is an interface between two systems at which (a) they are not connected physically and (b) any logical connection is not automated (i.e., data is transferred through the interface only manually, under human control).
-In disconnected installations, the air gap exists between the Low Side and the High Side, so it is between these systems where a manual data transfer, or *sneakernet* is required.
+In disconnected installations, the air gap exists between the Low Side and the High Side, so it is between these systems where a manual data transfer, or *sneaker net* is required.
 
 == Preparing the Low Side
 
-A disconnected installation begins with downloading content and tooling to a *prep system* that has outbound access to the Internet.
-This server resides in an environment commonly referred to as the *Low Side* due to its low security profile.
+A disconnected installation begins with downloading content and tooling to a system we will refer to as the *jump* that has outbound access to the Internet.
+This server resides in a network environment commonly referred to as the *Low Side* due to its low security profile.
 Compliance requirements usually prevent the low side from housing sensitive data or private information.
 
 == Preparing the High Side
 
-We then provision a *bastion server* which has no Internet access and resides in an environment commonly referred to as the *High Side* due to its high security profile.
+We then provision a system we refer to as *highside* which has no Internet access and resides in a network environment commonly referred to as the *High Side* due to its high security profile.
 It is in the high side where sensitive data and production systems (like the cluster we're about to provision) live.
 During this phase, we'll transfer the content and tooling from the low side to the high side, a process which may entail use of a VPN or physical media like a DVD or USB.
-Once our transfer is complete, we'll start a *mirror registry* on the bastion server which will supply the container images needed for our OpenShift installation, since our installer can't reach out to quay.io or registry.redhat.io directly from here.
+Once our transfer is complete, we'll start a *mirror registry* on the highside system which will supply the container images needed for our OpenShift installation, since our installer can't reach out to quay.io or registry.redhat.io directly from here.
 
 === Proxy
 
@@ -37,7 +37,7 @@ Now that our air gap is in place, let's start prepping the low side.
 
 == Preparing the Installation
 
-The OpenShift installation process is initiated from the bastion server.
+The OpenShift installation process is initiated from the *highside* server.
 There are a handful of different ways to install OpenShift, but for this lab we're going to be using installer-provisioned infrastructure (IPI).
 By default, the installation program acts as an installation wizard, prompting you for values that it cannot determine on its own and providing reasonable default values for the remaining parameters.
 We'll then customize the `install-config.yaml` file that is produced to specify advanced configuration for our disconnected installation.
@@ -64,8 +64,8 @@ image::disco-1.svg[disco diagram,800]
 == Accessing the Cluster
 
 Since the cluster we'll produce is in a disconnected environment, it won't be publicly accessible via the Internet.
-In many cases, cluster access is restricted to hosts within the high side themselves.
-In our lab, we'll use the bastion server as a *jumphost* so that we can access the cluster from our laptop.
+In many cases, cluster access is restricted to hosts that reside in the high side network.
+In our lab, we'll use the *jump* system to access the cluster running in the high side network.
 
 == Planning Ahead
 

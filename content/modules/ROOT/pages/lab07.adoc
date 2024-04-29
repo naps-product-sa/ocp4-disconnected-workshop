@@ -1,6 +1,6 @@
 = Accessing the Cluster
 
-You should be able to access the API server from the bastion by leveraging the `kubeconfig` file the installer creates for you:
+You should be able to access the API server from the *highside* system by leveraging the `kubeconfig` file the installer creates for you:
 
 [source,bash,role=execute]
 ----
@@ -22,7 +22,7 @@ View details with 'oc describe <resource>/<name>' or list resources with 'oc get
 
 == Accessing the Web Console
 
-. Now you should be able to access the console in the VNC session:
+. Now you should be able to access the console in the VNC session running on the *jump* system:
 [source,bash,role=execute]
 ----
 oc whoami --show-console
@@ -38,6 +38,3 @@ Now the cluster's up and we can successfully access it.
 
 There's much work to be done after the initial installation.
 As a cluster administrator, you need to be mindful of how to manage operators, upgrades, patching, configuration, and much more.
-Stay tuned for future workshop modules where we'll examine these areas more closely.
-
-Happy coding!
