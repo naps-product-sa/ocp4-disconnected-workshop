@@ -1,84 +1,90 @@
 = Preparing the High Side
 
-In this lab, we'll prepare the High Side.
-Recall from our architecture diagram that our *highside* system on the high side will host our mirror registry.
-To do this we're interested in using `podman`, since it simplifies operation of the registry to run it within a container.
+In this lab, we'll setup the *highside* system.
+Recall from the architecture diagram that you will configure the *highside* system to run a container image registry service inside the disconnected network.
+We'll use OpenShift's `mirror-registry` utility as our image registry.
+`mirror-registry` is a simplified version of Red Hat's Quay image registry.
+You can use any registry you like for this as long as it supports Docker v2, such as:
+
+* Red Hat Quay (also known as `mirror-registry`)
+* JFrog Artifactory
+* Sonatype Nexus Repository
+* Harbor
 
 [TIP]
-We need `podman` installed on the *highside* system. For this lab, recall from xref:lab02.adoc[Lab 2] that the AWS Red Hat Update Infrastructure is part of our squid proxy's allowed URL list
-and that `podman` has been preinstalled for you.
+The `mirror-registry` requires `podman` on the *highside* system.
+`podman` was installed for you.
+Recall from xref:lab02.adoc[Lab 2] that the RHEL repos the provide `podman` are accessible via the `nat` system's squid proxy.
 
 image::disco-2.svg[disco diagram,800]
 
-== Accessing the High Side
+== Log into the highside system
 
-Now we need to access our *highside* system on the high side.
-In real customer environments, this might entail use of a VPN, or physical access to a workstation in a secure facility such as a SCIF.
-
-// TODO not sure what we are saying here?
-// To make things a bit simpler for our lab, we're going to restrict access to *highside* to its _private IP address_.
-// So we'll use the prep system as a sort of bastion-to-the-bastion.
-
-If your mirror is still running, you'll need to wait for it to complete before you continue. Once it's done, SSH into from the *jump* system over to the *highside* system:
+In the lab environment, you cannot log into the *highside* system directly because its in a disconnected network.
+Many customers access their disconnected systems using a VPN, a jump server, or a dedicated workstation.
+In the lab environment you'll access the *highside* system using SSH from the *jump* system.
+Passwordless SSH has been enabled for your convenience.
+For example, `ssh highside`
 
 [WARNING]
-Ensure that your mirror command `oc mirror` has completed successfully before proceeding in the lab.
-
-First, copy your SSH key to the *highside* system
-
-[.lowside,source,bash,role=execute,subs="attributes"]
-----
-ssh-copy-id highside
-{bastion_ssh_password}
-----
-
-Then test it with SSH
+Ensure that your `oc mirror` command has completed successfully before proceeding in the lab.
+You can confirm the mirroring has finished by looking for ...
+TODO - add the last few lines of `oc mirror`
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-ssh lab-user@highside
+ssh highside
 ----
 
-== Prove we do not have internet access
+== Prove that highside is disconnected
 
-Check that we do not have Internet access:
+Please use the following commands to prove that *highside* is unable to talk to redhat.com and quay.io directly.
+The OpenShift installation content is hosted at quay.io
+The responses below come from the Squid proxy sevice running on the *nat* system.
 
-[.highside,source,bash,role=execute]
-----
-curl -vso /dev/null google.com
-----
+Keep in mind that *highside* is allowed to talk to:
+- the Red Hat RPM repo inside Amazon AWS (rhui-REGION-aws.ce.redhat.com)
+- the Amazon API endpoints to create Amazon EC2 instances/VMs (ec2.us-east-2.amazonaws.com)
+- nothing else
 
-Your output will contain something like this:
-
+The output for a blocked website (quay.io) will look similar to this:
 [source,html]
 ----
-...
-< HTTP/1.1 403 Forbidden
-< Server: squid/5.5
-< Mime-Version: 1.0
-< Date: Tue, 23 Apr 2024 23:44:53 GMT
-< Content-Type: text/html;charset=utf-8
-< Content-Length: 3432
-< X-Squid-Error: ERR_ACCESS_DENIED 0
-< Vary: Accept-Language
-< Content-Language: en
-< X-Cache: MISS from squid
-< X-Cache-Lookup: NONE from squid:3128
-< Via: 1.1 squid (squid/5.5)
-< Connection: keep-alive
-...
+[lab-user@highside ~]$ curl -kI quay.io
+HTTP/1.1 403 Forbidden
+Server: squid/5.5
+Mime-Version: 1.0
+Date: Mon, 29 Apr 2024 20:08:15 GMT
+Content-Type: text/html;charset=utf-8
+Content-Length: 3434
+X-Squid-Error: ERR_ACCESS_DENIED 0
 ----
 
-This response comes from the squid proxy in the NAT server, and it's blocking the request because google.com is not part of the allowed list. Let's go back to the *jump* system to start the sneakernet:
-
-[.highside,source,bash,role=execute,subs="attributes"]
+The output for an allowed website (Red Hat RPM repos in Amazon AWS) will look similar to this:
+[source,html]
 ----
-exit
+[lab-user@highside ~]$ curl -kI https://rhui.us-east-2.aws.ce.redhat.com
+HTTP/1.1 200 OK
+Server: nginx/1.20.1
+Date: Mon, 29 Apr 2024 20:15:51 GMT
+Content-Type: text/html
+Content-Length: 4927
+Last-Modified: Mon, 12 Jul 2021 19:36:32 GMT
 ----
 
-== Moving Content to the High Side
+== Moving the installation content into highside / the disconnected network
 
-We'll now deliver the high side gift basket. Let's send over our payload and store it in `/mnt/high-side-data` on the *highside* system:
+Let's go back to the *jump* system and beginning moving the mirrored content into the disconnected network.
+The *jump* server will use `rsync` to copy the content into `/mnt/high-side-data` on the *highside* system.
+
+[TIP]
+--
+The `rsync` process is moving a lot of data.
+
+This command will take about 10 minutes to complete.
+
+Please DO NOT close the terminal while `rsync` is working.
+--
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
@@ -91,16 +97,6 @@ Images used by operators and platform components must be mirrored from upstream 
 
 An OpenShift subscription includes access to the https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry[mirror registry for Red Hat OpenShift], which is a small-scale container registry designed specifically for mirroring images in disconnected installations.
 We'll make use of this option in this lab.
-
-[NOTE]
---
-You can use any registry you like for this as long as it supports Docker v2, such as:
-
-* Red Hat Quay
-* JFrog Artifactory
-* Sonatype Nexus Repository
-* Harbor
---
 
 Mirroring all release and operator images can take some time depending on the network bandwidth.
 For this lab, recall that we are only mirroring the release images to save time and resources.
