@@ -1,10 +1,14 @@
+:openshift_version: 4.14.18
+
 = OpenShift Disconnected Workshop
 
-Welcome to the OpenShift Disconnected Workshop! It's DISCO time! 💃🕺
+Welcome to the OpenShift Disconnected Workshop!
+
+It's DISCO time! 💃🕺
 
 In this workshop you will learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
 This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/latest/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap network_].
-The workshop environment (illustrated below) gives you access to several servers/systems in different networks.
+The workshop environment (illustrated below) gives you access to several servers/systems in different networks. These instructions and environments were created using OpenShift version `{openshift_version}`.
 
 [TIP]
 --
@@ -26,7 +30,11 @@ Before we begin let's consider a few use-cases for disconnected networks:
 == Understanding our lab environment
 
 The image below illustrates the various networks, systems, and connections this workshop provides.
-The lab instructions will help you prepare the `jump` system to download the installation content, configure the `highside` system to host the content, and create the `openshift.disco.lab` cluster which doesn't exist yet. Additional / optional modules will discuss updating your disconnected cluster.
+The diagram will be simplifed and explained in more detail in later chapters.
+The lab instructions will help you prepare the `jump` system to download the installation content, configure the `highside` system to host the content, and create the `openshift.disco.lab` cluster (it doesn't exist yet.)
+
+The *salsa* network and its systems are built automically when the workshop environment is created.
+You can log into the *salsa* systems to compare your systems with functioning disconnected systems.
 
 image::disco-4.svg[disco diagram,800]
 

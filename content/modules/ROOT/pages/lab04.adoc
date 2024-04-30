@@ -1,122 +1,201 @@
-:openshift_version_channel: stable-4.14
-:openshift_version: 4.14.19
+= Preparing the Installation
 
-= Preparing the Low Side
+In this lab, we'll make final preparations and execute the OpenShift Installer.
 
-In this lab, we will prepare the low side.
+image::disco-3.svg[disco diagram,800]
 
-== Accessing the Prep System
+== Building install-config.yaml
 
-Now that our prep system is up, let's SSH into it and download the content
+Here's a diagram describing the inputs and outputs of the installation configuration process: 
 
-* {bastion_ssh_command} 
-* {bastion_ssh_password}
+image::install-overview.png[Install Overview]
 
-== Downloading Tooling
+{counter:install}. Let's start by creating a workspace on the *highside* system to house our installation materials:
 
-Let's grab the tools we'll need for the [.highside]#*highside* system# - we will also be using some of them on the [.lowside]#*jump* system#. 
-Before we begin, `cd` into the `/mnt/low-side-data/` directory:
-[.lowside,source,bash,role=execute,subs="attributes"]
+[source,bash,role=execute,subs="attributes"]
 ----
-cd /mnt/low-side-data/
+mkdir /mnt/high-side-data/install
+cd /mnt/high-side-data/install
 ----
 
-Then download the following tools:
+{counter:install}. Then generate an SSH key pair for access to cluster nodes:
 
- ** `oc`: OpenShift CLI
-
-[.lowside,source,bash,role=execute,subs="attributes"]
+[source,bash,role=execute,subs="attributes"]
 ----
-curl -L -o oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-client-linux.tar.gz
-tar -xzf oc.tar.gz oc
-rm -f oc.tar.gz
-sudo cp oc /bin
+ssh-keygen -N ""
 ----
 
- ** `oc-mirror`: oc plugin for mirorring release, operator, and helm content
+{counter:install}. Use `jq` to minify your container registry pull secret.
+Copy this output to your clipboard, since you'll need it in a moment:
 
-[.lowside,source,bash,role=execute,subs="attributes"]
+[source,bash,role=execute,subs="attributes"]
 ----
-curl -L -o oc-mirror.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/oc-mirror.tar.gz
-tar -xzf oc-mirror.tar.gz
-rm -f oc-mirror.tar.gz
-chmod +x oc-mirror
-sudo cp oc-mirror /bin
+jq -c . /run/user/1000/containers/auth.json
 ----
 
- ** `mirror-registry`: small-scale Quay registry designed for mirroring
+[NOTE]
+--
+For connected installations, you would use the secret from the Hybrid Cloud Console, but for our use case, the mirror registry is the only one OpenShift will need to authenticate to.
+--
 
-[.lowside,source,bash,role=execute]
-----
-curl -L -o mirror-registry.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz
-tar -xzf mirror-registry.tar.gz
-rm -f /mnt/low-side-data/mirror-registry.tar.gz
-----
+Then generate `install-config.yaml`:
 
- ** `openshift-installer`: OpenShift Installer
-
-[.lowside,source,bash,role=execute,subs="attributes"]
+[source,bash,role=execute,subs="attributes"]
 ----
-curl -L -o openshift-installer.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-install-linux.tar.gz
-tar -xzf openshift-installer.tar.gz openshift-install
-rm -f openshift-installer.tar.gz
+/mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install --log-level=DEBUG
 ----
 
-== Mirroring Content to Disk
+The OpenShift installer will prompt you for a number of fields;
+enter the values below:
 
-The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab.
-Instead, we'll mirror content to a tarball on disk that we can then sneaker net into the *highside* system on the high side.
-We'll then mirror from the tarball into the mirror registry from there.
 
-{counter:mirror}. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries.
-If you're in a guided workshop, your instructor may provide this for you.
-Otherwise, grab your own from the https://console.redhat.com/openshift/install/pull-secret[Hybrid Cloud Console].
+[cols="a,a"]
+|===
+| *SSH Public Key*: `/home/lab-user/.ssh/id_rsa.pub`
+| _The SSH public key used to access all nodes within the cluster._
 
-[.lowside,source,bash,role=execute]
+| *Platform*: `aws`
+| _The platform on which the cluster will run._
+
+| *Base Domain*: `lab`
+| _The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name._
+
+| *Cluster Name*: `disco`
+| _The name of the cluster. This will be used when generating sub-domains._
+
+| *Pull Secret*: `(Paste the output from minifying this in Step 3.)`
+| _Pull secret for the disconnected registry running on *highside* system
+
+|===
+
+The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
+
+We need to make a couple changes to this config before we kick off the install:
+
+ ** Change `publish` from *External* to *Internal*. We're using a private subnet to house the cluster, so it won't be publicly accessible.
+ ** Add the subnet ID for the private subnet to `platform.aws.subnets`. Otherwise, the installer will create its own VPC and subnets.
+
+Private subnet ID: `{PrivateSubnet1}`
+
+Then add to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
+
+[source,yaml,role=execute,subs="attributes"]
 ----
-mkdir ~/.docker
-cp pull-secret.txt ~/.docker/config.json
-----
-
-{counter:mirror}. Next, we need to create a `ImageSetConfiguration` that describes the parameters of our mirror.
-
-{counter:mirror}. To save time and storage, we're going to omit the operator catalogs and mirror only the release images.
-
-We'll still get a fully functional cluster, but *OperatorHub* will be empty. You'll want to have a strategy for mirroring operator content in a real world scenario.
-
-We'll also include an `ubi` image so we can run some tests later.
-Create a file called `imageset-config.yaml` with the following contents:
-
-[source,yaml,subs="attributes"]
-----
-kind: ImageSetConfiguration
-apiVersion: mirror.openshift.io/v1alpha2
-storageConfig:
-  local:
-    path: ./
-mirror:
-  platform:
-    channels:
-    - name: {openshift_version_channel}
-      type: ocp
-      minVersion: {openshift_version}
-      maxVersion: {openshift_version}
-
-  operators:
-  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
-    packages:
-    - name: web-terminal
-      channels:
-      - name: fast
-  
-  additionalImages:
-  - name: registry.redhat.io/ubi8/nginx-120
+...
+platform:
+  aws:
+    region: {aws_default_region}
+    subnets:
+    - {PrivateSubnet1}
+ ...
 ----
 
-. Now we're ready to kick off the mirror!
-This should take a few minutes to complete.
+//  ** Modify the `machineNetwork` to match the IPv4 CIDR blocks from the private subnets.
+// Otherwise your control plane and compute nodes will be assigned IP addresses that are out of range and break the install.
+// You can retrieve them by running this command from your workstation:
+// +
+// [source,bash,role=execute,subs="attributes"]
+// ----
+// aws ec2 describe-subnets | jq '[.Subnets[] | select(.Tags[].Value | contains ("Private")).CidrBlock] | unique | map("cidr: " + .)' | yq read -P - | sed "s/'//g"
+// ----
+// +
+// Then use them to *replace the existing* `networking.machineNetwork` *entry* in your `install-config.yaml` so that they look something like this: ```bash ...
+// networking:   clusterNetwork:
 
-[.lowside,source,bash,role=execute]
+//   *** cidr: 10.128.0.0/14 hostPrefix: 23   machineNetwork:
+//   *** cidr: 10.0.48.0/20
+//   *** cidr: 10.0.64.0/20
+//   *** cidr: 10.0.80.0/20 ...
+
+=== Add the `imageContentSources` that `oc mirror` produced to ensure image mappings happen correctly.
+
+*Before continuing*, make sure the second stage of your mirror is done by checking that the `imageContentSourcePolicy.yaml` file exists on disk.
+
+[source,bash,role=execute,subs="attributes"]
 ----
-oc mirror --config imageset-config.yaml file:///mnt/low-side-data
+while true ; do if (test -e /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml) ; then break; fi; sleep 5; done
+----
+
+Then you can append the relevant snippet to your `install-config.yaml` by running this command:
+
+[source,bash,role=execute]
+----
+cat <<EOF >> install-config.yaml
+imageContentSources:
+$(grep "mirrors:" -A 2 --no-group-separator /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
+EOF
+----
+
+They'll look something like this:
+
+[source,yaml,role=execute,subs="attributes"]
+----
+imageContentSources:
+  - mirrors:
+    - ip-10-0-51-206.ec2.internal:8443/ubi8/ubi
+    source: registry.redhat.io/ubi8/ubi
+  - mirrors:
+     - ip-10-0-51-206.ec2.internal:8443/openshift/release-images
+     source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+     - ip-10-0-51-206.ec2.internal:8443/openshift/release
+     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+----
+
+// [NOTE]
+// Instead of adding this field to the `install-config.yaml` you could drop the `imageContentSourcePolicy.yaml` file in the manifests directory after running `openshift-install create manifests` to achieve the same result.
+
+** Add the root CA of our mirror registry (`/mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field by running this command:
+
+[source,bash,role=execute]
+----
+cat <<EOF >> install-config.yaml
+additionalTrustBundle: |
+$(sed 's/^/  /' /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem)
+EOF
+----
+
+It should look something like this:
+
+[source,yaml,role=execute,subs="attributes"]
+----
+...
+additionalTrustBundle: |
+  -----BEGIN CERTIFICATE-----
+  ...
+  -----END CERTIFICATE-----
+----
+
+. Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
+[source,bash,role=execute,subs="attributes"]
+----
+cd /mnt/high-side-data/install
+cp install-config.yaml install-config.yaml.backup
+----
+
+== Check your work
+
+TODO add complete install-config.yaml
+
+== Running the Installation
+
+We're ready to run the install!
+Let's kick off the cluster installation:
+
+[source,bash,role=execute,subs="attributes"]
+----
+/mnt/high-side-data/openshift-install create cluster --log-level=DEBUG --dir /mnt/high-side-data/install
+----
+
+The installation process should take about 30 minutes.
+If you've done everything correctly, you should see something like this:
+
+[source,bash,role=execute,subs="attributes"]
+----
+...
+INFO Install complete!
+INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/myuser/install_dir/auth/kubeconfig'
+INFO Access the OpenShift web-console here: https://console-openshift-console.apps.disco.lab
+INFO Login to the console with user: "kubeadmin", and password: "password"
+INFO Time elapsed: 30m49s
 ----

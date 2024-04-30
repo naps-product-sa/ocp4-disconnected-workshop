@@ -1,172 +1,96 @@
-= Preparing the High Side
+= Accessing the Cluster
 
-In this lab, we'll setup the *highside* system.
-Recall from the architecture diagram that you will configure the *highside* system to run a container image registry service inside the disconnected network.
-We'll use OpenShift's `mirror-registry` utility as our image registry.
-`mirror-registry` is a simplified version of Red Hat's Quay image registry.
-You can use any registry you like for this as long as it supports Docker v2, such as:
+You should be able to access the API server from the *highside* system by leveraging the `kubeconfig` file the installer creates for you:
 
-* Red Hat Quay (also known as `mirror-registry`)
-* JFrog Artifactory
-* Sonatype Nexus Repository
-* Harbor
+[source,bash,role=execute]
+----
+export KUBECONFIG=/mnt/high-side/install/auth/kubeconfig
+oc status
+----
 
-[TIP]
-The `mirror-registry` requires `podman` on the *highside* system.
-`podman` was installed for you.
-Recall from xref:lab02.adoc[Lab 2] that the RHEL repos the provide `podman` are accessible via the `nat` system's squid proxy.
+Example output:
 
-image::disco-2.svg[disco diagram,800]
+[source,bash,role=execute]
+----
+In project default on server https://api.disco.lab:6443
 
-== Log into the highside system
+svc/openshift - kubernetes.default.svc.cluster.local
+svc/kubernetes - 172.30.0.1:443 -> 6443
 
-In the lab environment, you cannot log into the *highside* system directly because its in a disconnected network.
-Many customers access their disconnected systems using a VPN, a jump server, or a dedicated workstation.
-In the lab environment you'll access the *highside* system using SSH from the *jump* system.
-Passwordless SSH has been enabled for your convenience.
-For example, `ssh highside`
+View details with 'oc describe <resource>/<name>' or list resources with 'oc get all'.
+----
 
-[WARNING]
-Ensure that your `oc mirror` command has completed successfully before proceeding in the lab.
-You can confirm the mirroring has finished by looking for ...
-TODO - add the last few lines of `oc mirror`
+== Accessing the Web Console
 
-[.lowside,source,bash,role=execute,subs="attributes"]
+. Now you should be able to access the console in the VNC session running on the *jump* system:
+[source,bash,role=execute]
+----
+oc whoami --show-console
+----
+
+image::console.png[console]
+
+Success!
+
+Now the cluster's up and we can successfully access it.
+
+== What's next?
+
+There's much work to be done after the initial installation.
+As a cluster administrator, you need to be mindful of how to manage operators, upgrades, patching, configuration, and much more.
+
+== GLUE
+
+== Post-Install Cluster Configuration
+
+Now that we have a cluster up and running (or we are using the pre-made salsa.lab cluster) we can perform some
+post-install steps that are specific to a disconnected environment.
+
+image::disco-4.svg[disco diagram,800]
+
+First, lets log in to our cluster
+
+[cols="a,a",options="header"]
+|===
+| Using the pre-baked `salsa.lab`
+| Using the lab-provisioned `disco.lab`
+
+|
+[source,bash,role=execute]
+----
+ssh salsa-registry
+oc login https://api.salsa.lab:6443
+----
+|
+[source,bash,role=execute]
 ----
 ssh highside
+oc login https://api.disco.lab:6443
 ----
 
-== Prove that highside is disconnected
+|
+* *Username:* kubeadmin
+* *Password:* (in `cluster/auth/kubeadmin-password`)
+|
+* *Username:* admin
+* *Password:* admin
+|===
 
-Please use the following commands to prove that *highside* is unable to talk to redhat.com and quay.io directly.
-The OpenShift installation content is hosted at quay.io
-The responses below come from the Squid proxy sevice running on the *nat* system.
+== Add our custom catalog source
+// https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned
 
-Keep in mind that *highside* is allowed to talk to:
-- the Red Hat RPM repo inside Amazon AWS (rhui-REGION-aws.ce.redhat.com)
-- the Amazon API endpoints to create Amazon EC2 instances/VMs (ec2.us-east-2.amazonaws.com)
-- nothing else
+TODO
 
-The output for a blocked website (quay.io) will look similar to this:
-[.highside,source,html,role=execute]
-----
-curl -kI quay.io
-----
-[.output]
-----
-HTTP/1.1 403 Forbidden
-Server: squid/5.5
-Mime-Version: 1.0
-Date: Mon, 29 Apr 2024 20:08:15 GMT
-Content-Type: text/html;charset=utf-8
-Content-Length: 3434
-X-Squid-Error: ERR_ACCESS_DENIED 0
-----
+== Deploy a operator
 
-The output for an allowed website (Red Hat RPM repos in Amazon AWS) will look similar to this:
-[.highside,source,html,role=execute]
-----
-curl -kI https://rhui.us-east-2.aws.ce.redhat.com
-----
-[.output]
-----
-HTTP/1.1 200 OK
-Server: nginx/1.20.1
-Date: Mon, 29 Apr 2024 20:15:51 GMT
-Content-Type: text/html
-Content-Length: 4927
-Last-Modified: Mon, 12 Jul 2021 19:36:32 GMT
-----
+TODO
 
-== Moving the installation content into highside / the disconnected network
+// == Add images with `podman`
+// https://docs.openshift.com/container-platform/4.14/post_installation_configuration/cluster-tasks.html#post-install-must-gather-disconnected
 
-Let's go back to the *jump* system and beginning moving the mirrored content into the disconnected network.
-The *jump* server will use `rsync` to copy the content into `/mnt/high-side-data` on the *highside* system.
+// == Remove default samples operator
+// https://docs.openshift.com/container-platform/4.14/openshift_images/configuring-samples-operator.html#configuring-samples-operator
 
-[TIP]
---
-The `rsync` process is moving a lot of data.
+== Update cluster
 
-This command will take about 10 minutes to complete.
-
-Please DO NOT close the terminal while `rsync` is working.
---
-
-[.lowside,source,bash,role=execute,subs="attributes"]
-----
-rsync -avP /mnt/low-side-data/ lab-user@highside:/mnt/high-side-data/
-----
-
-== Creating a Mirror Registry
-
-Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the high side.
-
-An OpenShift subscription includes access to the https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry[mirror registry for Red Hat OpenShift], which is a small-scale container registry designed specifically for mirroring images in disconnected installations.
-We'll make use of this option in this lab.
-
-Mirroring all release and operator images can take some time depending on the network bandwidth.
-For this lab, recall that we are only mirroring the release images to save time and resources.
-
-We should have the `mirror-registry` binary along with the required container images available on *highside* in `/mnt/high-side-data`.
-
-First, let's SSH back into the *highside* system:
-
-[.lowside,source,bash,role=execute,subs="attributes"]
-----
-ssh lab-user@highside
-----
-
-And kick off our mirror registry install:
-
-[.highside,source,bash,role=execute]
-----
-cd /mnt/high-side-data
-./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/high-side-data/quay/quay-install --quayStorage /mnt/high-side-data/quay/quay-storage --pgStorage /mnt/high-side-data/quay/pg-data --initPassword discopass
-----
-[.output]
-----
-...
-INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in /mnt/quay/quay-install
-INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, discopass)
-----
-
-Copy the CA into the root trust
-
-[.highside,source,bash,role=execute]
-----
-sudo cp /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
-sudo update-ca-trust
-----
-
-Login to the registry with `podman`.
-This will generate an auth file at `/run/user/1000/containers/auth.json`:
-
-[.highside,source,bash,role=execute]
-----
-podman login -u init -p discopass $(hostname):8443
-----
-
-== Mirroring Content
-
-Now we're ready to mirror images from disk into the registry.
-Let's add `oc` and `oc-mirror` to the path:
-
-[.highside,source,bash,role=execute]
-----
-sudo mv /mnt/high-side-data/oc /bin/
-sudo mv /mnt/high-side-data/oc-mirror /bin/
-----
-
-And fire up the mirror!
-Let's send it to the background with `nohup` so we can get to work on the installation prep while this is running:
-
-[.highside,source,bash,role=execute]
-----
-nohup oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443 &
-----
-
-Press `ENTER` once more to get your prompt back.
-The log output will be streamed to a file called `nohup.out`, and your shell will notify you when the process has been completed after 10 minutes or so.
-
-With the final mirror now running, there are only a few steps left to prepare the cluster installation.
-Let's get to it!
+TODO

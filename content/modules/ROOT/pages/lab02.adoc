@@ -1,73 +1,150 @@
+:openshift_version_channel: stable-4.14
+:openshift_version: 4.14.19
+
 = The Disconnected Installation Process
 
 Let's start with an overview of the disconnected installation process.
+You can refer to the https://docs.openshift.com/container-platform/latest/installing/disconnected_install/index.html[OpenShift documentation] for more information.
+The basic steps are:
 
-== Creating an Air Gap
-
-According to the https://www.rfc-editor.org/rfc/rfc4949[Internet Security Glossary], an Air Gap is an interface between two systems at which (a) they are not connected physically and (b) any logical connection is not automated (i.e., data is transferred through the interface only manually, under human control).
-In disconnected installations, the air gap exists between the Low Side and the High Side, so it is between these systems where a manual data transfer, or *sneaker net* is required.
+1. Prepare a system (`jump`) that can download the installation content
+** This system uses `oc-mirror` to download the content
+2. Prepare a system (`highside`) that can _serve_ the installation content in the disconnected network
+** This system uses `oc-mirror` to populate the `mirror-registry` 
+3. Move the content from the `jump` system to the `highside` system
+** `rsync` in this workshop
+** many people uses DVDs and actually walk the content between systems (aka https://en.wikipedia.org/wiki/Sneakernet[_sneaker net_] 👟)
+4. Tell the OpenShift installation program (`openshift-install`) where to find the installation content
+** Make a few changes the `install-config.yaml` file (aka the "answer file")
+5. Modify some settings after OpenShift has been installed
+** e.g. where to look for apps/Operators and updates
 
 == Preparing the Low Side
 
-A disconnected installation begins with downloading content and tooling to a system we will refer to as the *jump* that has outbound access to the Internet.
+A disconnected installation begins by downloading the `oc-mirror` tool and installation content to a system we refer to as the `jump` system.
+In this workshop environement the  that has outbound access to the Internet.
 This server resides in a network environment commonly referred to as the *Low Side* due to its low security profile.
 Compliance requirements usually prevent the low side from housing sensitive data or private information.
 
-== Preparing the High Side
+// TODO remove the "glue" when I copied lab04 into lab02
+== GLUE
 
-We then provision a system we refer to as *highside* which has no Internet access and resides in a network environment commonly referred to as the *High Side* due to its high security profile.
-It is in the high side where sensitive data and production systems (like the cluster we're about to provision) live.
-During this phase, we'll transfer the content and tooling from the low side to the high side, a process which may entail use of a VPN or physical media like a DVD or USB.
-Once our transfer is complete, we'll start a *mirror registry* on the highside system which will supply the container images needed for our OpenShift installation, since our installer can't reach out to quay.io or registry.redhat.io directly from here.
+== Preparing the Low Side
 
-=== Proxy
+In this lab, we will prepare the low side.
 
-The high side protects outbound traffic with a http://www.squid-cache.org/[Squid proxy] running in a NAT instance.
-The proxy prevents any egress traffic not listed in `/etc/squid/whitelist.txt` on that host.
-If you look at the template you'll notice our entries are:
+== Accessing the Prep System
 
- ** `.amazonaws.com`
- ** `.cloudfront.net`
- ** `.aws.ce.redhat.com`
+Now that our prep system is up, let's SSH into it and download the content
 
-There may be situations where you wish to add more exceptions here, such as container or package repositories.
+* {bastion_ssh_command} 
+* {bastion_ssh_password}
 
-Now that our air gap is in place, let's start prepping the low side.
+== Downloading Tooling
 
+Let's grab the tools we'll need for the [.highside]#*highside* system# - we will also be using some of them on the [.lowside]#*jump* system#. 
+Before we begin, `cd` into the `/mnt/low-side-data/` directory:
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+cd /mnt/low-side-data/
+----
 
-== Preparing the Installation
+Then download the following tools:
 
-The OpenShift installation process is initiated from the *highside* server.
-There are a handful of different ways to install OpenShift, but for this lab we're going to be using installer-provisioned infrastructure (IPI).
-By default, the installation program acts as an installation wizard, prompting you for values that it cannot determine on its own and providing reasonable default values for the remaining parameters.
-We'll then customize the `install-config.yaml` file that is produced to specify advanced configuration for our disconnected installation.
-The installation program then provisions the underlying infrastructure for the cluster.
+ ** `oc`: OpenShift CLI
 
-[TIP]
-You may notice that nodes are provisioned through a process called _Ignition_.
-This concept is out of scope for this workshop, but if you're interested to learn more about it, you can read up on it in the documentation https://docs.openshift.com/container-platform/4.13/installing/index.html#about-rhcos[here].
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+curl -L -o oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-client-linux.tar.gz
+tar -xzf oc.tar.gz oc
+rm -f oc.tar.gz
+sudo cp oc /bin
+----
 
-IPI is the recommended installation method in most cases because it leverages full automation in installation and cluster management, but there are some key considerations to keep in mind when planning a production installation in a real world scenario.
+ ** `oc-mirror`: oc plugin for mirorring release, operator, and helm content
 
-* *You may not have access to the infrastructure APIs.* Our lab is going to live in AWS, which requires connectivity to the `.amazonaws.com` domain to talk to AWS, as well as the `.aws.ce.redhat.com` domain to talk to Red Hat Update Infrastructure (RHUI).
-We accomplish this by using an _allowed list_ on a Squid proxy running on the high side, but a similar approach may not be achievable or permissible for everyone.
-We'll discuss this further later in the lab.
-* *You may not have sufficient permissions with your infrastructure provider*.
-Our lab has full admin in our AWS enclave, so that's not a constraint we'll need to deal with.
-In real world environments, you'll need to ensure your account has the https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-account.html#installation-aws-permissions_installing-aws-account[appropriate permissions] which sometimes involves negotiating with security teams.
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+curl -L -o oc-mirror.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/oc-mirror.tar.gz
+tar -xzf oc-mirror.tar.gz
+rm -f oc-mirror.tar.gz
+chmod +x oc-mirror
+sudo cp oc-mirror /bin
+----
 
-Once configuration has been completed, we can kick off the OpenShift Installer and it will do all the work for us to provision the infrastructure and install OpenShift.
-Here's a diagram describing everything we've discussed so far: 
+ ** `mirror-registry`: small-scale Quay registry designed for mirroring
 
-image::disco-1.svg[disco diagram,800]
+[.lowside,source,bash,role=execute]
+----
+curl -L -o mirror-registry.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz
+tar -xzf mirror-registry.tar.gz
+rm -f /mnt/low-side-data/mirror-registry.tar.gz
+----
 
-== Accessing the Cluster
+ ** `openshift-installer`: OpenShift Installer
 
-Since the cluster we'll produce is in a disconnected environment, it won't be publicly accessible via the Internet.
-In many cases, cluster access is restricted to hosts that reside in the high side network.
-In our lab, we'll use the *jump* system to access the cluster running in the high side network.
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+curl -L -o openshift-installer.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-install-linux.tar.gz
+tar -xzf openshift-installer.tar.gz openshift-install
+rm -f openshift-installer.tar.gz
+----
 
-== Planning Ahead
+== Mirroring Content to Disk
 
-Once the cluster is up, what comes next?
-This lab ends when the cluster is installed, but there are many more considerations to made for how you manage things like upgrades, operators, patches, and more.
+The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab.
+Instead, we'll mirror content to a tarball on disk that we can then sneaker net into the *highside* system on the high side.
+We'll then mirror from the tarball into the mirror registry from there.
+
+{counter:mirror}. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries.
+If you're in a guided workshop, your instructor may provide this for you.
+Otherwise, grab your own from the https://console.redhat.com/openshift/install/pull-secret[Hybrid Cloud Console].
+
+[.lowside,source,bash,role=execute]
+----
+mkdir ~/.docker
+cp pull-secret.txt ~/.docker/config.json
+----
+
+{counter:mirror}. Next, we need to create a `ImageSetConfiguration` that describes the parameters of our mirror.
+
+{counter:mirror}. To save time and storage, we're going to omit the operator catalogs and mirror only the release images.
+
+We'll still get a fully functional cluster, but *OperatorHub* will be empty. You'll want to have a strategy for mirroring operator content in a real world scenario.
+
+We'll also include an `ubi` image so we can run some tests later.
+Create a file called `imageset-config.yaml` with the following contents:
+
+[source,yaml,subs="attributes"]
+----
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+storageConfig:
+  local:
+    path: ./
+mirror:
+  platform:
+    channels:
+    - name: {openshift_version_channel}
+      type: ocp
+      minVersion: {openshift_version}
+      maxVersion: {openshift_version}
+
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
+    packages:
+    - name: web-terminal
+      channels:
+      - name: fast
+  
+  additionalImages:
+  - name: registry.redhat.io/ubi8/nginx-120
+----
+
+. Now we're ready to kick off the mirror!
+This should take a few minutes to complete.
+
+[.lowside,source,bash,role=execute]
+----
+oc mirror --config imageset-config.yaml file:///mnt/low-side-data
+----
