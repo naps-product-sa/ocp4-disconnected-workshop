@@ -87,7 +87,7 @@ We'll still get a fully functional cluster, but *OperatorHub* will be empty. You
 We'll also include an `ubi` image so we can run some tests later.
 Create a file called `imageset-config.yaml` with the following contents:
 
-[.lowside,source,yaml,subs="attributes"]
+[source,yaml,subs="attributes"]
 ----
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2

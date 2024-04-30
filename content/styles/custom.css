@@ -1,4 +1,6 @@
-.highside, div.listingblock.execute.highside > div > pre > code {
+.highside, 
+div.listingblock.execute.highside > div > pre > code, 
+div.listingblock.highside > div > pre > code {
   font-family: monospace;
   {{/* font-size: 1.1em; */}}
   line-height: calc(1 / 1.1);
@@ -7,11 +9,17 @@
   color: black;
 }
 
-.lowside, div.listingblock.execute.lowside > div > pre > code {
+.lowside,
+div.listingblock.execute.lowside > div > pre > code,
+div.listingblock.lowside > div > pre > code {
   font-family: monospace;
   {{/* font-size: 1.1em; */}}
   line-height: calc(1 / 1.1);
 
   background-color: rgb(208, 199, 228);
   color: black;
+}
+
+div.listingblock.output {
+  margin: 0;
 }
