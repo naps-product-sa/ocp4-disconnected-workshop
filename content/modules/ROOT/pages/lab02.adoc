@@ -19,30 +19,16 @@ The basic steps are:
 5. Modify some settings after OpenShift has been installed
 ** e.g. where to look for apps/Operators and updates
 
-== Preparing the Low Side
+== Preparing the `jump` system
 
-A disconnected installation begins by downloading the `oc-mirror` tool and installation content to a system we refer to as the `jump` system.
-In this workshop environement the  that has outbound access to the Internet.
-This server resides in a network environment commonly referred to as the *Low Side* due to its low security profile.
-Compliance requirements usually prevent the low side from housing sensitive data or private information.
+The `jump` system lives in the *lowside* network which allows it to access resources on the public internet.
+The network is called *lowside* because it has a low security profile, and shouldn't be used to store sensitive information.
 
-// TODO remove the "glue" when I copied lab04 into lab02
-== GLUE
+image::disco-0.svg[disco diagram,800]
 
-== Preparing the Low Side
+=== Downloading Tooling
 
-In this lab, we will prepare the low side.
-
-== Accessing the Prep System
-
-Now that our prep system is up, let's SSH into it and download the content
-
-* {bastion_ssh_command} 
-* {bastion_ssh_password}
-
-== Downloading Tooling
-
-Let's grab the tools we'll need for the [.highside]#*highside* system# - we will also be using some of them on the [.lowside]#*jump* system#. 
+Let's grab the tools we need for the [.highside]#*highside* system# - we will also be using some of them on the [.lowside]#*jump* system#. 
 Before we begin, `cd` into the `/mnt/low-side-data/` directory:
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----

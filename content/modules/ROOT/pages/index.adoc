@@ -34,15 +34,29 @@ The diagram will be simplifed and explained in more detail in later chapters.
 The lab instructions will help you prepare the `jump` system to download the installation content, configure the `highside` system to host the content, and create the `openshift.disco.lab` cluster (it doesn't exist yet.)
 
 The *salsa* network and its systems are built automically when the workshop environment is created.
-You can log into the *salsa* systems to compare your systems with functioning disconnected systems.
+You can log into the *salsa* systems to compare your systems with functional disconnected systems.
 
 image::disco-4.svg[disco diagram,800]
 
 === Lab Access and Documentation notes
 
-The terminal window to your right is *already* logged into the [.lowside]#`jump`# system.
-The right-hand side of this browser can also show the [.lowside]#`jump`# system's graphical desktop by clicking on the *Desktop* button.
+The terminal window to your right is *already* logged into the `jump` system.
+The right-hand side of this browser can also show the `jump` system's graphical desktop by clicking on the *Desktop* button.
 The lab instructions should be run as the `{bastion_ssh_user_name}` user.
+Commands that should be run on the `jump` system will appear in this color.
+
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+echo "Run this command on the jump system"
+echo "FYI - the jump system may also be referred to as the _lowside_ system"
+----
+
+Commands that should be run on the `highside` system will appear in this color.
+
+[.highside,source,html,role=execute]
+----
+echo "Run this command on the highside system"
+----
 
 If you prefer to use your own terminal, you can log into the [.lowside]#`jump`# system using SSH like this:
 
@@ -61,4 +75,4 @@ If you prefer to use your own VNC viewer, you can connect to the [.lowside]#`jum
 vncviewer -via {bastion_ssh_command} 127.0.0.1:0
 ----
 
-//TODO - replace {bastion_ssh_command} with the correct variable
+**TODO** - replace {bastion_ssh_command} with the correct variable
