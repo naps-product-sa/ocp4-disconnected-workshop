@@ -10,9 +10,9 @@ Here's a diagram describing the inputs and outputs of the installation configura
 
 image::install-overview.png[Install Overview]
 
-{counter:install}. Let's start by creating a workspace on the *highside* system to house our installation materials:
+{counter:install}. Let's start by creating a workspace on the [.highside]#*highside* system# to house our installation materials:
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 mkdir /mnt/high-side-data/install
 cd /mnt/high-side-data/install
@@ -20,7 +20,7 @@ cd /mnt/high-side-data/install
 
 {counter:install}. Then generate an SSH key pair for access to cluster nodes:
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 ssh-keygen -N ""
 ----
@@ -28,7 +28,7 @@ ssh-keygen -N ""
 {counter:install}. Use `jq` to minify your container registry pull secret.
 Copy this output to your clipboard, since you'll need it in a moment:
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 jq -c . /run/user/1000/containers/auth.json
 ----
@@ -40,7 +40,7 @@ For connected installations, you would use the secret from the Hybrid Cloud Cons
 
 Then generate `install-config.yaml`:
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 /mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install --log-level=DEBUG
 ----
@@ -81,13 +81,11 @@ Then add to `platform.aws.subnets` in your `install-config.yaml` so that they lo
 
 [source,yaml,role=execute,subs="attributes"]
 ----
-...
 platform:
   aws:
     region: {aws_default_region}
     subnets:
     - {PrivateSubnet1}
- ...
 ----
 
 //  ** Modify the `machineNetwork` to match the IPv4 CIDR blocks from the private subnets.
@@ -111,14 +109,14 @@ platform:
 
 *Before continuing*, make sure the second stage of your mirror is done by checking that the `imageContentSourcePolicy.yaml` file exists on disk.
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 while true ; do if (test -e /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml) ; then break; fi; sleep 5; done
 ----
 
 Then you can append the relevant snippet to your `install-config.yaml` by running this command:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 cat <<EOF >> install-config.yaml
 imageContentSources:
@@ -147,7 +145,7 @@ imageContentSources:
 
 ** Add the root CA of our mirror registry (`/mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem`) to the trust bundle using the `additionalTrustBundle` field by running this command:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute]
 ----
 cat <<EOF >> install-config.yaml
 additionalTrustBundle: |
@@ -157,9 +155,8 @@ EOF
 
 It should look something like this:
 
-[source,yaml,role=execute,subs="attributes"]
+[source,yaml,subs="attributes"]
 ----
-...
 additionalTrustBundle: |
   -----BEGIN CERTIFICATE-----
   ...
@@ -167,7 +164,7 @@ additionalTrustBundle: |
 ----
 
 . Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 cd /mnt/high-side-data/install
 cp install-config.yaml install-config.yaml.backup
@@ -182,15 +179,11 @@ TODO add complete install-config.yaml
 We're ready to run the install!
 Let's kick off the cluster installation:
 
-[source,bash,role=execute,subs="attributes"]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 /mnt/high-side-data/openshift-install create cluster --log-level=DEBUG --dir /mnt/high-side-data/install
 ----
-
-The installation process should take about 30 minutes.
-If you've done everything correctly, you should see something like this:
-
-[source,bash,role=execute,subs="attributes"]
+[.output]
 ----
 ...
 INFO Install complete!
@@ -199,3 +192,5 @@ INFO Access the OpenShift web-console here: https://console-openshift-console.ap
 INFO Login to the console with user: "kubeadmin", and password: "password"
 INFO Time elapsed: 30m49s
 ----
+
+The installation process should take about 30 minutes.

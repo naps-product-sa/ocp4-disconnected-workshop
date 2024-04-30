@@ -1,17 +1,14 @@
-:openshift_version_channel: stable-4.14
-:openshift_version: 4.14.19
-
 = The Disconnected Installation Process
 
 Let's start with an overview of the disconnected installation process.
 You can refer to the https://docs.openshift.com/container-platform/latest/installing/disconnected_install/index.html[OpenShift documentation] for more information.
 The basic steps are:
 
-1. Prepare a system (`jump`) that can download the installation content
+1. Prepare a system ([.lowside]#jump#) that can download the installation content
 ** This system uses `oc-mirror` to download the content
-2. Prepare a system (`highside`) that can _serve_ the installation content in the disconnected network
+2. Prepare a system ([.highside]#highside#) that can _serve_ the installation content in the disconnected network
 ** This system uses `oc-mirror` to populate the `mirror-registry` 
-3. Move the content from the `jump` system to the `highside` system
+3. Move the content from the [.lowside]#jump# system to the [.highside]#highside# system
 ** `rsync` in this workshop
 ** many people uses DVDs and actually walk the content between systems (aka https://en.wikipedia.org/wiki/Sneakernet[_sneaker net_] 👟)
 4. Tell the OpenShift installation program (`openshift-install`) where to find the installation content
@@ -21,14 +18,14 @@ The basic steps are:
 
 == Preparing the `jump` system
 
-The `jump` system lives in the *lowside* network which allows it to access resources on the public internet.
+The [.lowside]#jump system# lives in the *lowside* network which allows it to access resources on the public internet.
 The network is called *lowside* because it has a low security profile, and shouldn't be used to store sensitive information.
 
 image::disco-0.svg[disco diagram,800]
 
 === Downloading Tooling
 
-Let's grab the tools we need for the [.highside]#*highside* system# - we will also be using some of them on the [.lowside]#*jump* system#. 
+Let's grab the tools we need for the [.highside]#highside system# - we will also be using some of them on the [.lowside]#jump system#. 
 Before we begin, `cd` into the `/mnt/low-side-data/` directory:
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
@@ -79,7 +76,7 @@ rm -f openshift-installer.tar.gz
 == Mirroring Content to Disk
 
 The `oc-mirror` plugin supports mirroring content directly from upstream sources to a mirror registry, but since there is an air gap between our low side and high side, that's not an option for this lab.
-Instead, we'll mirror content to a tarball on disk that we can then sneaker net into the *highside* system on the high side.
+Instead, we'll mirror content to a tarball on disk that we can then sneaker net into the [.highside]#highside system# on the high side.
 We'll then mirror from the tarball into the mirror registry from there.
 
 {counter:mirror}. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries.

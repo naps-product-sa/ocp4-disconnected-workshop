@@ -1,7 +1,7 @@
 = Preparing the High Side
 
-In this lab, we'll setup the *highside* system.
-Recall from the architecture diagram that you will configure the *highside* system to run a container image registry service inside the disconnected network.
+In this lab, we'll setup the [.highside]#*highside* system#.
+Recall from the architecture diagram that you will configure the [.highside]#*highside* system# to run a container image registry service inside the disconnected network.
 We'll use OpenShift's `mirror-registry` utility as our image registry.
 `mirror-registry` is a simplified version of Red Hat's Quay image registry.
 You can use any registry you like for this as long as it supports Docker v2, such as:
@@ -12,7 +12,7 @@ You can use any registry you like for this as long as it supports Docker v2, suc
 * Harbor
 
 [TIP]
-The `mirror-registry` requires `podman` on the *highside* system.
+The `mirror-registry` requires `podman` on the [.highside]#*highside* system#.
 `podman` was installed for you.
 Recall from xref:lab02.adoc[Lab 2] that the RHEL repos the provide `podman` are accessible via the `nat` system's squid proxy.
 
@@ -20,9 +20,9 @@ image::disco-2.svg[disco diagram,800]
 
 == Log into the highside system
 
-In the lab environment, you cannot log into the *highside* system directly because its in a disconnected network.
+In the lab environment, you cannot log into the [.highside]#*highside* system# directly because its in a disconnected network.
 Many customers access their disconnected systems using a VPN, a jump server, or a dedicated workstation.
-In the lab environment you'll access the *highside* system using SSH from the *jump* system.
+In the lab environment you'll access the [.highside]#*highside* system# using SSH from the [.lowside]#*jump* system#.
 Passwordless SSH has been enabled for your convenience.
 For example, `ssh highside`
 
@@ -38,14 +38,15 @@ ssh highside
 
 == Prove that highside is disconnected
 
-Please use the following commands to prove that *highside* is unable to talk to redhat.com and quay.io directly.
+Please use the following commands to prove that the [.highside]#*highside* system# is unable to talk to redhat.com and quay.io directly.
 The OpenShift installation content is hosted at quay.io
 The responses below come from the Squid proxy sevice running on the *nat* system.
 
-Keep in mind that *highside* is allowed to talk to:
-- the Red Hat RPM repo inside Amazon AWS (rhui-REGION-aws.ce.redhat.com)
-- the Amazon API endpoints to create Amazon EC2 instances/VMs (ec2.us-east-2.amazonaws.com)
-- nothing else
+Keep in mind that [.highside]#*highside*# is allowed to talk to:
+
+* the Red Hat RPM repo inside Amazon AWS (rhui-REGION-aws.ce.redhat.com)
+* the Amazon API endpoints to create Amazon EC2 instances/VMs (ec2.us-east-2.amazonaws.com)
+* 🛑 nothing else 🛑
 
 The output for a blocked website (quay.io) will look similar to this:
 [.highside,source,html,role=execute]
@@ -80,8 +81,8 @@ Last-Modified: Mon, 12 Jul 2021 19:36:32 GMT
 
 == Moving the installation content into highside / the disconnected network
 
-Let's go back to the *jump* system and beginning moving the mirrored content into the disconnected network.
-The *jump* server will use `rsync` to copy the content into `/mnt/high-side-data` on the *highside* system.
+Let's go back to the [.lowside]#*jump* system# and beginning moving the mirrored content into the disconnected network.
+The [.lowside]#*jump* system# will use `rsync` to copy the content into `/mnt/high-side-data` on the [.highside]#*highside* system#.
 
 [TIP]
 --
@@ -107,9 +108,9 @@ We'll make use of this option in this lab.
 Mirroring all release and operator images can take some time depending on the network bandwidth.
 For this lab, recall that we are only mirroring the release images to save time and resources.
 
-We should have the `mirror-registry` binary along with the required container images available on *highside* in `/mnt/high-side-data`.
+We should have the `mirror-registry` binary along with the required container images available on [.highside]#*highside*# in `/mnt/high-side-data`.
 
-First, let's SSH back into the *highside* system:
+First, let's SSH back into the [.highside]#*highside* system#:
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----

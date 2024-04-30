@@ -2,22 +2,28 @@
 div.listingblock.execute.highside > div > pre > code, 
 div.listingblock.highside > div > pre > code {
   font-family: monospace;
-  {{/* font-size: 1.1em; */}}
-  line-height: calc(1 / 1.1);
-
   background-color: rgb(247, 192, 138);
-  color: black;
+
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+span.highside {
+  padding: 0.1em 0.4em;
 }
 
 .lowside,
 div.listingblock.execute.lowside > div > pre > code,
 div.listingblock.lowside > div > pre > code {
   font-family: monospace;
-  {{/* font-size: 1.1em; */}}
-  line-height: calc(1 / 1.1);
-
   background-color: rgb(208, 199, 228);
-  color: black;
+
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+span.lowside {
+  padding: 0.1em 0.4em;
 }
 
 div.listingblock.output {
