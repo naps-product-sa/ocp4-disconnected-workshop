@@ -1,10 +1,11 @@
 # OpenShift 4 Disconnected Workshop
-This repository houses the lab guides for the Red Hat NAPS OpenShift 4 Disconnected workshop.
+This repository contains the automation and instructions for the OpenShift Disconnected workshop.
 
-## Rendered version of the Lab Guides / Instructions / Content via GitHub Actions
+GitHub Actions will update the rendered version of the instructions after every commit to the `main` branch.
+
 [https://naps-product-sa.github.io/ocp4-disconnected-workshop/](https://naps-product-sa.github.io/ocp4-disconnected-workshop/)
 
-## Rendering the workshop
+Alternatively, you can rendering the workshop instructions locally using:
 
 ```bash
 mkdir output

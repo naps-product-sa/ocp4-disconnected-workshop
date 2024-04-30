@@ -3,37 +3,37 @@
 Welcome to the OpenShift Disconnected Workshop! It's DISCO time! 💃🕺
 
 In this workshop you will learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
-This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/latest/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap_ network].
+This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/latest/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap network_].
 The workshop environment (illustrated below) gives you access to several servers/systems in different networks.
 
 [TIP]
 --
-The term "disconnected" can mean different things to different people.
+The term _disconnected network_ can mean different things to different people.
 
 This workshop describes one particular way of performing a disconnected installation.
-Another way, not described here, would be to setup, secure, and use a proxy server.
+Another way would be to setup, secure, and use a proxy server.
 You could also install OpenShift with a temporary connection to the installation resources and remove the access later.
 --
 
 == Who uses disconnected networks?
 
-Before we begin, consider a few use cases for disconnected networks:
+Before we begin let's consider a few use-cases for disconnected networks:
 
 * *Military & Law Enforcement*: Often need secure environments to handle sensitive data
 * *Research organizations*: Want to protect their data / provide data governance
-* *Industrial / utility*: Use SCADA (Supervisory Control and Data Acquisition) networks to protect control and operation data
+* *Industrial / utility*: Use https://en.wikipedia.org/wiki/SCADA[SCADA] networks to protect their supervisory and control networks
 
 == Understanding our lab environment
 
-The image below illustrates the varios networks, systems, and connections this workshop provides.
-The lab instructions will help you create the `openshift.disco.lab` cluster which doesn't exist yet.
+The image below illustrates the various networks, systems, and connections this workshop provides.
+The lab instructions will help you prepare the `jump` system to download the installation content, configure the `highside` system to host the content, and create the `openshift.disco.lab` cluster which doesn't exist yet. Additional / optional modules will discuss updating your disconnected cluster.
 
 image::disco-4.svg[disco diagram,800]
 
 === Lab Access and Documentation notes
 
 The terminal window to your right is *already* logged into the [.lowside]#`jump`# system.
-The right-hand side of this browser can also show the [.lowside]#`jump`# system's graphical desktop by click on the *Desktop* button.
+The right-hand side of this browser can also show the [.lowside]#`jump`# system's graphical desktop by clicking on the *Desktop* button.
 The lab instructions should be run as the `{bastion_ssh_user_name}` user.
 
 If you prefer to use your own terminal, you can log into the [.lowside]#`jump`# system using SSH like this:
@@ -43,3 +43,14 @@ If you prefer to use your own terminal, you can log into the [.lowside]#`jump`# 
 # Your unique lab-user password is {bastion_ssh_password}
 {bastion_ssh_command}
 ----
+
+If you prefer to use your own VNC viewer, you can connect to the [.lowside]#`jump`# system's graphical desktop like this:
+
+[source,bash,role=execute,subs="attributes"]
+----
+# Your unique lab-user password is {bastion_ssh_password}
+# Your unique VNC password is also {bastion_ssh_password}
+vncviewer -via {bastion_ssh_command} 127.0.0.1:0
+----
+
+//TODO - replace {bastion_ssh_command} with the correct variable
