@@ -1,38 +1,45 @@
 = OpenShift Disconnected Workshop
 
-Welcome to the OpenShift 4 Disconnected Workshop!
+Welcome to the OpenShift Disconnected Workshop! It's DISCO time! 💃🕺
 
-Here you will learn about how to install and operate an OpenShift 4 cluster in a [.highside]#disconnected network#, or one without access to the Internet (even through a proxy or firewall).
-This changes the way the cluster operates because things like container images, operator updates, and patches must be brought into the environment via *mirroring*.
+In this workshop you will learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
+This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/latest/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap_ network].
+The workshop environment (illustrated below) gives you access to several servers/systems in different networks.
+
+[TIP]
+--
+The term "disconnected" can mean different things to different people.
+
+This workshop describes one particular way of performing a disconnected installation.
+Another way, not described here, would be to setup, secure, and use a proxy server.
+You could also install OpenShift with a temporary connection to the installation resources and remove the access later.
+--
 
 == Who uses disconnected networks?
 
 Before we begin, consider a few use cases for disconnected networks:
 
-* *Law enforcement*: Disconnected networks are private and purpose built
-* *Research organizations*: Disconnected networks provide data governance
-* *Industrial control*: Disconnected networks provide a security layer for supervisory control and data acquisition (SCADA)
-* *The Military*: Disconnected networks provide alternative, reliable communication methods
+* *Military & Law Enforcement*: Often need secure environments to handle sensitive data
+* *Research organizations*: Want to protect their data / provide data governance
+* *Industrial / utility*: Use SCADA (Supervisory Control and Data Acquisition) networks to protect control and operation data
 
 == Understanding our lab environment
 
-There are of course many different options for installing OpenShift in a restricted network, this is just one fairly opinionated approach using AWS infrastructure. We will do our best to point out where there is the potential for variability along the way.
+The image below illustrates the varios networks, systems, and connections this workshop provides.
+The lab instructions will help you create the `openshift.disco.lab` cluster which doesn't exist yet.
 
 image::disco-4.svg[disco diagram,800]
 
-=== Lab Access
+=== Lab Access and Documentation notes
 
-The terminal window to your right is *already* logged into the lab environment as the `{bastion_ssh_user_name}` user via `ssh`.
-All steps of this lab are to be completed as the `{bastion_ssh_user_name}` user.
+The terminal window to your right is *already* logged into the [.lowside]#`jump`# system.
+The right-hand side of this browser can also show the [.lowside]#`jump`# system's graphical desktop by click on the *Desktop* button.
+The lab instructions should be run as the `{bastion_ssh_user_name}` user.
 
-[cols="1,1"]
-|===
-|Command
-|`{bastion_ssh_command}`
+If you prefer to use your own terminal, you can log into the [.lowside]#`jump`# system using SSH like this:
 
-|Password
-|`{bastion_ssh_password}`
-|=== 
-
-
-Away we go!
+[source,bash,role=execute,subs="attributes"]
+----
+# Your unique lab-user password is {bastion_ssh_password}
+{bastion_ssh_command}
+----
