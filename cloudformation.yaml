@@ -713,7 +713,7 @@ Resources:
                 },
                 {
                   "Title": "DISCO - OpenShift",
-                  "URL": "https://console-openshift-console.apps.disco.lab:8443",
+                  "URL": "https://console-openshift-console.apps.disco.lab",
           	      "Favicon": "https://raw.githubusercontent.com/openshift/origin-web-catalog/master/app/assets/img/favicon.ico",
                   "Placement": "toolbar"
                 }
