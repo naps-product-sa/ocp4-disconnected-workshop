@@ -165,7 +165,7 @@ Please begin by moving your _pull secret_ into the default location.
 [.lowside,source,bash,role=execute]
 ----
 mkdir -v ~/.docker
-cp -v pull-secret-example.json ~/.docker/config.json
+cp -v ~/pull-secret-example.json ~/.docker/config.json
 ----
 
 Next, we need to create an `ImageSetConfiguration` that describes what needs to be download.
@@ -184,7 +184,7 @@ Create a file called `imageset-config.yaml` with the following contents:
 
 [.lowside,source,yaml,subs="attributes",role=execute]
 ----
-cat << EOF > /home/lab-user/imageset-config.yaml
+cat << EOF > imageset-config.yaml
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
 storageConfig:
