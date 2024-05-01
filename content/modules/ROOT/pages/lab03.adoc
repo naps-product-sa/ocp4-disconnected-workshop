@@ -41,6 +41,7 @@ ssh highside
 ----
 [.output]
 ----
+Warning: Permanently added 'highside' (ED25519) to the list of known hosts.
 Last login: Wed May  1 07:56:13 2024 from 10.0.6.23
 [lab-user@highside ~]$
 ----
@@ -55,25 +56,24 @@ The [.highside]#highside systems# are configured to use a `nat / squid proxy` se
 
 {counter:exceptions}. The [.highside]#highside# system allows inbound SSH connections from the [.lowside]#jump system#
 
-{counter:exceptions}. The [.highside]#highside# system is allowed to install RHEL RPMs from the repos inside the Amazon AWS Cloud
+{counter:exceptions}. The [.highside]#highside# system is allowed to install RHEL RPMs from the repos inside the Amazon AWS Cloud (not from the public repos at https://cdn.redhat.com)
 
-{counter:exceptions}. Your [.highside]#openshift.demo.lab# cluster will be allowed to talk to the Amazon AWS Cloud APIs
-
-** more detail about this permission will be provided in the next lab
+{counter:exceptions}. Your [.highside]#openshift.demo.lab# cluster will be allowed to talk to the Amazon AWS Cloud APIs. More details about this permission will be provided in the next lab
 
 {counter:exceptions}. 🛑 **nothing else** 🛑 is allowed into or out of the [.highside]#highside network#
 
 The xref:appendix01.adoc[Appendix] has more information about the `nat / squid` proxy configuration.
 --
 
-Please use the following commands to prove that the [.highside]#highside# system is unable to connect to openshift.com and quay.io.
+Please use the following commands to prove that the [.highside]#highside# system is unable to connect to [.underline]#openshift.com# and [.underline]#quay.io#.
 
 You may recall that:
 
-* The `oc` and `openshift-install` tools were downloaded from openshift.com
-* The OpenShift installation images were downloaded from quay.io.
+* The `oc` and `openshift-install` tools were downloaded from [.underline]#openshift.com#
+* The OpenShift installation images were downloaded from [.underline]#quay.io#
 
-The output for a blocked website (quay.io) will look similar to this:
+If you try to access a blocked website, [.underline]#quay.io#, you'll see an **Acces Denied** message like this.
+
 [.highside,source,bash,role=execute]
 ----
 curl -I quay.io
@@ -119,12 +119,12 @@ After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump#
 --
 Please run the `rsync` command in your `tmux` screen.
 This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
-The `rsync` tasks should complete in about 15 minutes.
+The `rsync` tasks should complete in about 5 minutes.
 --
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-rsync -avP /mnt/low-side-data/ lab-user@highside:/mnt/high-side-data/
+rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
 ----
 [.output]
 ----
@@ -139,8 +139,16 @@ total size is 30,788,095,434  speedup is 1.00
 
 == Creating a Mirror Registry
 
+[TIP]
+--
+You can begin working on this section while the previous `rsync` command is still copying data.
+`rsync` transfers files alphabetically, which is good for us because `mirror-registry` transfers before the larger `.tar` file.
+--
+
 Now that the [.highside]#highside# system has the mirroring tools and installation content transferred, we can setup the `mirror-registry`.
 The command below will change directories and set the `mirror-registry` password to `discopass` for the `init` user.
+The automation that installs and configures the `mirror-registry` takes ~5 minutes to complete.
+Unfortunately we can't move on to the next step of trusting the TLS certificate until the `mirror-registry` has finished installed.
 
 [.highside,source,bash,role=execute]
 ----
