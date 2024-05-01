@@ -216,3 +216,7 @@ INFO Time elapsed: 30m49s
 ----
 
 The installation process should take about 30 minutes.
+
+[IMPORTANT]
+This disco.lab cluster will take about 30 minutes to install but if you do not want to wait proceed to the next section
+to work on the pre-built salsa.lab cluster!
