@@ -30,7 +30,7 @@ Copy this output to your clipboard, since you'll need it in a moment:
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-jq -c . /run/user/1000/containers/auth.json
+jq -c . $XDG_RUNTIME_DIR/containers/auth.json
 ----
 
 [NOTE]
@@ -40,55 +40,66 @@ For connected installations, you would use the secret from the Hybrid Cloud Cons
 
 Then generate `install-config.yaml`:
 
-[.highside,source,bash,role=execute,subs="attributes"]
+[.highside,source,yaml,role=execute,subs="attributes"]
 ----
-/mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install
-----
-
-The OpenShift installer will prompt you for a number of fields;
-enter the values below:
-
-
-[cols="a,a"]
-|===
-| *SSH Public Key*: `/home/lab-user/.ssh/id_rsa.pub`
-| _The SSH public key used to access all nodes within the cluster._
-
-| *Platform*: `aws`
-| _The platform on which the cluster will run._
-
-| *Base Domain*: `lab`
-| _The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name._
-
-| *Cluster Name*: `disco`
-| _The name of the cluster. This will be used when generating sub-domains._
-
-| *Pull Secret*: `(Paste the output from minifying this in Step 3.)`
-| _Pull secret for the disconnected registry running on *highside* system
-
-|===
-
-//TODO make this much better on how to edit the yaml file
-
-The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
-
-We need to make a couple changes to this config before we kick off the install:
-
- ** Change `publish` from *External* to *Internal*. We're using a private subnet to house the cluster, so it won't be publicly accessible.
- ** Add the subnet ID for the private subnet to `platform.aws.subnets`. Otherwise, the installer will create its own VPC and subnets.
-
-Private subnet ID: `{PrivateSubnet1}`
-
-Then add to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
-
-[source,yaml,role=execute,subs="attributes"]
-----
+cat << EOF > /mnt/high-side-data/install/install-config.yaml
+additionalTrustBundlePolicy: Proxyonly
+apiVersion: v1
+baseDomain: lab
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+metadata:
+  creationTimestamp: null
+  name: disco
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
 platform:
   aws:
     region: {aws_default_region}
     subnets:
     - {PrivateSubnet1}
+publish: Internal
+EOF
 ----
+
+//TODO make this much better on how to edit the yaml file
+
+// The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
+
+// We need to make a couple changes to this config before we kick off the install:
+
+//  ** Change `publish` from *External* to *Internal*. We're using a private subnet to house the cluster, so it won't be publicly accessible.
+//  ** Add the subnet ID for the private subnet to `platform.aws.subnets`. Otherwise, the installer will create its own VPC and subnets.
+
+// Private subnet ID: `{PrivateSubnet1}`
+
+// Then add to `platform.aws.subnets` in your `install-config.yaml` so that they look something like this:
+
+// [source,yaml,role=execute,subs="attributes"]
+// ----
+// platform:
+//   aws:
+//     region: {aws_default_region}
+//     subnets:
+//     - {PrivateSubnet1}
+// ----
 
 //  ** Modify the `machineNetwork` to match the IPv4 CIDR blocks from the private subnets.
 // Otherwise your control plane and compute nodes will be assigned IP addresses that are out of range and break the install.
