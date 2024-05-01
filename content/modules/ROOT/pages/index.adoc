@@ -29,10 +29,10 @@ Before we begin let's consider a few use-cases for disconnected networks:
 
 The image below illustrates the various networks, systems, and connections this workshop provides.
 The diagram will be simplifed and explained in more detail in later chapters.
-The lab instructions will help you prepare the [.lowside]#jump system# to download the installation content, configure the [.highside]#highside system# system to host the content, and create the [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
+The workshop instructions will help you prepare the [.lowside]#jump system# to download the installation content, setup the [.highside]#highside system# system to host the content, and create the [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
 
-The *salsa* network and its systems are built automically when the workshop environment is created.
-You can log into the *salsa* systems to compare your systems with functional disconnected systems.
+The **salsa network** and its systems are built automatically when the workshop environment is created.
+You can log into the **salsa systems** to compare your systems with functional disconnected systems.
 
 image::disco-4.svg[disco diagram,800]
 
@@ -40,6 +40,7 @@ image::disco-4.svg[disco diagram,800]
 
 The terminal window to your right is *already* logged into the [.lowside]#jump system's# *SSH Terminal*.
 The right-hand side of this browser can also show the [.lowside]#jump system's# graphical desktop by clicking on the *Desktop* button.
+
 The lab instructions should be run as the user named `{bastion_ssh_user_name}`.
 
 Commands that should be run on the [.lowside]#jump system# will appear in this color.
@@ -56,6 +57,17 @@ Commands that should be run on the [.highside]#highside system# will appear in t
 ----
 echo "Run this command on the highside system"
 ----
+
+[TIP]
+--
+Use the *Copy* button in the corner of the command text box to your advantage!
+You can paste by pressing Ctrl-v or Shift + Insert
+--
+
+[NOTE]
+--
+The workshop labs intentionally avoid asking you to use `vi`, `nano`, or `emacs` to edit text files.
+--
 
 === Alternate connection methods
 
