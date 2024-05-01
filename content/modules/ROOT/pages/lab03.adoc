@@ -216,12 +216,24 @@ oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname)
 ----
 [.output]
 ----
+...
+
 info: Mirroring completed in 18m10.33s (39.33MB/s)
 Rendering catalog image "ip-10-0-8-121.us-west-2.compute.internal:8443/redhat/redhat-operator-index:v4.14" with file-based catalog 
 Writing image mapping to oc-mirror-workspace/results-1714533240/mapping.txt
 Writing UpdateService manifests to oc-mirror-workspace/results-1714533240
 Writing CatalogSource manifests to oc-mirror-workspace/results-1714533240
 Writing ICSP manifests to oc-mirror-workspace/results-1714533240
+
+[lab-user@highside ~]$ 
 ----
 
-Please proceed to the next section while the `oc-mirror` upload completes.
+[TIP]
+--
+You can click the *Desktop* button and use Firefox to login to your new `mirror-registry`.
+You can even see the OpenShift installation images begin to appear.
+Don't spend too much time exploring the `mirror-registry's` web pages.
+We need to start the next section, **Installing OpenShift**
+--
+
+image::vnc-disco-registry-bookmark.png[Desktop / VNC button]
