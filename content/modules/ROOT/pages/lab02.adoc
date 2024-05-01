@@ -22,7 +22,7 @@ You can refer to the https://docs.openshift.com/container-platform/{openshift_ve
 
 {counter:steps}. Tell the OpenShift installation program (`openshift-install`) where to find the installation images
 
-** Make a few changes the `install-config.yaml` file
+** Make a few changes to the default `install-config.yaml` file
 *** Add the TLS certificate data for the `mirror-registry`
 *** Add credentials (`pull secret`) for the `mirror-registry`
 *** Add the `mirror-registry` as an approved mirror source
@@ -79,7 +79,6 @@ Disconnected OpenShift installations can use any _image registry_ that supports 
 * JFrog Artifactory
 * Sonatype Nexus Repository
 * Red Hat Quay Registry (enterprise)
-** the simplified, & purpose-built version called `mirror-registry`
 --
 
 Please begin by changing your directory to `/mnt/low-side-data/`
@@ -88,9 +87,12 @@ Please begin by changing your directory to `/mnt/low-side-data/`
 cd /mnt/low-side-data/
 ----
 
-Use the following commands to download and extract the following tools:
+Use the following commands to download and extract the following tools.
+Click the *Copy* button to quickly grab all of the commands in each of the following code blocks.
+The commands won't run immediately after pasting.
+You'll need to hit Enter/Return yourself.
 
-* `oc-mirror`: A plugin to the `oc` command for mirorring releases, operators, images, and helm charts
+* `oc-mirror`: A plugin to the `oc` command for mirorring OpenShift releases, apps / Operators, additional images, and Helm charts
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
@@ -101,7 +103,7 @@ chmod +x oc-mirror
 sudo cp -v oc-mirror /bin
 ----
 
-* `mirror-registry`: small-scale Red Hat Quay registry designed for mirroring
+* `mirror-registry`: a small-scale Red Hat Quay registry designed for mirroring
 
 [.lowside,source,bash,role=execute]
 ----
@@ -151,11 +153,11 @@ Now that the mirroring and installation tools have been downloaded and extacted,
 [NOTE]
 --
 A **_pull secret_** is JSON-formated data that combines authentication information for one or more Image Registries into a single file.
-You should download your own _pull secret_ / access credentials from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
+You should download your own _pull secret_ from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
 
 More information about _pull secrets_ can be found in the xref:appendix01.adoc[Appendix].
 
-If you are unable to download your own_pull secret_ from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank], you can use the workshop's _pull secret_ that is saved on the [.lowside]#jump system# at `/home/lab-user/pull-secret-example.json`
+If you are unable to download your own _pull secret_ from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank], you can use the workshop's _pull secret_ that is saved on the [.lowside]#jump system# at `/home/lab-user/pull-secret-example.json`
 --
 
 Please begin by moving your _pull secret_ into the default location.
@@ -168,7 +170,7 @@ mkdir -v ~/.docker
 cp -v ~/pull-secret-example.json ~/.docker/config.json
 ----
 
-Next, we need to create an `ImageSetConfiguration` that describes what needs to be download.
+Next, we need to create an `ImageSetConfiguration` that describes what needs to be downloaded.
 **To save time and storage, we're only going to download two versions of OpenShift**.
 We will also only download one extra app/Operator, the `Web Terminal` Operator.
 And one additional image, `registry.redhat.io/rhel8/support-tools`.
@@ -215,14 +217,18 @@ EOF
 [WARNING]
 --
 Please run the next `oc-mirror` command in a `tmux` screen.
-This will allow you to keep working on the next section with `oc-mirror` downloads ~25 GB of data.
-Your workshop environment has `tmux` configured to be as user-friendly as possible.
-The download takes about 15 minutes in this workshop environment.
+This will allow you to move on to the next section while `oc-mirror` downloads ~25 GB of data.
+
+Your workshop environment has configured `tmux` to be as user-friendly as possible.
+
+**The download takes about 15 minutes in this workshop environment.**
 --
 
 Let's create a `tmux` session and begin the `oc-mirror` download.
-Just run the `tmux` command and see how your terminal is automatically split into two "panes", top and bottom.
+Run the `tmux` command and see how your terminal is automatically split into two "panes", top and bottom.
 You can use your mouse to click and change between the top _pane_ and the bottom _pane_.
+You can drag the line that divides the panes to resize them.
+
 If you use your scroll wheel, please press `q` to return to the bottom and continue typing.
 
 [.lowside,source,bash,role=execute]
