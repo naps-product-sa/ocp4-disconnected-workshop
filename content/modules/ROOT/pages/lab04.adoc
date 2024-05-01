@@ -79,7 +79,10 @@ publish: Internal
 EOF
 ----
 
-//TODO make this much better on how to edit the yaml file
+//TODO add pull secret and ssh key
+// pullSecret: '{"auths":{"ip-10-0-62-109.us-east-2.compute.internal:8443":{"auth":"aW5pdDpkaXNjb3Bhc3M="}}}'
+// sshKey: |
+//   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8oUGmdh9c2NNg9F4dAdmkE9jlJD5BCNkbvOPBfHL1Lvgqwbk081R1y9TylxV64DMXzVjrfJWudB8qHZA7jfTwP6HW5ZfBNPLao5DrxQBtKQrMAN2vfQY4NIbYfHu8d7K9oJkTklqC4L/mt9XA0CPq7uQ/jya41DI1hMvuKCGnWcvEwtL/4sRz8csBXVbgfEw6JIs+jknc4mX405TOF/VZE/RKeQVAz+s8oR8tVxL81H3auRVaIIAxzkegbhUrmaidtmSnimZLwQsW9wndKAeYqmvFKc8+dMDBXoS2t3gcZo0ngu3oJnx8tyP3HYe/sReuU/M9aY9A7OhMqWIVhmbzpsU5WkTSM7W9LTtAufOtNY4X+YnA/HcnnugJFXm0f3Yw/qvv5DT/nbqCl2DhWTlkScce/Lta93qcccTmkZvnEub1qwndnUM1m3unlXxS5QpeaniywGZoEBJe8EI9Cfh/Uv5fPT6B5kdyitGCOtE5brm/FFdMbUGM7/bO4Gn7TKM= lab-user@ip-10-0-62-109.us-east-2.compute.internal
 
 // The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
 
