@@ -1,57 +1,80 @@
-= Preparing the High Side
+= Setup the High Side
 
-In this lab, we'll setup the [.highside]#*highside* system#.
-Recall from the architecture diagram that you will configure the [.highside]#*highside* system# to run a container image registry service inside the disconnected network.
-We'll use OpenShift's `mirror-registry` utility as our image registry.
-`mirror-registry` is a simplified version of Red Hat's Quay image registry.
-You can use any registry you like for this as long as it supports Docker v2, such as:
+In this lab we will setup the [.highside]#*highside* system#.
+Recall from the architecture diagram (below) that you will configure the [.highside]#*highside* system# to run an _image registry_ inside the disconnected network.
+We'll use OpenShift's `mirror-registry` as our _image registry_.
+The `mirror-registry` is a simplified version of Red Hat's Quay image registry.
+You can use any _image registry_ you like, as long as it supports Docker v2 API, [.underline]#uses TLS encryption, and requires authenticated image pulls#.
+Examples of alternative _image registries_ include.
 
-* Red Hat Quay (also known as `mirror-registry`)
+* Harbor
 * JFrog Artifactory
 * Sonatype Nexus Repository
-* Harbor
+* Red Hat Quay Registry (enterprise)
 
-[TIP]
-The `mirror-registry` requires `podman` on the [.highside]#*highside* system#.
-`podman` was installed for you.
-Recall from xref:lab02.adoc[Lab 2] that the RHEL repos the provide `podman` are accessible via the `nat` system's squid proxy.
+The task overview for this section is:
 
-image::disco-2.svg[disco diagram,800]
+{counter:overview}. Connect to [.highside]#highside# and prove that its disconnected
+
+* Transfer (`rsync`) the installation content to [.highside]#highside#
+
+{counter:overview}. Install the `mirror-registry`
+
+* Trust the generated TLS certificate
+* Log in / create a _pull secret_
+
+{counter:overview}. Move the .tar contents into the `mirror-registry`
 
 == Log into the highside system
 
-In the lab environment, you cannot log into the [.highside]#*highside* system# directly because its in a disconnected network.
-Many customers access their disconnected systems using a VPN, a jump server, or a dedicated workstation.
-In the lab environment you'll access the [.highside]#*highside* system# using SSH from the [.lowside]#*jump* system#.
-Passwordless SSH has been enabled for your convenience.
-For example, `ssh highside`
+In your workshop environment you cannot log into the [.highside]#*highside* system# directly because its in a disconnected network.
+Many customers access their disconnected systems using a VPN, a jump server, or with dedicated workstations.
 
-[WARNING]
-Ensure that your `oc mirror` command has completed successfully before proceeding in the lab.
-You can confirm the mirroring has finished by looking for ...
-TODO - add the last few lines of `oc mirror`
+Passwordless SSH has been enabled for your convenience.
+Please log into the [.highside]#highside system# using `ssh`
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
 ssh highside
 ----
+[.output]
+----
+Last login: Wed May  1 07:56:13 2024 from 10.0.6.23
+[lab-user@highside ~]$
+----
 
 == Prove that highside is disconnected
 
-Please use the following commands to prove that the [.highside]#*highside* system# is unable to talk to redhat.com and quay.io directly.
-The OpenShift installation content is hosted at quay.io
-The responses below come from the Squid proxy sevice running on the *nat* system.
+image::disco-5.svg[disco diagram,800]
 
-Keep in mind that [.highside]#*highside*# is allowed to talk to:
+[NOTE]
+--
+The [.highside]#highside systems# are configured to use a `nat / proxy` server to access a few resources.
 
-* the Red Hat RPM repo inside Amazon AWS (rhui-REGION-aws.ce.redhat.com)
-* the Amazon API endpoints to create Amazon EC2 instances/VMs (ec2.us-east-2.amazonaws.com)
-* 🛑 nothing else 🛑
+{counter:exceptions}. [.highside]#highside# allows inbound SSH connections from the [.lowside]#jump system#.
+
+{counter:exceptions}. [.highside]#highside# is allowed to install RHEL RPMs from the repos inside the Amazon AWS Cloud
+
+{counter:exceptions}. Your [.highside]#openshift.demo.lab cluster# will be allowed to talk to the Amazon AWS Cloud APIs
+
+** more detail about this permission will be provided in the next lab
+
+{counter:exceptions}. 🛑 nothing else 🛑 is allowed into or out of the [.highside]#highside network#.
+
+The xref:appendix01.adoc[Appendix] has more information about the `nat / squid` proxy configuration
+--
+
+Please use the following commands to prove that the [.highside]#highside system# is unable to connect to openshift.com and quay.io.
+
+You may recall that:
+
+* The `oc` and `openshift-install` tools were downloaded from openshift.com
+* The OpenShift installation images were downloaded from quay.io.
 
 The output for a blocked website (quay.io) will look similar to this:
 [.highside,source,bash,role=execute]
 ----
-curl -kI quay.io
+curl -I quay.io
 ----
 [.output]
 ----
@@ -64,10 +87,11 @@ Content-Length: 3434
 X-Squid-Error: ERR_ACCESS_DENIED 0
 ----
 
+The [.highside]#highside system# is configured to install RPMs (like `podman`) from the Red Hat repos inside the Amazon AWS Cloud.
 The output for an allowed website (Red Hat RPM repos in Amazon AWS) will look similar to this:
 [.highside,source,bash,role=execute]
 ----
-curl -kI https://rhui.us-east-2.aws.ce.redhat.com
+curl -I --insecure https://rhui.us-east-2.aws.ce.redhat.com
 ----
 [.output]
 ----
@@ -81,22 +105,29 @@ Last-Modified: Mon, 12 Jul 2021 19:36:32 GMT
 
 == Moving the installation content into highside / the disconnected network
 
-Let's go back to the [.lowside]#*jump* system# and beginning moving the mirrored content into the disconnected network.
+[WARNING]
+Ensure that your `oc mirror` command has completed successfully before proceeding in the lab.
+You can confirm the mirroring has finished by looking for ...
 
-[.highside,source,bash,role=execute]
+[.output]
 ----
-exit
+...
+info: Mirroring completed in 18m10.33s (39.33MB/s)
+Rendering catalog image "ip-10-0-8-121.us-west-2.compute.internal:8443/redhat/redhat-operator-index:v4.14" with file-based catalog 
+Writing image mapping to oc-mirror-workspace/results-1714533240/mapping.txt
+Writing UpdateService manifests to oc-mirror-workspace/results-1714533240
+Writing CatalogSource manifests to oc-mirror-workspace/results-1714533240
+Writing ICSP manifests to oc-mirror-workspace/results-1714533240
+[lab-user@jump low-side-data]$ 
 ----
 
-The [.lowside]#*jump* system# will use `rsync` to copy the content into `/mnt/high-side-data` on the [.highside]#*highside* system#.
+The [.lowside]#*jump* system# will use `rsync` to copy the installation content into `/mnt/high-side-data` on the [.highside]#*highside* system#.
 
-[TIP]
+[WARNING]
 --
-The `rsync` process is moving a lot of data.
-
-This command will take about 10 minutes to complete.
-
-Please DO NOT close the terminal while `rsync` is working.
+Please run the next `rsync` command in your `tmux` screen.
+This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
+The `rsync` tasks should complete in about 15 minutes.
 --
 
 [.lowside,source,bash,role=execute,subs="attributes"]
@@ -116,24 +147,8 @@ total size is 30,788,095,434  speedup is 1.00
 
 == Creating a Mirror Registry
 
-Images used by operators and platform components must be mirrored from upstream sources into a container registry that is accessible by the high side.
-
-An OpenShift subscription includes access to the https://docs.openshift.com/container-platform/4.14/installing/disconnected_install/installing-mirroring-creating-registry.html#installing-mirroring-creating-registry[mirror registry for Red Hat OpenShift], which is a small-scale container registry designed specifically for mirroring images in disconnected installations.
-We'll make use of this option in this lab.
-
-Mirroring all release and operator images can take some time depending on the network bandwidth.
-For this lab, recall that we are only mirroring the release images to save time and resources.
-
-We should have the `mirror-registry` binary along with the required container images available on [.highside]#*highside*# in `/mnt/high-side-data`.
-
-First, let's SSH back into the [.highside]#*highside* system#:
-
-[.lowside,source,bash,role=execute,subs="attributes"]
-----
-ssh lab-user@highside
-----
-
-And kick off our mirror registry install:
+Now that the [.highside]#highside system# has the mirroring tools and installation content transferred, we can setup the `mirror-registry`.
+The command below will change directories and set the `mirror-registry` password to `discopass` for the default user `init`.
 
 [.highside,source,bash,role=execute]
 ----
@@ -147,43 +162,64 @@ INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in 
 INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, discopass)
 ----
 
-Copy the CA into the root trust
+[NOTE]
+The `mirror-registry` is installed with a default TLS certificate that is not trusted by anything, not even the [.highside]#highside system# where it was installed.
+
+The procedure to trust the `mirror-registry` TLS certificate is simple.
+Copy the Certificate Authority (CA) file into the Red Hat Enterprise Linux root trust directory.
+Then run the `update-ca-trust` command.
 
 [.highside,source,bash,role=execute]
 ----
-sudo cp /home/lab-user/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
+sudo cp -v /home/lab-user/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust
 ----
 
-Login to the registry with `podman`.
-This will generate an auth file at `/run/user/1000/containers/auth.json`:
+After the `mirror-registry` TLS certificate has been trusted, use `podman` to login.
+The username is `init` and the password `discopass`.
+This will generate an authentication file (_pull secret_) at `/run/user/1000/containers/auth.json`:
 
 [.highside,source,bash,role=execute]
 ----
 podman login -u init -p discopass $(hostname):8443
 ----
+[.output]
+----
+Login Succeeded!
+----
 
 == Mirroring Content
 
-Now we're ready to mirror images from disk into the registry.
-Let's add `oc` and `oc-mirror` to the path:
+Now that the [.highside]#highside# system trusts the `mirror-registry's` TLS certificate, and `podman` has logged in and created a new _pull secret_, we're ready to upload the installation images from the .tar file.
+
+We'll begin by adding the `oc`, `oc-mirror` and `openshift-install` commands to the PATH.
 
 [.highside,source,bash,role=execute]
 ----
-sudo mv /mnt/high-side-data/oc /bin/
-sudo mv /mnt/high-side-data/oc-mirror /bin/
+sudo mv -v /mnt/high-side-data/oc /bin/
+sudo mv -v /mnt/high-side-data/oc-mirror /bin/
+sudo mv -v /mnt/high-side-data/openshift-install /bin/
 ----
 
-And fire up the mirror!
-Let's send it to the background with `nohup` so we can get to work on the installation prep while this is running:
+[WARNING]
+--
+Please run the next `oc-mirror` command in your `tmux` screen.
+This will allow you to keep working on the next section while `oc-mirror` uploads ~25 GB of data into the `mirror-registry`.
+The `oc-mirror` task should complete in about 15 minutes.
+--
 
 [.highside,source,bash,role=execute]
 ----
-nohup oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443 &
+oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443
+----
+[.output]
+----
+info: Mirroring completed in 18m10.33s (39.33MB/s)
+Rendering catalog image "ip-10-0-8-121.us-west-2.compute.internal:8443/redhat/redhat-operator-index:v4.14" with file-based catalog 
+Writing image mapping to oc-mirror-workspace/results-1714533240/mapping.txt
+Writing UpdateService manifests to oc-mirror-workspace/results-1714533240
+Writing CatalogSource manifests to oc-mirror-workspace/results-1714533240
+Writing ICSP manifests to oc-mirror-workspace/results-1714533240
 ----
 
-Press `ENTER` once more to get your prompt back.
-The log output will be streamed to a file called `nohup.out`, and your shell will notify you when the process has been completed after 10 minutes or so.
-
-With the final mirror now running, there are only a few steps left to prepare the cluster installation.
-Let's get to it!
+Please proceed to the next section while the `oc-mirror` upload completes.

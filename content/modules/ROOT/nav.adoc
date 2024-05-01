@@ -1,6 +1,6 @@
 * xref:index.adoc[{counter:toc}. Workshop Overview]
 * xref:lab02.adoc[{counter:toc}. Disconnected Overview & Prepare "jump"]
-* xref:lab03.adoc[{counter:toc}. Prepare "highside"]
+* xref:lab03.adoc[{counter:toc}. Setup "highside"]
 * xref:lab04.adoc[{counter:toc}. Install OpenShift]
 * xref:lab05.adoc[{counter:toc}. Redirect OpenShift updates]
 * xref:appendix01.adoc[{counter:toc}. Appendix: Lab Details ]

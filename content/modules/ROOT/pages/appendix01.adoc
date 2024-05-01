@@ -34,13 +34,21 @@ Once our transfer is complete, we'll start a *mirror registry* on the highside s
 
 === Proxy
 
-The high side protects outbound traffic with a http://www.squid-cache.org/[Squid proxy] running in a NAT instance.
-The proxy prevents any egress traffic not listed in `/etc/squid/whitelist.txt` on that host.
-If you look at the template you'll notice our entries are:
+The high side protects outbound traffic with a http://www.squid-cache.org/[Squid proxy] running on the `nat system`.
+The `nat system / proxy` prevents any egress traffic not listed in its `/etc/squid/whitelist.txt` file.
 
- ** `.amazonaws.com`
- ** `.cloudfront.net`
- ** `.aws.ce.redhat.com`
+Note that access from the [.highside]#highside systems# to quay.io, openshift.com, and redhat.com is **DENIED**.
+
+[.lowside,source,bash,role=execute]
+----
+ssh nat "sudo cat /etc/squid/whitelist.txt"
+----
+[.output]
+----
+.amazonaws.com
+.cloudfront.net
+.aws.ce.redhat.com
+----
 
 There may be situations where you wish to add more exceptions here, such as container or package repositories.
 
