@@ -2,11 +2,11 @@
 
 Welcome to the OpenShift **__Disco__**nnected Workshop!
 
-It's DISCO time! 💃🕺
+💃 It's DISCO time! 🕺
 
 In this workshop you will learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
 This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/latest/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap network_].
-The workshop environment (illustrated below) gives you access to several servers/systems in different networks. These instructions and environments were created using OpenShift version `{openshift_version}`.
+The workshop environment (illustrated below) gives you access to several servers/systems in different networks. The instructions and environments were created using OpenShift version `{openshift_version}`.
 
 [TIP]
 --
@@ -22,14 +22,14 @@ You could also install OpenShift with a temporary connection to the installation
 Before we begin let's consider a few use-cases for disconnected networks:
 
 * *Military & Law Enforcement*: Often need secure environments to handle sensitive data
-* *Research organizations*: Want to protect their data / provide data governance
-* *Industrial / utility*: Use https://en.wikipedia.org/wiki/SCADA[SCADA] networks to protect their supervisory and control networks
+* *Research Organizations*: Want to protect their data & provide data governance
+* *Industrial / Utilities*: Use https://en.wikipedia.org/wiki/SCADA[SCADA] networks to protect their supervisory and control machinery
 
 == Understanding our lab environment
 
 The image below illustrates the various networks, systems, and connections this workshop provides.
 The diagram will be simplifed and explained in more detail in later chapters.
-The lab instructions will help you prepare the `jump` system to download the installation content, configure the `highside` system to host the content, and create the `openshift.disco.lab` cluster (it doesn't exist yet.)
+The lab instructions will help you prepare the [.lowside]#jump system# to download the installation content, configure the [.highside]#highside system# system to host the content, and create the [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
 
 The *salsa* network and its systems are built automically when the workshop environment is created.
 You can log into the *salsa* systems to compare your systems with functional disconnected systems.
@@ -38,15 +38,16 @@ image::disco-4.svg[disco diagram,800]
 
 === Lab Access and Documentation notes
 
-The terminal window to your right is *already* logged into the `jump` system.
-The right-hand side of this browser can also show the `jump` system's graphical desktop by clicking on the *Desktop* button.
-The lab instructions should be run as the `{bastion_ssh_user_name}` user.
+The terminal window to your right is *already* logged into the [.lowside]#jump system's# *SSH Terminal*.
+The right-hand side of this browser can also show the [.lowside]#jump system's# graphical desktop by clicking on the *Desktop* button.
+The lab instructions should be run as the user named `{bastion_ssh_user_name}`.
+
 Commands that should be run on the [.lowside]#jump system# will appear in this color.
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
 echo "Run this command on the jump system"
-echo "FYI - the jump system may also be referred to as the _lowside_ system"
+echo "The jump system may also be referred to as the *lowside* system"
 ----
 
 Commands that should be run on the [.highside]#highside system# will appear in this color.
@@ -55,6 +56,8 @@ Commands that should be run on the [.highside]#highside system# will appear in t
 ----
 echo "Run this command on the highside system"
 ----
+
+=== Alternate connection methods
 
 If you prefer to use your own terminal, you can log into the [.lowside]#jump system# using SSH like this:
 
@@ -68,7 +71,6 @@ If you prefer to use your own VNC viewer, you can connect to the [.lowside]#jump
 
 [source,bash,role=execute,subs="attributes"]
 ----
-# Your unique lab-user password is {bastion_ssh_password}
-# Your unique VNC password is also {bastion_ssh_password}
+# Your unique VNC password is {bastion_ssh_password}
 vncviewer {JumpInstancePublicIp}
 ----

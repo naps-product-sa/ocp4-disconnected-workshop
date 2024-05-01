@@ -1,6 +1,18 @@
-= The Disconnected Installation Process
+=== Two ways to `oc-mirror` - Partially Disconnected -vs Fully Disconnected
+The `oc-mirror` plugin supports two mirroring scenarios.
 
-Let's start with an overview of the disconnected installation process.
+If your network security allows it, `oc-mirror` can simultaneously download the OpenShift installation images and upload it into the [.highside]#`mirror-registry` in the disconnected environment#.
+
+This is documented as a https://docs.openshift.com/container-platform/4.15/installing/disconnected_install/installing-mirroring-disconnected.html#mirroring-image-set-partial[partially disconnected environment,window=_blank].
+
+The other scenario, described in this workshop, requires `oc-mirror` to download the OpenShift installation images into a .tar file on a [.lowside]#lowside system#.
+
+After the .tar file is created, it must be moved into the [.highside]# highside disconnected environment#.
+
+Another instance of `oc-mirror` will open the .tar file and upload the contents into the `mirror-registry`.
+
+This is documented as a https://docs.openshift.com/container-platform/4.15/installing/disconnected_install/installing-mirroring-disconnected.html#mirroring-image-set-full[fully disconnected environment,window=_blank].
+
 
 == Creating an Air Gap
 

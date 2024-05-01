@@ -181,6 +181,12 @@ TODO add complete install-config.yaml
 We're ready to run the install!
 Let's kick off the cluster installation:
 
+[NOTE]
+--
+The OpenShift tooling is built for every release and version data is encoded in each binary.
+--
+
+
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
 /mnt/high-side-data/openshift-install create cluster --dir /mnt/high-side-data/install
