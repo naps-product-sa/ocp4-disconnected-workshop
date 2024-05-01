@@ -1,7 +1,7 @@
 = Disconnected Overview
 
 Let's start with an overview of OpenShift's disconnected installation process.
-You can refer to the https://docs.openshift.com/container-platform/latest/installing/disconnected_install/index.html[OpenShift documentation,window=_blank] for more details.
+You can refer to the https://docs.openshift.com/container-platform/{openshift_version}/installing/disconnected_install/index.html[OpenShift documentation,window=_blank] for more details.
 
 **The disconnected installation steps are:**
 
@@ -54,7 +54,7 @@ OpenShift provides two primary tools that are used to create disconnected cluste
 
 {counter:tools}. `mirror-registry` - An _image registry_ that serves container images to the OpenShift nodes
 
-** This is a https://docs.openshift.com/container-platform/4.15/installing/disconnected_install/installing-mirroring-creating-registry.html[smaller & streamlined,window=_blank] version of the Red Hat Quay Image Registry
+** This is a https://docs.openshift.com/container-platform/{openshift_version}/installing/disconnected_install/installing-mirroring-creating-registry.html[smaller & streamlined,window=_blank] version of the Red Hat Quay Image Registry
 
 We will also download two additional tools that will be used later on the [.highside]#highside system#.
 
@@ -94,7 +94,7 @@ Use the following commands to download and extract the following tools:
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-curl -L -o oc-mirror.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/oc-mirror.tar.gz
+curl -L -o oc-mirror.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_min_version}/oc-mirror.tar.gz
 tar -xzf oc-mirror.tar.gz
 rm -f oc-mirror.tar.gz
 chmod +x oc-mirror
@@ -114,7 +114,7 @@ rm -f /mnt/low-side-data/mirror-registry.tar.gz
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-curl -L -o oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-client-linux.tar.gz
+curl -L -o oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_min_version}/openshift-client-linux.tar.gz
 tar -xzf oc.tar.gz oc
 rm -f oc.tar.gz
 sudo cp -v oc /bin
@@ -124,7 +124,7 @@ sudo cp -v oc /bin
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-curl -L -o openshift-install.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_version}/openshift-install-linux.tar.gz
+curl -L -o openshift-install.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_min_version}/openshift-install-linux.tar.gz
 tar -xzf openshift-install.tar.gz openshift-install
 rm -f openshift-install.tar.gz
 ----
@@ -199,7 +199,7 @@ mirror:
       maxVersion: {openshift_max_version}
 
   operators:
-  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.14
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v{openshift_version}
     packages:
     - name: web-terminal
       channels:

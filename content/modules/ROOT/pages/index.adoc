@@ -5,8 +5,8 @@ Welcome to the OpenShift **__Disco__**nnected Workshop!
 💃 It's DISCO time! 🕺
 
 In this workshop you will learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
-This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/latest/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap network_].
-The workshop environment (illustrated below) gives you access to several servers/systems in different networks. The instructions and environments were created using OpenShift version `{openshift_version}`.
+This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/{openshift_version}/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap network_,window=_blank].
+The workshop environment (illustrated below) gives you access to several servers/systems in different networks. The instructions and environments were created using OpenShift version `{openshift_min_version}`.
 
 [TIP]
 --
@@ -23,7 +23,7 @@ Before we begin let's consider a few use-cases for disconnected networks:
 
 * *Military & Law Enforcement*: Often need secure environments to handle sensitive data
 * *Research Organizations*: Want to protect their data & provide data governance
-* *Industrial / Utilities*: Use https://en.wikipedia.org/wiki/SCADA[SCADA] networks to protect their supervisory and control machinery
+* *Industrial / Utilities*: Use https://en.wikipedia.org/wiki/SCADA[SCADA,window=_blank] networks to protect their supervisory and control machinery
 
 == Understanding our lab environment
 
