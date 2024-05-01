@@ -671,11 +671,10 @@ Resources:
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
 
           # Disable the "do you trust this SSH host" messages
-          cat << EOF >> /home/lab-user/.ssh/config
+          cat << EOF >> /etc/ssh/ssh_config.d/01-disco-workshop.conf
           Host *
             StrictHostKeyChecking false
           EOF
-          chown -v lab-user:lab-user /home/lab-user/.ssh/config
 
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
