@@ -592,10 +592,7 @@ Resources:
 
   JumpInstance:
     Type: AWS::EC2::Instance
-    DependsOn: 
-      - InternetGatewayAttachment
-      - HighSideInstance
-      - SalsaImageRegistryInstance
+    DependsOn: InternetGatewayAttachment
     Properties:
       ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
       InstanceType: !Ref JumpInstanceType
