@@ -16,9 +16,9 @@ Examples of alternative _image registries_ include.
 
 The tasks in this lab include:
 
-{counter:overview}. Connecting to the [.highside]#highside# system and proving that its disconnected
-
 {counter:overview}. Transfering the installation content to the [.highside]#highside# system using `rsync`
+
+{counter:overview}. Connecting to the [.highside]#highside# system and proving that its disconnected
 
 {counter:overview}. Installing the `mirror-registry`
 
@@ -26,6 +26,44 @@ The tasks in this lab include:
 * Logging in and creating a _pull secret_
 
 {counter:overview}. Uploading the `.tar` file's contents into the `mirror-registry`
+
+== Moving the installation content onto highside
+
+[WARNING]
+Ensure that your `oc mirror` command has completed successfully before proceeding with this lab.
+You can confirm the mirroring has finished by looking in your `tmux` pane to see if your prompt has returned.
+
+[.output]
+----
+...
+info: Mirroring completed in 2m47.63s (135.1MB/s)
+Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+[lab-user@jump low-side-data]$ 
+----
+
+After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump# system to copy the installation content into `/mnt/high-side-data` on the [.highside]#highside# system.
+
+[WARNING]
+--
+Please run the `rsync` command in your `tmux` screen.
+This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
+The `rsync` tasks should complete in about 5 minutes.
+--
+
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
+----
+[.output]
+----
+...
+publish/
+publish/.metadata.json
+        332,183 100%  332.37kB/s    0:00:00 (xfr#66, to-chk=0/127)
+
+sent 30,795,621,525 bytes  received 1,565 bytes  131,324,618.72 bytes/sec
+total size is 30,788,095,434  speedup is 1.00
+----
 
 == Log into the highside system
 
@@ -97,44 +135,6 @@ curl -I --insecure https://rhui.us-east-2.aws.ce.redhat.com
 HTTP/1.1 200 OK
 Server: nginx/1.20.1
 Date: Mon, 29 Apr 2024 20:15:51 GMT
-----
-
-== Moving the installation content onto highside
-
-[WARNING]
-Ensure that your `oc mirror` command has completed successfully before proceeding with this lab.
-You can confirm the mirroring has finished by looking in your `tmux` pane to see if your prompt has returned.
-
-[.output]
-----
-...
-info: Mirroring completed in 2m47.63s (135.1MB/s)
-Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
-[lab-user@jump low-side-data]$ 
-----
-
-After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump# system to copy the installation content into `/mnt/high-side-data` on the [.highside]#highside# system.
-
-[WARNING]
---
-Please run the `rsync` command in your `tmux` screen.
-This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
-The `rsync` tasks should complete in about 5 minutes.
---
-
-[.lowside,source,bash,role=execute,subs="attributes"]
-----
-rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
-----
-[.output]
-----
-...
-publish/
-publish/.metadata.json
-        332,183 100%  332.37kB/s    0:00:00 (xfr#66, to-chk=0/127)
-
-sent 30,795,621,525 bytes  received 1,565 bytes  131,324,618.72 bytes/sec
-total size is 30,788,095,434  speedup is 1.00
 ----
 
 == Creating a Mirror Registry
