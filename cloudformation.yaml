@@ -592,7 +592,10 @@ Resources:
 
   JumpInstance:
     Type: AWS::EC2::Instance
-    DependsOn: InternetGatewayAttachment
+    DependsOn: 
+      - InternetGatewayAttachment
+      - HighSideInstance
+      - SalsaImageRegistryInstance
     Properties:
       ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "ami"]
       InstanceType: !Ref JumpInstanceType
@@ -669,6 +672,11 @@ Resources:
           # Install the AWS CLI
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
+
+          # scan for other SSH hosts
+          ssh-keyscan highside ${HighSideInstance.PrivateDnsName}  >> /etc/ssh/ssh_known_hosts
+          ssh-keyscan salsa-registry ${SalsaImageRegistryInstance.PrivateDnsName} >> /etc/ssh/ssh_known_hosts
+          ssh-keyscan nat ${NatInstance.PrivateDnsName} >> /etc/ssh/ssh_known_hosts
 
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
