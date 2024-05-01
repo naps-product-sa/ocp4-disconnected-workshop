@@ -232,3 +232,5 @@ We need to start the next section, **Installing OpenShift**
 --
 
 image::vnc-disco-registry-bookmark.png[Desktop / VNC button]
+
+//TODO get the user out of tmux!
