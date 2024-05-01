@@ -1,4 +1,6 @@
-=== Two ways to `oc-mirror` - Partially Disconnected -vs Fully Disconnected
+= Appendix: Lab Details
+
+== Two ways to `oc-mirror` - Partially Disconnected -vs Fully Disconnected
 The `oc-mirror` plugin supports two mirroring scenarios.
 
 If your network security allows it, `oc-mirror` can simultaneously download the OpenShift installation images and upload it into the [.highside]#`mirror-registry` in the disconnected environment#.
