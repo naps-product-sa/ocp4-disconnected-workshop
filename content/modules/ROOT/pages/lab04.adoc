@@ -68,6 +68,8 @@ enter the values below:
 
 |===
 
+//TODO make this much better on how to edit the yaml file
+
 The installer will generate `install-config.yaml` and drop it in `/mnt/high-side-data/install` for you.
 
 We need to make a couple changes to this config before we kick off the install:
