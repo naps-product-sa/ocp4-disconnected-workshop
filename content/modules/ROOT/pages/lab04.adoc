@@ -43,7 +43,7 @@ Then generate `install-config.yaml`:
 [.highside,source,yaml,role=execute,subs="attributes"]
 ----
 cat << EOF > /mnt/high-side-data/install/install-config.yaml
-additionalTrustBundlePolicy: Proxyonly
+additionalTrustBundlePolicy: Always
 apiVersion: v1
 baseDomain: lab
 compute:
@@ -165,7 +165,7 @@ imageContentSources:
 ----
 cat <<EOF >> install-config.yaml
 additionalTrustBundle: |
-$(sed 's/^/  /' /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem)
+$(sed 's/^/  /' /home/lab-user/quay-install/quay-rootCA/rootCA.pem)
 EOF
 ----
 
@@ -203,7 +203,7 @@ The OpenShift tooling is built for every release and version data is encoded in 
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-/mnt/high-side-data/openshift-install create cluster --dir /mnt/high-side-data/install
+openshift-install create cluster --dir /mnt/high-side-data/install
 ----
 [.output]
 ----
