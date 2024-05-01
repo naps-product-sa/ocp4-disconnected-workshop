@@ -1,4 +1,4 @@
-== Disconnected Overview
+= Disconnected Overview
 
 Let's start with an overview of OpenShift's disconnected installation process.
 You can refer to the https://docs.openshift.com/container-platform/latest/installing/disconnected_install/index.html[OpenShift documentation,window=_blank] for more details.
