@@ -29,3 +29,23 @@ span.lowside {
 div.listingblock.output {
   margin: 0;
 }
+
+.nav-banner {
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid black;
+}
+
+div.banner-item-title {
+  width: 100%;
+  font-weight: bold;
+}
+
+.nav-banner > div > span {
+  overflow: scroll;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  user-select: all;
+  -moz-user-select: all;
+  -webkit-user-select: all;
+}

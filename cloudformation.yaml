@@ -641,7 +641,9 @@ Resources:
 
           # Apply the latest security patches
           yum update -y --security
-          yum install -y unzip vim lvm2 git podman tmux jq bind-utils
+          yum install -y unzip vim lvm2 git podman tmux jq bind-utils nano
+
+          echo ${PullSecret} | base64 -d | tr "'" '"' > /home/lab-user/pull-secret-example.json
 
           cat << EOF >> /etc/tmux.conf
           set -g mouse on
@@ -857,7 +859,7 @@ Resources:
 
           # Apply the latest security patches
           yum update -y --security
-          yum install -y unzip vim lvm2 podman tmux jq
+          yum install -y unzip vim lvm2 podman tmux jq nano
 
           echo "set -g mouse on" >> /etc/tmux.conf
 

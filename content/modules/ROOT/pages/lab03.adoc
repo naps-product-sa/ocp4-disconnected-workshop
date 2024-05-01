@@ -49,7 +49,7 @@ Keep in mind that [.highside]#*highside*# is allowed to talk to:
 * 🛑 nothing else 🛑
 
 The output for a blocked website (quay.io) will look similar to this:
-[.highside,source,html,role=execute]
+[.highside,source,bash,role=execute]
 ----
 curl -kI quay.io
 ----
@@ -65,7 +65,7 @@ X-Squid-Error: ERR_ACCESS_DENIED 0
 ----
 
 The output for an allowed website (Red Hat RPM repos in Amazon AWS) will look similar to this:
-[.highside,source,html,role=execute]
+[.highside,source,bash,role=execute]
 ----
 curl -kI https://rhui.us-east-2.aws.ce.redhat.com
 ----
@@ -82,6 +82,12 @@ Last-Modified: Mon, 12 Jul 2021 19:36:32 GMT
 == Moving the installation content into highside / the disconnected network
 
 Let's go back to the [.lowside]#*jump* system# and beginning moving the mirrored content into the disconnected network.
+
+[.highside,source,bash,role=execute]
+----
+exit
+----
+
 The [.lowside]#*jump* system# will use `rsync` to copy the content into `/mnt/high-side-data` on the [.highside]#*highside* system#.
 
 [TIP]
@@ -96,6 +102,16 @@ Please DO NOT close the terminal while `rsync` is working.
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
 rsync -avP /mnt/low-side-data/ lab-user@highside:/mnt/high-side-data/
+----
+[.output]
+----
+...
+publish/
+publish/.metadata.json
+        332,183 100%  332.37kB/s    0:00:00 (xfr#66, to-chk=0/127)
+
+sent 30,795,621,525 bytes  received 1,565 bytes  131,324,618.72 bytes/sec
+total size is 30,788,095,434  speedup is 1.00
 ----
 
 == Creating a Mirror Registry
@@ -122,12 +138,12 @@ And kick off our mirror registry install:
 [.highside,source,bash,role=execute]
 ----
 cd /mnt/high-side-data
-./mirror-registry install --quayHostname $(hostname) --quayRoot /mnt/high-side-data/quay/quay-install --quayStorage /mnt/high-side-data/quay/quay-storage --pgStorage /mnt/high-side-data/quay/pg-data --initPassword discopass
+./mirror-registry install --initPassword discopass
 ----
 [.output]
 ----
 ...
-INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in /mnt/quay/quay-install
+INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in /home/lab-user/quay-install
 INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, discopass)
 ----
 
@@ -135,7 +151,7 @@ Copy the CA into the root trust
 
 [.highside,source,bash,role=execute]
 ----
-sudo cp /mnt/high-side-data/quay/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
+sudo cp /home/lab-user/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust
 ----
 

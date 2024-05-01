@@ -11,7 +11,7 @@ content:
 
 ui:
   bundle:
-    url: https://github.com/rhpds/showroom_theme_summit/releases/download/v0.0.2-pre1/ui-bundle.zip
+    url: https://github.com/rhpds/showroom_theme_summit/releases/download/v0.0.1/ui-bundle.zip
 
   supplemental_files:
   - path: partials/head-meta.hbs
@@ -23,6 +23,31 @@ ui:
     contents: |
       static_files:
       - custom.css
+  - path: partials/nav-banner.hbs
+    contents: |
+      {{#if page.attributes.ssh-command}}
+      <div class="nav-banner">
+      {{#with page.attributes.ssh-command}}
+        <div><div class="banner-item-title">Connect to jump system:</div> <span class="value">{{this}}</span></div>
+      {{/with}}
+      {{#with page.attributes.ssh-password}}
+        <div><div class="banner-item-title">Password:</div> <span class="value">{{this}}</span></div>
+      {{/with}}
+      </div>
+      {{/if}}
+  - path: partials/nav-menu.hbs
+    contents: |
+      <div class="nav-panel-menu is-active" data-panel="menu">
+        <nav class="nav-menu">
+      {{#with page.navigation}}
+          {{#with @root.page.componentVersion}}
+          <h3 class="title" style="display: none;"><a href="{{{relativize ./url}}}" class=" query-params-link">{{./title}}</a></h3>
+          {{/with}}
+      {{> nav-tree navigation=this}}
+      {{/with}}
+      {{> nav-banner}}
+        </nav>
+      </div>
 
 runtime:
   cache_dir: ./.cache/antora

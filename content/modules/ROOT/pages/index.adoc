@@ -70,5 +70,5 @@ If you prefer to use your own VNC viewer, you can connect to the [.lowside]#jump
 ----
 # Your unique lab-user password is {bastion_ssh_password}
 # Your unique VNC password is also {bastion_ssh_password}
-vncviewer -via {bastion_ssh_command} 127.0.0.1:0
+vncviewer {JumpInstancePublicIp}
 ----

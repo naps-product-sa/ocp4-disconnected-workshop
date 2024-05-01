@@ -26,6 +26,10 @@ image::disco-0.svg[disco diagram,800]
 === Downloading Tooling
 
 Let's grab the tools we need for the [.highside]#highside system# - we will also be using some of them on the [.lowside]#jump system#. 
+
+[NOTE]
+The OpenShift tooling is built for every release and version data is encoded in each binary.
+
 Before we begin, `cd` into the `/mnt/low-side-data/` directory:
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
@@ -79,14 +83,15 @@ The `oc-mirror` plugin supports mirroring content directly from upstream sources
 Instead, we'll mirror content to a tarball on disk that we can then sneaker net into the [.highside]#highside system# on the high side.
 We'll then mirror from the tarball into the mirror registry from there.
 
-{counter:mirror}. We'll first need an OpenShift pull secret to authenticate to the Red Hat registries.
-If you're in a guided workshop, your instructor may provide this for you.
-Otherwise, grab your own from the https://console.redhat.com/openshift/install/pull-secret[Hybrid Cloud Console].
+{counter:mirror}. We will need an OpenShift pull secret to authenticate to the Red Hat registries. Grab yours from the https://console.redhat.com/openshift/install/pull-secret[Hybrid Cloud Console,window=_blank].
+
+[NOTE]
+If you cannot get a pull secret from the Red Hat Hybrid Cloud Console, you can find one at `~/pull-secret-example.json`
 
 [.lowside,source,bash,role=execute]
 ----
 mkdir ~/.docker
-cp pull-secret.txt ~/.docker/config.json
+cp pull-secret.json ~/.docker/config.json
 ----
 
 {counter:mirror}. Next, we need to create a `ImageSetConfiguration` that describes the parameters of our mirror.
@@ -98,8 +103,9 @@ We'll still get a fully functional cluster, but *OperatorHub* will be empty. You
 We'll also include an `ubi` image so we can run some tests later.
 Create a file called `imageset-config.yaml` with the following contents:
 
-[source,yaml,subs="attributes"]
+[.lowside,source,yaml,subs="attributes",role=execute]
 ----
+cat << EOF > /home/lab-user/imageset-config.yaml
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
 storageConfig:
@@ -108,7 +114,7 @@ storageConfig:
 mirror:
   platform:
     channels:
-    - name: {openshift_version_channel}
+    - name: {openshift_channel}
       type: ocp
       minVersion: {openshift_version}
       maxVersion: {openshift_version}
@@ -122,12 +128,19 @@ mirror:
   
   additionalImages:
   - name: registry.redhat.io/ubi8/nginx-120
+EOF
 ----
 
-. Now we're ready to kick off the mirror!
+{counter:mirror}. Now we're ready to kick off the mirror!
 This should take a few minutes to complete.
 
 [.lowside,source,bash,role=execute]
 ----
 oc mirror --config imageset-config.yaml file:///mnt/low-side-data
+----
+[.output]
+----
+...
+info: Mirroring completed in 2m52.23s (131.9MB/s)
+Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
 ----

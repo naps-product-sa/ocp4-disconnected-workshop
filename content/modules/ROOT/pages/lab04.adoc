@@ -42,7 +42,7 @@ Then generate `install-config.yaml`:
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-/mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install --log-level=DEBUG
+/mnt/high-side-data/openshift-install create install-config --dir /mnt/high-side-data/install
 ----
 
 The OpenShift installer will prompt you for a number of fields;
@@ -181,13 +181,13 @@ Let's kick off the cluster installation:
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-/mnt/high-side-data/openshift-install create cluster --log-level=DEBUG --dir /mnt/high-side-data/install
+/mnt/high-side-data/openshift-install create cluster --dir /mnt/high-side-data/install
 ----
 [.output]
 ----
 ...
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/myuser/install_dir/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/mnt/high-side-data/install/auth/kubeconfig'
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.disco.lab
 INFO Login to the console with user: "kubeadmin", and password: "password"
 INFO Time elapsed: 30m49s
