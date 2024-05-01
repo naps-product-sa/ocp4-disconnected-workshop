@@ -126,7 +126,7 @@ EOF
 
 They'll look something like this:
 
-[source,yaml,role=execute,subs="attributes"]
+[source,yaml]
 ----
 imageContentSources:
   - mirrors:
@@ -155,7 +155,7 @@ EOF
 
 It should look something like this:
 
-[source,yaml,subs="attributes"]
+[source,yaml]
 ----
 additionalTrustBundle: |
   -----BEGIN CERTIFICATE-----
