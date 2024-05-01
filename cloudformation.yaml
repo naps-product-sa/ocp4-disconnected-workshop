@@ -673,10 +673,12 @@ Resources:
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
           unzip -q -d /tmp /tmp/awscliv2.zip && rm -f /tmp/awscliv2.zip && /tmp/aws/install && rm -rf /tmp/aws
 
-          # scan for other SSH hosts
-          ssh-keyscan highside ${HighSideInstance.PrivateDnsName}  >> /etc/ssh/ssh_known_hosts
-          ssh-keyscan salsa-registry ${SalsaImageRegistryInstance.PrivateDnsName} >> /etc/ssh/ssh_known_hosts
-          ssh-keyscan nat ${NatInstance.PrivateDnsName} >> /etc/ssh/ssh_known_hosts
+          # Disable the "do you trust this SSH host" messages
+          cat << EOF >> /home/lab-user/.ssh/config
+          Host *
+            StrictHostKeyChecking false
+          EOF
+          chown -v lab-user:lab-user /home/lab-user/.ssh/config
 
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
