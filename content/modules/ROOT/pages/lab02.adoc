@@ -73,7 +73,7 @@ The previous tool, `oc adm release mirror ...`, is still available but not recom
 
 [NOTE]
 --
-Disconnected OpenShift installations can use any _Image Registry_ that support Docker v2 API, such as:
+Disconnected OpenShift installations can use any _image registry_ that supports the Docker v2 API, [.underline]#provide TLS encryption, and require authenticated image pulls#, such as:
 
 * Harbor
 * JFrog Artifactory
@@ -231,12 +231,12 @@ tmux
 ----
 [.output]
 ----
-[lab-user@jump ~]$   # This is the top *pane*
+[lab-user@jump ~]$   ### This is the top pane ###
 
 
 
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[lab-user@jump ~]$   # This is the bottom *pane*
+[lab-user@jump ~]$   ### This is the bottom pane ###
 
 
 
