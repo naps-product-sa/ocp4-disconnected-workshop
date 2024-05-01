@@ -14,6 +14,8 @@ asciidoc:
 
     page-pagination: true
     page-links:
+    - url: https://github.com/naps-product-sa/ocp4-disconnected-workshop
+      text: Lab Guide Source
     - url: https://redhat.com
       text: Red Hat
     - url: https://www.redhat.com/en/summit
