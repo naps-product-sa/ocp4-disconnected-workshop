@@ -1,4 +1,4 @@
-= Logging in to your OpenShift Cluster
+= Post-Install Configuration
 
 **Congratulations** you've successfully created an OpenShift cluster in a disconnected environment!
 
@@ -7,17 +7,20 @@
 Or, perhaps, your cluster will finish installing in the next ~30 minutes. 😸
 
 Don't worry!
-Your workshop environment also includes a previously-built disconnected **Salsa** cluster.
+Your workshop environment also includes a previously-built disconnected **Salsa cluster**.
+You can complete this lab using either cluster.
+
+image::disco-4.svg[disco diagram,800]
 
 //TODO - more highlighting for the [.salsa] objects???
 
 == Are we done yet?
 
-Installing OpenShift in a disconnected environment concludes the "day 1" tasks.
+Installing OpenShift in a disconnected environment concludes the __"day 1"__ tasks.
 However, a disconnected cluster is more useful when you make a few simple configuration changes.
-These are commonly referred to as "day 2" tasks.
+These are commonly referred to as __"day 2"__ tasks.
 
-Here are a few suggested "day 2" tasks that will improve your experience.
+Here are a few suggested __"day 2"__ tasks that will improve your experience.
 
 {counter:overview}. Disable the default app / Operator `CatalogSources`
 
@@ -27,7 +30,8 @@ Here are a few suggested "day 2" tasks that will improve your experience.
 
 {counter:overview}. Update OpenShift from a disconnected _Update Server_
 
-* You may not have enough time in the Summit 2024 lab break-out to complete this task
+[INFO]
+You may not have enough time during the Summit 2024 lab session to complete the __Update Server__ task.
 
 == Accessing your cluster
 
@@ -60,12 +64,12 @@ Password: fKLcS-EuJDs-SfrVD-nbbvA
 --
 The pre-built **salsa.lab** cluster credentials are `admin` / `admin`.
 
-There is also a non-admin user available with `user` / `user`.
+There is also a non-admin user available as `user` / `user`.
 --
 
 Now you can click the *Desktop* button on the right-hand side and use Firefox to login to the OpenShift __Web Console__.
 The __Web Console__ is the very last part of OpenShift to come online.
-If you are trying to connect to your [.highside]#disco.lab# cluster, and see an "**Application is not available**" message, it means the installation has completed yet.
+If you are trying to connect to your [.highside]#disco.lab# cluster, and see an "**Application is not available**" message, it means the installation hasn't completed yet.
 
 Your workshop environment includes a Firefox bookmark to quickly connect with the __Web Console__.
 
@@ -98,23 +102,19 @@ svc/kubernetes - 172.30.0.1:443 -> 6443
 View details with 'oc describe <resource>/<name>' or list resources with 'oc get all'.
 ----
 
-There's much work to be done after the initial installation.
-As a cluster administrator, you need to be mindful of how to manage operators, upgrades, patching, configuration, and much more.
+Now that you're logged in via the command-line or the _Web Console_ we can proceed with the __"day 2"__ tasks.
 
-
-== Post-Install Cluster Configuration
+== Post-Install Cluster Configurations
 
 Now that we have a cluster up and running (or we are using the pre-made salsa.lab cluster) we can perform some
 post-install steps that are specific to a disconnected environment.
 
-image::disco-4.svg[disco diagram,800]
-
-First, lets log in to our cluster
-
 [cols="a,a",options="header"]
 |===
-| Using the pre-baked `salsa.lab`
-| Using the lab-provisioned `disco.lab`
+| Using the pre-built `salsa.lab` cluster
+| Using your own `disco.lab` cluster
+
+**Note to self** - do we want to use `ssh`? I would suggest doing `oc login` from the [.lowside]#jump system#.
 
 |
 [source,bash,role=execute]
@@ -137,12 +137,12 @@ oc login https://api.disco.lab:6443
 * *Password:* admin
 |===
 
-== Add our custom catalog source
+=== Add our custom catalog source
 // https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned
 
 TODO
 
-== Deploy a operator
+=== Deploy a operator
 
 TODO
 
@@ -152,6 +152,6 @@ TODO
 // == Remove default samples operator
 // https://docs.openshift.com/container-platform/4.14/openshift_images/configuring-samples-operator.html#configuring-samples-operator
 
-== Update cluster
+=== Update cluster
 
 TODO

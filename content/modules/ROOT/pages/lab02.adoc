@@ -161,7 +161,7 @@ Now that the mirroring and installation tools have been downloaded and extacted,
 A **_pull secret_** is JSON-formated data that combines authentication information for one or more Image Registries into a single file.
 You can find your own _pull secret_ in the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
 
-More information about _pull secrets_ can be found in the xref:appendix01.adoc[Appendix].
+More information about _pull secrets_ can be found in the xref:appendix01.adoc#pull-secrets[Appendix].
 
 This workshop provides a generic _pull secret_ in order to avoid delays and frustrations using `vi` or `nano`.
 --

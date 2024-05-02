@@ -1,5 +1,93 @@
 = Appendix: Lab Details
 
+== Pull Secrets
+
+A **_pull secret_** is JSON-formated data that combines authentication information for one or more Image Registries into a single file.
+You can find your own _pull secret_ in the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
+
+Connected cluster's, and systems that use `oc-mirror` to download the OpenShift installation images, are required to have valid authentication for the quay.io registry. The other registries in your __pull secret__ allow your OpenShift cluster to build a sample application catalog for your developers, fetch official content from Red Hat, and participate in the Insight monitoring service.
+
+The __pull secret__ of a disconnected cluster is only required to have authentication details for the `mirror-registry` and any other registries that your applications depend upon.
+
+OpenShift provides a __global pull secret__, and allows individual `namespaces` / projects to create their own __pull secrets__. It is not allowed to have multiple authentication for a single registry (e.g. defined in the __global__ and __namespaced pull secrets__.)
+
+The `jq` tool makes it easy to inspect and reformat the contents of a __pull secret__.
+And you can add and remove entries in a __pull secret__ using `podman`.
+
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+jq . ~/.docker/config.json
+----
+[.output]
+----
+{
+  "auths": {
+    "cloud.openshift.com": {
+      "auth": "dXNlcm5hbWU6cGFzc3dvcmQ=",
+      "email": "groovy@disco.lab"
+    },
+    "quay.io": {
+      "auth": "dXNlcm5hbWU6cGFzc3dvcmQ=",
+      "email": "groovy@disco.lab"
+    },
+    "registry.connect.redhat.com": {
+      "auth": "dXNlcm5hbWU6cGFzc3dvcmQ=",
+      "email": "groovy@disco.lab"
+    },
+    "registry.redhat.io": {
+      "auth": "dXNlcm5hbWU6cGFzc3dvcmQ=",
+      "email": "groovy@disco.lab"
+    }
+  }
+}
+----
+
+[TIP]
+--
+The __"auth"__ string is base64-encoded data.
+If you decode the string you will see that it says `username:password`
+--
+
+The `install-config.yaml` file doesn't allow multi-line __pull secrets__.
+You can collapse / condense / compact multi-line JSON with `jq -c`
+
+[.highside,source,bash,role=execute,subs="attributes"]
+----
+cat /run/user/1001/containers/auth.json
+
+jq -c . /run/user/1001/containers/auth.json
+----
+[.output]
+----
+{
+  "auths": {
+    "mirror-registry.disco.lab:8443": {
+      "auth": "aW5pdDpkaXNjb3Bhc3M="
+    }
+  }
+}
+
+{"auths":{"mirror-registry.disco.lab:8443":{"auth":"aW5pdDpkaXNjb3Bhc3M="}}}
+----
+
+Add and remove __pull secret_ entries using `podman`
+
+[.highside,source,bash,role=execute,subs="attributes"]
+----
+podman login mirror-registry.disco.lab:8443
+
+podman logout mirror-registry.disco.lab:8443
+----
+[.output]
+----
+Username: init
+Password: discopass
+Login Succeeded!
+
+Removed login credentials for ip-10-0-52-200.us-west-2.compute.internal:8443
+----
+
+
 == Two ways to `oc-mirror` - Partially Disconnected -vs Fully Disconnected
 The `oc-mirror` plugin supports two mirroring scenarios.
 
@@ -16,25 +104,7 @@ Another instance of `oc-mirror` will open the .tar file and upload the contents 
 This is documented as a https://docs.openshift.com/container-platform/4.15/installing/disconnected_install/installing-mirroring-disconnected.html#mirroring-image-set-full[fully disconnected environment,window=_blank].
 
 
-== Creating an Air Gap
-
-According to the https://www.rfc-editor.org/rfc/rfc4949[Internet Security Glossary], an Air Gap is an interface between two systems at which (a) they are not connected physically and (b) any logical connection is not automated (i.e., data is transferred through the interface only manually, under human control).
-In disconnected installations, the air gap exists between the Low Side and the High Side, so it is between these systems where a manual data transfer, or *sneaker net* is required.
-
-== Preparing the Low Side
-
-A disconnected installation begins with downloading content and tooling to a system we will refer to as the *jump* that has outbound access to the Internet.
-This server resides in a network environment commonly referred to as the *Low Side* due to its low security profile.
-Compliance requirements usually prevent the low side from housing sensitive data or private information.
-
-== Preparing the High Side
-
-We then provision a system we refer to as *highside* which has no Internet access and resides in a network environment commonly referred to as the *High Side* due to its high security profile.
-It is in the high side where sensitive data and production systems (like the cluster we're about to provision) live.
-During this phase, we'll transfer the content and tooling from the low side to the high side, a process which may entail use of a VPN or physical media like a DVD or USB.
-Once our transfer is complete, we'll start a *mirror registry* on the highside system which will supply the container images needed for our OpenShift installation, since our installer can't reach out to quay.io or registry.redhat.io directly from here.
-
-=== Proxy
+== Proxy
 
 The high side protects outbound traffic with a http://www.squid-cache.org/[Squid proxy] running on the `nat system`.
 The `nat system / proxy` prevents any egress traffic not listed in its `/etc/squid/whitelist.txt` file.
@@ -57,13 +127,21 @@ There may be situations where you wish to add more exceptions here, such as cont
 Now that our air gap is in place, let's start prepping the low side.
 
 
-== Preparing the Installation
+== `openshift-install` details
 
 The OpenShift installation process is initiated from the *highside* server.
 There are a handful of different ways to install OpenShift, but for this lab we're going to be using installer-provisioned infrastructure (IPI).
 By default, the installation program acts as an installation wizard, prompting you for values that it cannot determine on its own and providing reasonable default values for the remaining parameters.
-We'll then customize the `install-config.yaml` file that is produced to specify advanced configuration for our disconnected installation.
-The installation program then provisions the underlying infrastructure for the cluster.
+After the wizard portion of `openshift-install` completes, you then customize the `install-config.yaml` file that was produced to specify the disconnected pieces.
+With the standard values and the disconnected values added to the `install-config.yaml` file, `openshift-install` can automatically provisions the underlying infrastructure for the cluster.
+
+Examples of the __underlying infrastructure__ include:
+
+* Virtual Machines / Cloud instances
+* DNS records
+* Firewall / Security Groups
+* Load Balancers
+* IAM permissions that allow the cluster to scale and self-heal
 
 [TIP]
 You may notice that nodes are provisioned through a process called _Ignition_.
@@ -82,14 +160,3 @@ Once configuration has been completed, we can kick off the OpenShift Installer a
 Here's a diagram describing everything we've discussed so far: 
 
 image::disco-1.svg[disco diagram,800]
-
-== Accessing the Cluster
-
-Since the cluster we'll produce is in a disconnected environment, it won't be publicly accessible via the Internet.
-In many cases, cluster access is restricted to hosts that reside in the high side network.
-In our lab, we'll use the *jump* system to access the cluster running in the high side network.
-
-== Planning Ahead
-
-Once the cluster is up, what comes next?
-This lab ends when the cluster is installed, but there are many more considerations to made for how you manage things like upgrades, operators, patches, and more.
