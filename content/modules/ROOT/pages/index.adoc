@@ -60,8 +60,10 @@ echo "Run this command on the highside system"
 
 [TIP]
 --
-Use the *Copy* button in the corner of the command text box to your advantage!
-You can paste by pressing Ctrl-v or Shift + Insert
+Use the *Copy* button in the corner of the command boxes to your advantage!
+
+On Linux, press **Ctrl + Shift + V** to paste.
+Using **Ctrl + Insert** (copy) and **Shift + Insert** (paste) also works.
 --
 
 [NOTE]

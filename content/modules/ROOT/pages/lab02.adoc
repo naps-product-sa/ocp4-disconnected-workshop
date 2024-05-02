@@ -91,8 +91,8 @@ cd /mnt/low-side-data/
 --
 Click the *Copy* button to quickly grab all of the commands in the code blocks.
 
-On Linux, press Ctrl + Shift + V to paste.
-Using Ctrl + Insert (copy) and Shift + Insert (paste) also work.
+On Linux, press **Ctrl + Shift + V** to paste.
+Using **Ctrl + Insert** (copy) and **Shift + Insert** (paste) also works.
 
 The pasted commands won't run immediately.
 You must to hit Enter/Return yourself.
