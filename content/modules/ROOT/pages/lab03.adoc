@@ -180,6 +180,8 @@ total size is 30,788,095,434  speedup is 1.00
 
 Looking at the workshop environment diagram, we can see how the [.highside]#highside# system is disconnected.
 
+image::disco-5.svg[disco diagram,800]
+
 [NOTE]
 --
 The [.highside]#highside systems# are configured to use a `nat / squid proxy` server to access a few resources
@@ -194,8 +196,6 @@ The [.highside]#highside systems# are configured to use a `nat / squid proxy` se
 
 The xref:appendix01.adoc[Appendix] has more information about the `nat / squid` proxy configuration.
 --
-
-image::disco-5.svg[disco diagram,800]
 
 Please use the following commands to prove that the [.highside]#highside# system is unable to connect to [.underline]#openshift.com# and [.underline]#quay.io#.
 
