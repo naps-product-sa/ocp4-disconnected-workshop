@@ -1,16 +1,94 @@
-= Accessing the Cluster
+= Logging in to your OpenShift Cluster
+
+**Congratulations** you've successfully created an OpenShift cluster in a disconnected environment!
+
+🪩 💃 It's DISCO time! 🕺 🪩
+
+Or, perhaps, your cluster will finish installing in the next ~30 minutes. 😸
+
+Don't worry!
+Your workshop environment also includes a previously-built disconnected **Salsa** cluster.
+
+//TODO - more highlighting for the [.salsa] objects???
+
+== Are we done yet?
+
+Installing OpenShift in a disconnected environment concludes the "day 1" tasks.
+However, a disconnected cluster is more useful when you make a few simple configuration changes.
+These are commonly referred to as "day 2" tasks.
+
+Here are a few suggested "day 2" tasks that will improve your experience.
+
+{counter:overview}. Disable the default app / Operator `CatalogSources`
+
+{counter:overview}. Create your own app / Operator `CatalogSource`
+
+{counter:overview}. Install additional `ImageContentSourcePolicies`
+
+{counter:overview}. Update OpenShift from a disconnected _Update Server_
+
+* You may not have enough time in the Summit 2024 lab break-out to complete this task
+
+== Accessing your cluster
+
+Because of time constraints, we recommend that you decide now to either use your **disco.lab** cluster, or the prebuilt **salsa.lab** cluster.
+
+The instructions are the same - only the names change.
+
+We will assume for now that you will be using the pre-built **salsa.lab** cluster.
+
+=== Accessing the cluster's web console
+
+Before you launch a web browser, you need to find the randomized password that was assigned to your cluster's `kubeadmin` user.
+The password is printed when `openshift-install` finishes.
+But, if you don't want to wait, you can lookup the password with these commands:
+
+[.highside,source,bash,role=execute,subs="attributes"]
+----
+echo "URL: https://console-openshift-console.apps.disco.lab"
+echo "Username: kubeadmin"
+echo "Password: $(more /mnt/high-side-data/install/auth/kubeadmin-password)"
+----
+[.output]
+----
+URL: https://console-openshift-console.apps.disco.lab
+Username: kubeadmin
+Password: fKLcS-EuJDs-SfrVD-nbbvA
+----
+
+[TIP]
+--
+The pre-built **salsa.lab** cluster credentials are `admin` / `admin`.
+
+There is also a non-admin user available with `user` / `user`.
+--
+
+Now you can click the *Desktop* button on the right-hand side and use Firefox to login to the OpenShift __Web Console__.
+The __Web Console__ is the very last part of OpenShift to come online.
+If you are trying to connect to your [.highside]#disco.lab# cluster, and see an "**Application is not available**" message, it means the installation has completed yet.
+
+Your workshop environment includes a Firefox bookmark to quickly connect with the __Web Console__.
+
+image::vnc-disco-openshift-bookmark.png[console]
+
+The web-based VNC client is a bit klunky when it comes to **copy** and **paste**.
+You can copy and paste into the VNC desktop using __noVNC__'s tool ribbon (hidden by default.) 
+
+image::vnc-copy-paste.png[console]
+
+
+//TODO - cleanup needed here
+=== Accessing the cluster from the command-line
 
 You should be able to access the API server from the *highside* system by leveraging the `kubeconfig` file the installer creates for you:
 
-[source,bash,role=execute]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
-export KUBECONFIG=/mnt/high-side/install/auth/kubeconfig
+mkdir -vp $HOME/.kube
+cp -v /mnt/high-side/install/auth/kubeconfig $HOME/.kube/config
 oc status
 ----
-
-Example output:
-
-[source,bash,role=execute]
+[.output]
 ----
 In project default on server https://api.disco.lab:6443
 
@@ -20,26 +98,9 @@ svc/kubernetes - 172.30.0.1:443 -> 6443
 View details with 'oc describe <resource>/<name>' or list resources with 'oc get all'.
 ----
 
-== Accessing the Web Console
-
-. Now you should be able to access the console in the VNC session running on the *jump* system:
-[source,bash,role=execute]
-----
-oc whoami --show-console
-----
-
-image::console.png[console]
-
-Success!
-
-Now the cluster's up and we can successfully access it.
-
-== What's next?
-
 There's much work to be done after the initial installation.
 As a cluster administrator, you need to be mindful of how to manage operators, upgrades, patching, configuration, and much more.
 
-== GLUE
 
 == Post-Install Cluster Configuration
 
