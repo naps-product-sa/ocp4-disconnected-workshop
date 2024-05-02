@@ -26,6 +26,20 @@ span.lowside {
   padding: 0.1em 0.4em;
 }
 
+.salsa,
+div.listingblock.execute.salsa > div > pre > code,
+div.listingblock.salsa > div > pre > code {
+  font-family: monospace;
+  background-color: rgb(240, 191, 193);
+
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+span.salsa {
+  padding: 0.1em 0.4em;
+}
+
 div.listingblock.output {
   margin: 0;
 }
