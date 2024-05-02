@@ -8,7 +8,7 @@ image::disco-3.svg[disco diagram,800]
 
 Here's a diagram describing the inputs and outputs of the installation configuration process: 
 
-image::install-overview-disco.png[Install Overview]
+image::install-overview-disco.svg[Install Overview]
 
 {counter:install}. Let's start by creating a workspace on the [.highside]#*highside* system# to house our installation materials:
 
