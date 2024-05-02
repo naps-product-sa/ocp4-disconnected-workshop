@@ -65,8 +65,6 @@ The pre-built **salsa.lab** cluster has preconfigured authentication for the pur
 * There is also a non-admin user available as `user` / `user`.
 --
 
-We will assume for now that you will be using the pre-built [.salsa]#salsa.lab cluster#.
-
 === Accessing the cluster with the command-line interface
 
 We can access either cluster from the [.lowside]#jump system#:
@@ -118,6 +116,7 @@ You can copy and paste into the VNC desktop using __noVNC__'s tool ribbon (hidde
 
 image::vnc-copy-paste.png[console]
 
+We will assume for now that you will be using the pre-built [.salsa]#salsa.lab cluster#.
 
 // === Accessing the cluster from the command-line
 
