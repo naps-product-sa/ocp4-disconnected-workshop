@@ -87,10 +87,18 @@ Please begin by changing your directory to `/mnt/low-side-data/`
 cd /mnt/low-side-data/
 ----
 
+[TIP]
+--
+Click the *Copy* button to quickly grab all of the commands in the code blocks.
+
+On Linux, press Ctrl + Shift + V to paste.
+Using Ctrl + Insert (copy) and Shift + Insert (paste) also work.
+
+The pasted commands won't run immediately.
+You must to hit Enter/Return yourself.
+--
+
 Use the following commands to download and extract the following tools.
-Click the *Copy* button to quickly grab all of the commands in each of the following code blocks.
-The commands won't run immediately after pasting.
-You'll need to hit Enter/Return yourself.
 
 * `oc-mirror`: A plugin to the `oc` command for mirorring OpenShift releases, apps / Operators, additional images, and Helm charts
 
