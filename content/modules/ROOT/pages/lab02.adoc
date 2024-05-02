@@ -116,8 +116,6 @@ sudo cp -v oc-mirror /bin
 [.lowside,source,bash,role=execute]
 ----
 curl -L -o mirror-registry.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz
-tar -xzf mirror-registry.tar.gz
-rm -f /mnt/low-side-data/mirror-registry.tar.gz
 ----
 
 * `oc`: The OpenShift command line interface
@@ -161,16 +159,14 @@ Now that the mirroring and installation tools have been downloaded and extacted,
 [NOTE]
 --
 A **_pull secret_** is JSON-formated data that combines authentication information for one or more Image Registries into a single file.
-You should download your own _pull secret_ from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
+You can find your own _pull secret_ in the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
 
 More information about _pull secrets_ can be found in the xref:appendix01.adoc[Appendix].
 
-If you are unable to download your own _pull secret_ from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank], you can use the workshop's _pull secret_ that is saved on the [.lowside]#jump system# at `/home/lab-user/pull-secret-example.json`
+This workshop provides a generic _pull secret_ in order to avoid delays and frustrations using `vi` or `nano`.
 --
 
-Please begin by moving your _pull secret_ into the default location.
-
-//TODO - create instructions for using the student's own pull secret
+Please begin by copying the provided _pull secret_ into the default location.
 
 [.lowside,source,bash,role=execute]
 ----

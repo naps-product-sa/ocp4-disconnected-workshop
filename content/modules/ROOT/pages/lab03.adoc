@@ -27,50 +27,43 @@ The tasks in this lab include:
 
 {counter:overview}. Uploading the `.tar` file's contents into the `mirror-registry`
 
-== Moving the installation content onto highside
 
-[WARNING]
-Ensure that your `oc mirror` command has completed successfully before proceeding with this lab.
-You can confirm the mirroring has finished by looking in your `tmux` pane to see if your prompt has returned.
+== Out-of-Order operations
 
-[.output]
-----
-...
-info: Mirroring completed in 2m47.63s (135.1MB/s)
-Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
-[lab-user@jump low-side-data]$ 
-----
+In order to make good use of our time together, we will perform the tasks described above out-of-order.
+We will start by copying the `mirror-registry` file from the [.lowside]#lowside# system onto the [.highside]#highside# system.
+Next, we will log into the [.highside]#highside# system to install the `mirror-registry`.
+While the `mirror-registry` installs itself (5 minutes), we will demonstrate that the [.highside]#highside# system is disconnected.
+The `oc-mirror` download command (15 minutes) should be finished by the time we finish those tasks.
+We will end this section by transfering the 25GB `.tar` file and uploading its contents into the `mirror-registry`
 
-After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump# system to copy the installation content into `/mnt/high-side-data` on the [.highside]#highside# system.
+== Creating a Mirror Registry
 
-[WARNING]
---
-Please run the `rsync` command in your `tmux` screen.
-This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
-The `rsync` tasks should complete in about 5 minutes.
---
+Let's begin by using the `rsync` command to copy the `mirror-registry` file from the [.lowside]#lowside# system onto the [.highside]#highside# system. Please run this command in the other `tmux` pane.
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
+rsync -avP /mnt/low-side-data/mirror-registry.tar.gz highside:/mnt/high-side-data/
 ----
 [.output]
 ----
-...
-publish/
-publish/.metadata.json
-        332,183 100%  332.37kB/s    0:00:00 (xfr#66, to-chk=0/127)
+Warning: Permanently added 'highside' (ED25519) to the list of known hosts.
+sending incremental file list
+mirror-registry.tar.gz
+    706,802,330 100%  133.34MB/s    0:00:05 (xfr#1, to-chk=0/1)
 
-sent 30,795,621,525 bytes  received 1,565 bytes  131,324,618.72 bytes/sec
-total size is 30,788,095,434  speedup is 1.00
+sent 706,975,008 bytes  received 35 bytes  128,540,916.91 bytes/sec
+total size is 706,802,330  speedup is 1.00
 ----
 
-== Log into the highside system
+Great! Now its time to log into the [.highside]#highside# system.
 
-In your workshop environment you cannot log into the [.highside]#highside# system directly because its in a disconnected network.
-Many customers access their disconnected systems using a VPN, a jump server, or with dedicated workstations.
+=== Logging into the highside system
 
-Passwordless SSH has been enabled for your convenience.
+In the real world, customers often access their disconnected systems using a VPN, a jump server, or with dedicated workstations.
+In your workshop environment, an exception was created in the firewall that allows (only) the [.lowside]#jump system# to SSH to the [.highside]#highside# system.
+
+Password-less SSH has been enabled for your convenience.
 Please log into the [.highside]#highside# system using `ssh` from the [.lowside]#jump# system.
 
 [.lowside,source,bash,role=execute,subs="attributes"]
@@ -84,75 +77,27 @@ Last login: Wed May  1 07:56:13 2024 from 10.0.6.23
 [lab-user@highside ~]$
 ----
 
-== Prove that highside is disconnected
-
-image::disco-5.svg[disco diagram,800]
-
-[NOTE]
---
-The [.highside]#highside systems# are configured to use a `nat / squid proxy` server to access a few resources
-
-{counter:exceptions}. The [.highside]#highside# system allows inbound SSH connections from the [.lowside]#jump system#
-
-{counter:exceptions}. The [.highside]#highside# system is allowed to install RHEL RPMs from the repos inside the Amazon AWS Cloud (not from the public repos at https://cdn.redhat.com)
-
-{counter:exceptions}. Your [.highside]#openshift.demo.lab# cluster will be allowed to talk to the Amazon AWS Cloud APIs. More details about this permission will be provided in the next lab
-
-{counter:exceptions}. 🛑 **nothing else** 🛑 is allowed into or out of the [.highside]#highside network#
-
-The xref:appendix01.adoc[Appendix] has more information about the `nat / squid` proxy configuration.
---
-
-Please use the following commands to prove that the [.highside]#highside# system is unable to connect to [.underline]#openshift.com# and [.underline]#quay.io#.
-
-You may recall that:
-
-* The `oc` and `openshift-install` tools were downloaded from [.underline]#openshift.com#
-* The OpenShift installation images were downloaded from [.underline]#quay.io#
-
-If you try to access a blocked website, [.underline]#quay.io#, you'll see an **Acces Denied** message like this.
-
-[.highside,source,bash,role=execute]
-----
-curl -I quay.io
-----
-[.output]
-----
-HTTP/1.1 403 Forbidden
-Server: squid/5.5
-Date: Mon, 29 Apr 2024 20:08:15 GMT
-X-Squid-Error: ERR_ACCESS_DENIED 0
-----
-
-The [.highside]#highside# system is configured to install RPMs (like `podman`) from the Red Hat Update Infrastructure (RHUI) repos inside the Amazon AWS Cloud.
-The output for an allowed website, like that repo, will look similar to this:
-[.highside,source,bash,role=execute]
-----
-curl -I --insecure https://rhui.us-east-2.aws.ce.redhat.com
-----
-[.output]
-----
-HTTP/1.1 200 OK
-Server: nginx/1.20.1
-Date: Mon, 29 Apr 2024 20:15:51 GMT
-----
-
-== Creating a Mirror Registry
-
-[TIP]
---
-You can begin working on this section while the previous `rsync` command is still copying data.
-`rsync` transfers files alphabetically, which is good for us because `mirror-registry` transfers before the larger `.tar` file.
---
-
 Now that the [.highside]#highside# system has the mirroring tools and installation content transferred, we can setup the `mirror-registry`.
-The command below will change directories and set the `mirror-registry` password to `discopass` for the `init` user.
-The automation that installs and configures the `mirror-registry` takes ~5 minutes to complete.
-Unfortunately we can't move on to the next step of trusting the TLS certificate until the `mirror-registry` has finished installed.
+We need to change directories and extract the `mirror-registry` files first.
 
 [.highside,source,bash,role=execute]
 ----
 cd /mnt/high-side-data
+tar -xzvf mirror-registry.tar.gz
+----
+[.output]
+----
+image-archive.tar
+execution-environment.tar
+mirror-registry
+----
+
+Now we install the `mirror-registry` and set a password for the initial user.
+The automation that installs and configures the `mirror-registry` takes ~5 minutes to complete.
+Unfortunately we can't move on to the next step of trusting the TLS certificate until the `mirror-registry` has finished installing.
+
+[.highside,source,bash,role=execute]
+----
 ./mirror-registry install --initPassword discopass
 ----
 [.output]
@@ -187,11 +132,104 @@ podman login -u init -p discopass $(hostname):8443
 Login Succeeded!
 ----
 
-The `podman login` command created an authentication file / (_pull secret_) at `/run/user/1000/containers/auth.json`.
-Note that the `oc-mirror` command looks for _pull secrets_ in both locations:
+The `podman login` command creates an authentication file / (_pull secret_) at `/run/user/1000/containers/auth.json`.
+Note that the `oc-mirror` command looks for _pull secrets_ in multiple locations:
 
 * `$HOME/.docker/config.json` (created on the [.lowside]#lowside jump# system)
 * `$XDG_RUNTIME_DIR/containers/auth.json` (created on the [.highside]#highside# system)
+
+== Moving the installation content onto `highside`
+
+[WARNING]
+Make sure that your `oc mirror` command has completed successfully before proceeding.
+You can confirm the mirroring has finished by looking in your `tmux` pane to see if your prompt has returned.
+
+[.output]
+----
+...
+info: Mirroring completed in 2m47.63s (135.1MB/s)
+Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+[lab-user@jump low-side-data]$ 
+----
+
+After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump# system to copy the installation content into `/mnt/high-side-data` on the [.highside]#highside# system.
+
+[WARNING]
+--
+Please run the `rsync` command in your `tmux` screen.
+This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
+The `rsync` tasks should complete in about 5 minutes.
+--
+
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
+----
+[.output]
+----
+...
+publish/
+publish/.metadata.json
+        332,183 100%  332.37kB/s    0:00:00 (xfr#66, to-chk=0/127)
+
+sent 30,795,621,525 bytes  received 1,565 bytes  131,324,618.72 bytes/sec
+total size is 30,788,095,434  speedup is 1.00
+----
+
+== Prove that highside is disconnected
+
+Looking at the workshop environment diagram, we can see how the [.highside]#highside# system is disconnected.
+
+[NOTE]
+--
+The [.highside]#highside systems# are configured to use a `nat / squid proxy` server to access a few resources
+
+{counter:exceptions}. The [.highside]#highside# system allows inbound SSH connections from the [.lowside]#jump system#
+
+{counter:exceptions}. The [.highside]#highside# system is allowed to install RHEL RPMs from the repos inside the Amazon AWS Cloud (not from the public repos at https://cdn.redhat.com)
+
+{counter:exceptions}. Your [.highside]#openshift.demo.lab# cluster will be allowed to talk to the Amazon AWS Cloud APIs. More details about this permission will be provided in the next lab
+
+{counter:exceptions}. 🛑 **nothing else** 🛑 is allowed into or out of the [.highside]#highside network#
+
+The xref:appendix01.adoc[Appendix] has more information about the `nat / squid` proxy configuration.
+--
+
+image::disco-5.svg[disco diagram,800]
+
+Please use the following commands to prove that the [.highside]#highside# system is unable to connect to [.underline]#openshift.com# and [.underline]#quay.io#.
+
+You may recall that:
+
+* The `oc` and `openshift-install` tools were downloaded from [.underline]#openshift.com#
+* The OpenShift installation images were downloaded from [.underline]#quay.io#
+
+If you try to access a blocked website, [.underline]#quay.io#, you'll see an **Acces Denied** message like this.
+
+[.highside,source,bash,role=execute]
+----
+curl -I quay.io
+----
+[.output]
+----
+HTTP/1.1 403 Forbidden
+Server: squid/5.5
+Date: Mon, 29 Apr 2024 20:08:15 GMT
+X-Squid-Error: ERR_ACCESS_DENIED 0
+----
+
+The [.highside]#highside# system is configured to install RPMs (like `podman`) from the Red Hat Update Infrastructure (RHUI) repos inside the Amazon AWS Cloud.
+The output for an allowed website, like that repo, will look similar to this:
+[.highside,source,bash,role=execute]
+----
+curl -I --insecure https://rhui.us-east-2.aws.ce.redhat.com
+----
+[.output]
+----
+HTTP/1.1 200 OK
+Server: nginx/1.20.1
+Date: Mon, 29 Apr 2024 20:15:51 GMT
+----
 
 == Mirroring Content
 
