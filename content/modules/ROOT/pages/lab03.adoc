@@ -138,7 +138,7 @@ Note that the `oc-mirror` command looks for _pull secrets_ in multiple locations
 * `$HOME/.docker/config.json` (created on the [.lowside]#lowside jump# system)
 * `$XDG_RUNTIME_DIR/containers/auth.json` (created on the [.highside]#highside# system)
 
-== Moving the installation content onto `highside`
+== Transfer the installation content
 
 [WARNING]
 Make sure that your `oc mirror` command has completed successfully before proceeding.

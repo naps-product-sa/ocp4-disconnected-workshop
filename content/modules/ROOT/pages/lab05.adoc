@@ -12,8 +12,6 @@ You can complete this lab using either cluster.
 
 image::disco-4.svg[disco diagram,800]
 
-//TODO - more highlighting for the [.salsa] objects???
-
 == Are we done yet?
 
 Installing OpenShift in a disconnected environment concludes the __"day 1"__ tasks.
@@ -35,17 +33,16 @@ You may not have enough time during the Summit 2024 lab session to complete the 
 
 == Accessing your cluster
 
-Because of time constraints, we recommend that you decide now to either use your **disco.lab** cluster, or the prebuilt **salsa.lab** cluster.
+Because of time constraints, we recommend that you decide now to either use your [.highside]#disco.lab cluster#, or the prebuilt [.salsa]#salsa.lab cluster#.
 
 The instructions are the same - only the names change.
 
-We will assume for now that you will be using the pre-built **salsa.lab** cluster.
+=== Retrieving the default `kubeadmin` password
 
-=== Accessing the cluster's web console
+The OpenShift install process creates a randomized password for the default cluster administrative user, `kubeadmin` and it is printed when `openshift-install` finishes.
+However, if you don't want to wait or your terminal output is gone you can lookup the password:
 
-Before you launch a web browser, you need to find the randomized password that was assigned to your cluster's `kubeadmin` user.
-The password is printed when `openshift-install` finishes.
-But, if you don't want to wait, you can lookup the password with these commands:
+With the [.highside]#highside system#:
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
@@ -62,12 +59,53 @@ Password: fKLcS-EuJDs-SfrVD-nbbvA
 
 [TIP]
 --
-The pre-built **salsa.lab** cluster credentials are `admin` / `admin`.
+The pre-built **salsa.lab** cluster has preconfigured authentication for the purposes of this lab:
 
-There is also a non-admin user available as `user` / `user`.
+* There is a cluster-admin user available as `admin` / `admin`.
+* There is also a non-admin user available as `user` / `user`.
 --
 
-Now you can click the *Desktop* button on the right-hand side and use Firefox to login to the OpenShift __Web Console__.
+We will assume for now that you will be using the pre-built [.salsa]#salsa.lab cluster#.
+
+=== Accessing the cluster with the command-line interface
+
+We can access either cluster from the [.lowside]#jump system#:
+
+[cols="a,a",options="header"]
+|===
+| Using the pre-built [.salsa]#salsa.lab cluster#
+| Using your own [.highside]#disco.lab cluster#
+
+|
+[.lowside,source,bash,role=execute]
+----
+ssh salsa-registry
+----
+[.salsa,source,bash,role=execute]
+----
+oc login https://api.salsa.lab:6443 --username admin --password admin
+----
+|
+[.lowside,source,bash,role=execute]
+----
+ssh highside
+----
+[.highside,source,bash,role=execute]
+----
+oc login https://api.disco.lab:6443 --username kubeadmin 
+----
+
+|
+* *Username:* admin
+* *Password:* admin
+|
+* *Username:* kubeadmin
+* *Password:* (that we found above on the [.highside]#highside system#)
+|===
+
+=== Accessing the cluster's web console
+
+Now you can click the *Desktop* button on the right-hand side of the lab web interface and use Firefox to login to the OpenShift __Web Console__.
 The __Web Console__ is the very last part of OpenShift to come online.
 If you are trying to connect to your [.highside]#disco.lab# cluster, and see an "**Application is not available**" message, it means the installation hasn't completed yet.
 
@@ -81,70 +119,55 @@ You can copy and paste into the VNC desktop using __noVNC__'s tool ribbon (hidde
 image::vnc-copy-paste.png[console]
 
 
-//TODO - cleanup needed here
-=== Accessing the cluster from the command-line
+// === Accessing the cluster from the command-line
 
-You should be able to access the API server from the *highside* system by leveraging the `kubeconfig` file the installer creates for you:
+// You should be able to access the API server from the *highside* system by leveraging the `kubeconfig` file the installer creates for you:
 
-[.highside,source,bash,role=execute,subs="attributes"]
-----
-mkdir -vp $HOME/.kube
-cp -v /mnt/high-side/install/auth/kubeconfig $HOME/.kube/config
-oc status
-----
-[.output]
-----
-In project default on server https://api.disco.lab:6443
+// [.highside,source,bash,role=execute,subs="attributes"]
+// ----
+// mkdir -vp $HOME/.kube
+// cp -v /mnt/high-side/install/auth/kubeconfig $HOME/.kube/config
+// oc status
+// ----
+// [.output]
+// ----
+// In project default on server https://api.disco.lab:6443
 
-svc/openshift - kubernetes.default.svc.cluster.local
-svc/kubernetes - 172.30.0.1:443 -> 6443
+// svc/openshift - kubernetes.default.svc.cluster.local
+// svc/kubernetes - 172.30.0.1:443 -> 6443
 
-View details with 'oc describe <resource>/<name>' or list resources with 'oc get all'.
-----
+// View details with 'oc describe <resource>/<name>' or list resources with 'oc get all'.
+// ----
 
-Now that you're logged in via the command-line or the _Web Console_ we can proceed with the __"day 2"__ tasks.
-
-== Post-Install Cluster Configurations
-
-Now that we have a cluster up and running (or we are using the pre-made salsa.lab cluster) we can perform some
-post-install steps that are specific to a disconnected environment.
-
-[cols="a,a",options="header"]
-|===
-| Using the pre-built `salsa.lab` cluster
-| Using your own `disco.lab` cluster
-
-**Note to self** - do we want to use `ssh`? I would suggest doing `oc login` from the [.lowside]#jump system#.
-
-|
-[source,bash,role=execute]
-----
-ssh salsa-registry
-oc login https://api.salsa.lab:6443
-----
-|
-[source,bash,role=execute]
-----
-ssh highside
-oc login https://api.disco.lab:6443
-----
-
-|
-* *Username:* kubeadmin
-* *Password:* (in `cluster/auth/kubeadmin-password`)
-|
-* *Username:* admin
-* *Password:* admin
-|===
+// Now that you're logged in via the command-line or the _Web Console_ we can proceed with the __"day 2"__ tasks.
 
 === Add our custom catalog source
 // https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned
 
-TODO
+In order to deploy operators from our custom catalog of operators mirrored over to our disconnected registry we have to add our own `CatalogSource`
+entry to the cluster. By default the cluster is trying to pull operator catalogs from the default, connected sources.
+
+First we will remove the default sources from the disconnected [.salsa]#salsa.lab cluster#.
+
+[.salsa,source,bash,role=execute]
+----
+oc patch OperatorHub cluster --type merge -p '{"spec": {"disableAllDefaultSources": true}}'
+----
+
+Next we will add our own custom catalog source:
+
+[.salsa,source,bash,role=execute]
+----
+oc create -f oc-mirror-workspace/results-*/catalogSource-cs-redhat-operator-index.yaml
+----
+
+Now we should see the operators that we mirrored over with `oc-mirror` in the OperatorHub on the OpenShift Web Console for [.salsa]#salsa.lab cluster# 
+
+image::disconnected-operator-catalog.png[console]
 
 === Deploy a operator
 
-TODO
+Go ahead and install the `Web Terminal` operator. The cluster will pull all images from our disconnected registry mirror.
 
 // == Add images with `podman`
 // https://docs.openshift.com/container-platform/4.14/post_installation_configuration/cluster-tasks.html#post-install-must-gather-disconnected
@@ -154,4 +177,47 @@ TODO
 
 === Update cluster
 
-TODO
+// First log into the [.salsa]#salsa-registry system#
+
+// [.lowside,source,bash,role=execute]
+// ----
+// ssh salsa-registry
+// ----
+
+// Next log into the [.salsa]#salsa.lab cluster#
+
+// [.salsa,source,bash,role=execute]
+// ----
+// oc login https://api.salsa.lab:6443 --username admin --password admin
+// ----
+
+Apply the release signatures for verifying the release images
+
+[.salsa,source,bash,role=execute]
+----
+oc apply -f oc-mirror-workspace/results-*/release-signatures
+----
+[.output]
+----
+configmap/sha256-08b8725ce619ff1855cb0ec5f5c5baa879ef3c6ab9930db300761b97d2761144 created
+configmap/sha256-b572b76fdc9ae73ef9e35d01b98438d9b19ec4ba4c9aabc5eea3972d4724bea3 created
+configmap/sha256-e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933 created
+----
+
+We will be updating the cluster with the command line which is the simplest way to do upgrades in a disconnected environment
+
+// TODO add callout for other upgrade methods
+// TODO talk about getting release image digest from mirror registry directly
+
+[.salsa,source,bash,role=execute]
+----
+podman login -u init -p salsapass $(hostname):8443
+DIGEST=$(oc image info -o json $HOSTNAME:8443/openshift/release-images:4.14.20-x86_64 | jq -r .contentDigest)
+oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@$DIGEST --allow-explicit-upgrade
+----
+[.output]
+----
+...
+
+Requested update to release image quay.io/openshift-release-dev/ocp-release@sha256:e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933
+----
