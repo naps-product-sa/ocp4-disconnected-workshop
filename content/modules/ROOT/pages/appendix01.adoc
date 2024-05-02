@@ -74,9 +74,9 @@ Add and remove __pull secret_ entries using `podman`
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-podman login mirror-registry.disco.lab:8443
+podman login --authfile $HOME/my-pull-secret.json mirror-registry.disco.lab:8443
 
-podman logout mirror-registry.disco.lab:8443
+podman logout --authfile $HOME/my-pull-secret.json mirror-registry.disco.lab:8443
 ----
 [.output]
 ----
@@ -84,7 +84,7 @@ Username: init
 Password: discopass
 Login Succeeded!
 
-Removed login credentials for ip-10-0-52-200.us-west-2.compute.internal:8443
+Removed login credentials for mirror-registry.disco.lab:8443
 ----
 
 
