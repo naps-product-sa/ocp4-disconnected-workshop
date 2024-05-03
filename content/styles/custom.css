@@ -1,3 +1,7 @@
+table > tbody > tr > td > div > div.listingblock.execute {
+  margin: 0;
+ }
+
 .highside, 
 div.listingblock.execute.highside > div > pre > code, 
 div.listingblock.highside > div > pre > code {

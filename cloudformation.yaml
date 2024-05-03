@@ -676,6 +676,62 @@ Resources:
             StrictHostKeyChecking false
           EOF
 
+          # Set up certificates
+          cat << EOF > /usr/local/bin/scan-certificates.sh
+          #!/bin/bash
+
+          TMP_DIR=\$(mktemp -d)
+          for host in ingress.apps.salsa.lab:443 ingress.apps.disco.lab:443 salsa:8443 highside:8443; do
+            openssl s_client -connect \${host} -showcerts 2>/dev/null </dev/null | \\
+            awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{ if(/BEGIN CERTIFICATE/){a++}; out="'\${TMP_DIR}'/scan-'\${host}'-"a".pem"; print >out}'
+          done
+
+          for file in \$(ls -1 \${TMP_DIR}); do
+            if cmp -s /etc/pki/ca-trust/source/anchors/\${file} \${TMP_DIR}/\${file}; then
+              rm \${TMP_DIR}/\${file}
+            fi
+          done
+
+          if [ ! \$(ls -1 \${TMP_DIR} | wc -l) -eq "0" ]; then
+            echo "found new certificates to import: \$(ls -l \${TMP_DIR})"
+            cp \${TMP_DIR}/*.pem /etc/pki/ca-trust/source/anchors/
+            update-ca-trust
+          fi
+          rm -rf \${TMP_DIR}
+          EOF
+
+          chmod +x /usr/local/bin/scan-certificates.sh
+
+          cat << EOF > /etc/systemd/system/scan-certificates.service
+          [Unit]
+          Description=Scan for certificates to add to ca-trust
+          Wants=network.target
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/scan-certificates.sh
+
+          [Install]
+          WantedBy=multi-user.target default.target
+          EOF
+
+          cat << EOF > /etc/systemd/system/scan-certificates.timer
+          [Unit]
+          Description=Run scan-certificates every so often
+
+          [Timer]
+          OnCalendar=*-*-* *:*:00,30
+          Persistent=true
+          AccuracySec=1s
+
+          [Install]
+          WantedBy=timers.target
+          EOF
+
+          systemctl daemon-reload
+          systemctl enable --now scan-certificates.timer
+
           # Setup VNC
           yum -y install "@GNOME" firefox tigervnc-server
 
@@ -863,6 +919,10 @@ Resources:
           sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
           echo "export NICKNAME=highside" > /etc/profile.d/friendly_prompt.sh
 
+          # set up certificates
+          cp -v /etc/pki/rhui/cdn.redhat.com-chain.crt /etc/pki/ca-trust/source/anchors/
+          update-ca-trust
+
           # Apply the latest security patches
           yum update -y --security
           yum install -y unzip vim lvm2 podman tmux jq nano
@@ -947,7 +1007,7 @@ Resources:
         - Key: AnsibleGroup
           Value: salsa
         - Key: DnsName
-          Value: salsa-registry
+          Value: salsa
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -970,7 +1030,7 @@ Resources:
           # Display a friendly name in bash
           # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-hostname.html#set-hostname-shell
           sed -i 's/\([[:blank:]]*\[[[:blank:]]"\$PS1"[[:blank:]]*=[[:blank:]]*".*\)\(\\h\)\(.*\)/\1$NICKNAME\3/g' /etc/bashrc
-          echo "export NICKNAME=salsa-registry" > /etc/profile.d/friendly_prompt.sh
+          echo "export NICKNAME=salsa" > /etc/profile.d/friendly_prompt.sh
 
           cat <<EOF > /etc/motd.d/salsa-cluster
           This instance manages the mirror registry and install of the salsa cluster. You can check the progress with:

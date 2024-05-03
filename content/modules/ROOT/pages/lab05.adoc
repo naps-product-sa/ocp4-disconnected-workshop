@@ -77,7 +77,7 @@ We can access either cluster from the [.lowside]#jump system#:
 |
 [.lowside,source,bash,role=execute]
 ----
-ssh salsa-registry
+ssh salsa
 ----
 [.salsa,source,bash,role=execute]
 ----
@@ -195,11 +195,11 @@ image::operator-web-terminal.png[Screenshot of the Web Terminal Operator install
 
 == Update your cluster
 
-// First log into the [.salsa]#salsa-registry system#
+// First log into the [.salsa]#salsa system#
 
 // [.lowside,source,bash,role=execute]
 // ----
-// ssh salsa-registry
+// ssh salsa
 // ----
 
 // Next log into the [.salsa]#salsa.lab cluster#
@@ -236,7 +236,7 @@ configmap/sha256-e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda93
 
 OpenShift will complain if you tell it to update to a new release using the `tag` name.
 OpenShift prefers to update to new releases using the sha256 `digest` because the `digest` guarantees that the `release image` contents haven't been altered.
-Please use the following commands to log into the [.salsa]#salsa-registry#, identify the sha256 `digest` and tell OpenShift to begin the update.
+Please use the following commands to log into the [.salsa]#salsa system#, identify the sha256 `digest` and tell OpenShift to begin the update.
 
 //   Applying a release (by tag) without checking signatures    //
 // [lab-user@highside ~]$ oc adm upgrade --to-image=ip-10-0-15-131.us-west-2.compute.internal:8443/openshift/release-images:4.14.20-x86_64 --force --allow-explicit-upgrade

@@ -236,6 +236,9 @@ You can drag the line that divides the panes to resize them.
 
 If you use your scroll wheel, please press `q` to return to the bottom and continue typing.
 
+[TIP]
+For more information on tmux, xref:appendix-tmux.adoc[check out the Appendix]
+
 [.lowside,source,bash,role=execute]
 ----
 tmux
