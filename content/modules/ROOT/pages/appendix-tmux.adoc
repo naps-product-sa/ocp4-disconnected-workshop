@@ -1,0 +1,108 @@
+= Appendix: tmux - terminal multiplexer
+
+== Useful `tmux` commands
+
+image::tmux-logo-medium.png[tmux logo]
+
+[%hardbreaks]
+https://github.com/tmux/tmux/wiki[`tmux`,window=_blank] is a terminal multiplexer, similar to https://www.gnu.org/software/screen/[GNU `screen`,window=_blank].
+`tmux` allows this Workshop's Showroom website to run multiple terminals.
+`tmux` also allows long-running commands, like `oc-mirror` to run in the background after you logout.
+
+The OpenShift Disconnected workshop encourages users to use multiple `tmux` panes in order to conserve time.
+Without `tmux`, workshop users would have to wait anywhere from 5 minutes to 45 minutes for the various `oc-mirror`, `rsync` and `openshift-install` tasks to complete.
+
+This appendix will introduce three additional `tmux` commands that workshop users may find helpful. You're encouraged to follow the links to the official documentation, as long as it doesn't distract you from the 🪩 💃 DISCO party! 🕺 🪩
+
+{counter:tmux} https://github.com/tmux/tmux/wiki/Getting-Started#creating-sessions[Creating a new session,window=_blank]
+
+{counter:tmux} https://github.com/tmux/tmux/wiki/Getting-Started#listing-sessions[Listing your sessions,window=_blank]
+
+{counter:tmux} https://github.com/tmux/tmux/wiki/Getting-Started#attaching-and-detaching[Attaching to a running session,window=_blank]
+
+=== new-session
+
+Creating a new `tmux` session is as easy as typing `tmux` because the default behavior when running the command is to create a new session. You could also type `tmux new-session` or `tmux new` as well, but you would only do that if you wanted to give a cool name to your session.
+[%hardbreaks]
+For example, `tmux new -s disco`.
+
+=== list-sessions
+
+`tmux` sessions continue running in the background if your connection is interrupted.
+Your connection to `tmux` could be interrupted if you close your browser tab or abruptly terminate your PuTTY, iTerm2, or SSH connections.
+
+You can list all of the running sessions with the `tmux list-sessions` command, or with the handy `tmux ls` alias.
+
+You'll notice in the example below that there are two `tmux` sessions running.
+The first session is called `0` and is likely running your `oc-mirror` tasks.
+The second session is called `disco` and is the result of running `tmux new -s disco`.
+
+[source,bash,role=execute]
+----
+tmux ls
+----
+[.output]
+----
+[lab-user@jump low-side-data]$ tmux ls
+0: 1 windows (created Fri May  3 04:16)
+disco: 1 windows (created Fri May  3 05:43)
+----
+
+=== attach-session
+
+Reconnecting to a disconnected `tmux` session is easy.
+If there is only one session running, you can re-attach using the command `tmux attach-session` or simply `tmux a` because `tmux` commands can be shortened to their least-ambiguous form.
+No other `tmux` commands start with the letter `a`. 😸
+
+If you have multiple `tmux` sessions running in the background, you need to __"target"__ the session you want to **attach** to.
+You could attach to the `disco` session by typing `tmux a -t disco`.
+Or, you could attach to the `0` session by typing `tmux a -t 0`.
+
+// BEGIN TMUX "SCREENSHOT"
+[source,bash,role=execute]
+----
+tmux a -t 0
+----
+[.output]
+----
+[lab-user@jump ~]$   ### This is the top pane ###
+
+
+
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[lab-user@jump ~]$   ### This is the bottom pane ###
+
+
+
+[0] 0:bash*                                                                     "ip-10-0-6-23.us-west-" 07:21 01-May-24
+        Welcome to tmux - press [Ctrl + b then d] to Disconnect or press [Ctrl + b then h] for additional Help         
+  Mouse mode has been turned on. Click to select your window/pane. Resize works too. Hold shift when selecting text.   
+----
+// END TMUX "SCREENSHOT"
+
+== Sending commands to `tmux`
+
+Many commands can be sent to `tmux` when you are inside of a session.
+For example, you might want to __detach__, __enable mouse-mode__, or __split the window__.
+Sending commands to `tmux` requires you to first send the **__"prefix"__** keystroke (Ctrl + b).
+
+There are many `tmux` cheat sheets that help serve as a reminder while you become comfortable using `tmux`.
+Consider this one on the https://www.redhat.com/sysadmin/introduction-tmux-linux[Red Hat Sysadmin Blog,window=_blank].
+
+Here is an abbreviated list of the commands that might be helpful for this workshop.
+
+[%hardbreaks]
+`Ctrl + b then d` - Detach from the current session
+`Ctrl + b then %` - Split the window in half, left-right (horizontally)
+`Ctrl + b then "` - Split the window in half, top-bottom (vertically)
+`Ctrl + b then Arrow Key` - Move between panes when mouse-mode is off (Left, Right, Up, Down) 
+`Ctrl + b then x` - Close the currently selected pane (with y/n prompt)
+`Ctrl + b then c` - Create a new window
+`Ctrl + b then w` - Open the window/pane navigator
+`Ctrl + b then ?` - Get help / show all keybindings. Press Q to exit.
+`Ctrl + b then :` - Enter the command line (with tab-completion) to type commands manually. ("set mouse on", "set mouse off")
+
+== Links to learn more
+
+The `tmux` wiki has great documentation to describe https://github.com/tmux/tmux/wiki/Getting-Started#sessions-windows-and-panes["how sessions, windows and panes are organized",window=_blank].
+

@@ -282,6 +282,6 @@ Username: `init`
 Password: `discopass`
 --
 
-image::vnc-disco-registry-bookmark.png[Desktop / VNC button]
+image::vnc-disco-registry-bookmark.png[Screenshot of Desktop with DISCO - Registry bookmark highlighted]
 
 //TODO get the user out of tmux!

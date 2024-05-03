@@ -5,3 +5,4 @@
 * xref:lab05.adoc[{counter:toc}. Post-Install Cluster Configuration]
 * xref:end.adoc[{counter:toc}. Finish]
 * xref:appendix01.adoc[Appendix: Lab Details]
+* xref:appendix-tmux.adoc[Appendix: tmux]

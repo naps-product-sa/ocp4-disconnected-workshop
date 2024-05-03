@@ -109,12 +109,12 @@ If you are trying to connect to your [.highside]#disco.lab# cluster, and see an 
 
 Your workshop environment includes a Firefox bookmark to quickly connect with the __Web Console__.
 
-image::vnc-disco-openshift-bookmark.png[console]
+image::vnc-disco-openshift-bookmark.png[Screenshot of Desktop with DISCO - OpenShift bookmark highlighted]
 
 The web-based VNC client is a bit klunky when it comes to **copy** and **paste**.
 You can copy and paste into the VNC desktop using __noVNC__'s tool ribbon (hidden by default.) 
 
-image::vnc-copy-paste.png[console]
+image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted]
 
 We will assume for now that you will be using the pre-built [.salsa]#salsa.lab cluster#.
 
@@ -162,7 +162,7 @@ oc create -f oc-mirror-workspace/results-*/catalogSource-cs-redhat-operator-inde
 
 Now we should see the operators that we mirrored over with `oc-mirror` in the OperatorHub on the OpenShift Web Console for [.salsa]#salsa.lab cluster# 
 
-image::disconnected-operator-catalog.png[console]
+image::disconnected-operator-catalog.png[Screenshot of the disco.lab instance of OpenShift Web Console showing OperatorHub with a custom CatalogSource]
 
 === Deploy a operator
 
