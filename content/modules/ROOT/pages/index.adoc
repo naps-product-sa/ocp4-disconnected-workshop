@@ -29,10 +29,10 @@ Before we begin let's consider a few use-cases for disconnected networks:
 
 The image below illustrates the various networks, systems, and connections this workshop provides.
 The diagram will be simplifed and explained in more detail in later chapters.
-The workshop instructions will help you prepare the [.lowside]#jump system# to download the installation content, setup the [.highside]#highside system# system to host the content, and create the [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
+The workshop instructions will help you prepare the [.lowside]#jump system# to download the installation content, setup the [.highside]#highside system# to host the content, and create the [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
 
-The **salsa network** and its systems are built automatically when the workshop environment is created.
-You can log into the **salsa systems** to compare your systems with functional disconnected systems.
+The [.salsa]#salsa network# and its systems are built automatically when the workshop environment is created.
+You can log into the [.salsa]#salsa systems to compare your systems with functional disconnected systems.
 
 image::disco-4.svg[disco diagram,800]
 
@@ -69,6 +69,7 @@ Using **Ctrl + Insert** (copy) and **Shift + Insert** (paste) also works.
 [NOTE]
 --
 The workshop labs intentionally avoid asking you to use `vi`, `nano`, or `emacs` to edit text files.
+The authors of workshop want you to focus on the material, instead of the strange incantations required to save and quit out of `vi` and `nano`.
 --
 
 === Alternate connection methods
