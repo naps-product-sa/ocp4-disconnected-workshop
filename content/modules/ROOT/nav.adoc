@@ -3,4 +3,5 @@
 * xref:lab03.adoc[{counter:toc}. Setup "highside"]
 * xref:lab04.adoc[{counter:toc}. Install OpenShift]
 * xref:lab05.adoc[{counter:toc}. Post-Install Cluster Configuration]
-* xref:appendix01.adoc[{counter:toc}. Appendix: Lab Details ]
+* xref:end.adoc[{counter:toc}. Finish]
+* xref:appendix01.adoc[Appendix: Lab Details]
