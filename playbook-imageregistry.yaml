@@ -204,9 +204,6 @@
           podman logout --authfile /home/lab-user/.docker/config.json cloud.openshift.com || true
           chown -Rv lab-user:lab-user /home/lab-user/.docker
 
-          echo "$(date) : Mirroring Content..."
-          oc-mirror --config ${HOME}/imageset-config.yaml --continue-on-error docker://${HOSTNAME}:8443 || true
-
           # Ensure quay init does not run again
           touch ${HOME}/mirror-registry-init-finished
 
@@ -242,6 +239,68 @@
         daemon_reload: true
         no_block: true
         name: mirror-registry-init
+
+    - name: Place mirror-registry-hydrate.sh
+      copy:
+        dest: /bin/mirror-registry-hydrate.sh
+        mode: "0755"
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash -xe
+          exec > >(tee /var/log/mirror-registry-hydrate.log) 2>&1
+
+          echo "$(date) : Starting mirror-registry-hydrate..."
+
+          # Set the HOME env var missing in systemd
+          export HOME="/home/lab-user"
+          export USER="lab-user"
+          cd ${HOME}
+
+          echo "$(date) : Mirroring Content..."
+          oc-mirror --config ${HOME}/imageset-config.yaml docker://${HOSTNAME}:8443
+
+          # Ensure hydrate does not run again
+          touch ${HOME}/mirror-registry-hydrate-finished
+
+          echo "$(date) : Finished mirror-registry-hydrate"
+          systemd-notify --ready
+
+          exit 0
+
+    - name: Add mirror-registry-hydrate service
+      copy:
+        dest: /etc/systemd/system/mirror-registry-hydrate.service
+        mode: "0644"
+        owner: root
+        group: root
+        content: |
+          [Unit]
+          Description=Hydrate the Mirror Quay
+          Wants=network.target
+          After=mirror-registry-init.service
+          ConditionPathExists=/home/lab-user/mirror-registry-init-finished
+          ConditionPathExists=!/home/lab-user/mirror-registry-hydrate-finished
+
+          [Service]
+          Type=notify
+          ExecStart=/bin/mirror-registry-hydrate.sh
+          User=lab-user
+          Group=lab-user
+          Restart=on-failure
+          RestartSec=30
+          NotifyAccess=all
+
+          [Install]
+          WantedBy=multi-user.target default.target
+
+    - name: Ensure mirror-registry-hydrate is enabled
+      ansible.builtin.systemd_service:
+        state: started
+        enabled: true
+        daemon_reload: true
+        no_block: true
+        name: mirror-registry-hydrate
 
     - name: Place cluster-init.sh
       copy:
@@ -323,8 +382,8 @@
           [Unit]
           Description=Configure cluster
           Wants=network.target
-          After=mirror-registry-init.service
-          ConditionPathExists=/home/lab-user/mirror-registry-init-finished
+          After=mirror-registry-hydrate.service
+          ConditionPathExists=/home/lab-user/mirror-registry-hydrate-finished
           ConditionPathExists=!/home/lab-user/cluster-init-finished
 
           [Service]

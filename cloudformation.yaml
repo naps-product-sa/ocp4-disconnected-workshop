@@ -975,9 +975,8 @@ Resources:
           cat <<EOF > /etc/motd.d/salsa-cluster
           This instance manages the mirror registry and install of the salsa cluster. You can check the progress with:
 
-          systemctl status mirror-registry-init.service cluster-init.service cloud-final.service
-
-          journalctl -f -u mirror-registry-init.service -u cluster-init.service -u cloud-final.service
+          systemctl status mirror-registry-init.service mirror-registry-hydrate.service cluster-init.service cloud-final.service
+          journalctl -f -u mirror-registry-init.service -u mirror-registry-hydrate.service -u cluster-init.service -u cloud-final.service
 
           EOF
 
