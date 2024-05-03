@@ -18,7 +18,7 @@ The tasks in this lab include:
 
 {counter:overview}. Transfering the installation content to the [.highside]#highside# system using `rsync`
 
-{counter:overview}. Connecting to the [.highside]#highside# system and proving that its disconnected
+{counter:overview}. Connecting to the [.highside]#highside# system and proving that it's disconnected
 
 {counter:overview}. Installing the `mirror-registry`
 
@@ -275,6 +275,11 @@ You can click the *Desktop* button and use Firefox to login to your new `mirror-
 You can even see the OpenShift installation images begin to appear.
 Don't spend too much time exploring the `mirror-registry's` web pages.
 We need to start the next section, **Installing OpenShift**
+
+[%hardbreaks]
+Reminder: The credentials for your DISCO - Registry are:
+Username: `init`
+Password: `discopass`
 --
 
 image::vnc-disco-registry-bookmark.png[Desktop / VNC button]
