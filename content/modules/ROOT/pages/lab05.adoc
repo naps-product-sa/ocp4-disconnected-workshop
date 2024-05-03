@@ -54,7 +54,7 @@ echo "Password: $(more /mnt/high-side-data/install/auth/kubeadmin-password)"
 ----
 URL: https://console-openshift-console.apps.disco.lab
 Username: kubeadmin
-Password: fKLcS-EuJDs-SfrVD-nbbvA
+Password: *****-*****-*****-*****
 ----
 
 [TIP]
@@ -101,6 +101,11 @@ oc login https://api.disco.lab:6443 --username kubeadmin
 * *Password:* (that we found above on the [.highside]#highside system#)
 |===
 
+[WARNING]
+--
+The copy-paste commands below assume that you will be using the pre-built [.salsa]#salsa.lab cluster#.
+--
+
 === Accessing the cluster's web console
 
 Now you can click the *Desktop* button on the right-hand side of the lab web interface and use Firefox to login to the OpenShift __Web Console__.
@@ -115,8 +120,6 @@ The web-based VNC client is a bit klunky when it comes to **copy** and **paste**
 You can copy and paste into the VNC desktop using __noVNC__'s tool ribbon (hidden by default.) 
 
 image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted]
-
-We will assume for now that you will be using the pre-built [.salsa]#salsa.lab cluster#.
 
 // === Accessing the cluster from the command-line
 
@@ -143,30 +146,36 @@ We will assume for now that you will be using the pre-built [.salsa]#salsa.lab c
 === Add our custom catalog source
 // https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned
 
-In order to deploy operators from our custom catalog of operators mirrored over to our disconnected registry we have to add our own `CatalogSource`
-entry to the cluster. By default the cluster is trying to pull operator catalogs from the default, connected sources.
+In order to deploy Operators from the customized catalog that was created in the `mirror-registry`, we have to add a new `CatalogSource` to OpenShift.
+We also need to disable the default CatalogSources.
+OpenShift clusters, by default, will try to use the online/connected versions of the Operator Catalogs from registry.redhat.io.
 
-First we will remove the default sources from the disconnected [.salsa]#salsa.lab cluster#.
+First, we will disable the default sources from the disconnected [.salsa]#salsa.lab cluster#.
 
 [.salsa,source,bash,role=execute]
 ----
 oc patch OperatorHub cluster --type merge -p '{"spec": {"disableAllDefaultSources": true}}'
 ----
 
-Next we will add our own custom catalog source:
+Next, we will add the customized `CatalogSource` that `oc-mirror` created for us.
+
+[INFO]
+--
+New `CatalogSources` can take 1-5 minutes to appear in the Web Console.
+--
 
 [.salsa,source,bash,role=execute]
 ----
 oc create -f oc-mirror-workspace/results-*/catalogSource-cs-redhat-operator-index.yaml
 ----
 
-Now we should see the operators that we mirrored over with `oc-mirror` in the OperatorHub on the OpenShift Web Console for [.salsa]#salsa.lab cluster# 
+Now we should see the Operators that we mirrored over with `oc-mirror` in the OperatorHub on the OpenShift Web Console for [.salsa]#salsa.lab cluster# 
 
 image::disconnected-operator-catalog.png[Screenshot of the disco.lab instance of OpenShift Web Console showing OperatorHub with a custom CatalogSource]
 
-=== Deploy a operator
+=== Deploy an Operator
 
-Go ahead and install the `Web Terminal` operator. The cluster will pull all images from our disconnected registry mirror.
+Go ahead and install the `Web Terminal` Operator. The cluster will pull all images from our disconnected registry mirror.
 
 // == Add images with `podman`
 // https://docs.openshift.com/container-platform/4.14/post_installation_configuration/cluster-tasks.html#post-install-must-gather-disconnected

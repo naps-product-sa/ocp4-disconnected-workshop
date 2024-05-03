@@ -103,7 +103,7 @@ Then you can append the relevant snippet to your `install-config.yaml` by runnin
 
 [.highside,source,bash,role=execute]
 ----
-cat <<EOF >> install-config.yaml
+cat << EOF >> /mnt/high-side-data/install/install-config.yaml
 imageContentSources:
 $(grep "mirrors:" -A 2 --no-group-separator /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
 EOF
@@ -128,7 +128,7 @@ Add the root CA of our mirror registry to the trust bundle using the `additional
 
 [.highside,source,bash,role=execute]
 ----
-cat <<EOF >> install-config.yaml
+cat << EOF >> /mnt/high-side-data/install/install-config.yaml
 additionalTrustBundle: |
 $(sed 's/^/  /' /home/lab-user/quay-install/quay-rootCA/rootCA.pem)
 EOF
