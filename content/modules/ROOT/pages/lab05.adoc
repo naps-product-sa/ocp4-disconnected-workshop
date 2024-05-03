@@ -1,4 +1,4 @@
-= Post-Install Configuration
+= Post-Install Tasks
 
 **Congratulations** you've successfully created an OpenShift cluster in a disconnected environment!
 
@@ -28,8 +28,8 @@ Here are a few suggested __"day 2"__ tasks that will improve your experience.
 
 {counter:overview}. Update OpenShift from a disconnected _Update Server_
 
-[INFO]
-You may not have enough time during the Summit 2024 lab session to complete the __Update Server__ task.
+[NOTE]
+You may not have enough time during the Summit 2024 Lab Session to complete the __Update Server__ task.
 
 == Accessing your cluster
 
@@ -143,7 +143,9 @@ image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted
 
 // Now that you're logged in via the command-line or the _Web Console_ we can proceed with the __"day 2"__ tasks.
 
-=== Add our custom catalog source
+== Install Operators
+
+=== Add custom catalog sources
 // https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned
 
 In order to deploy Operators from the customized catalog that was created in the `mirror-registry`, we have to add a new `CatalogSource` to OpenShift.
@@ -173,7 +175,7 @@ Now we should see the Operators that we mirrored over with `oc-mirror` in the Op
 
 image::disconnected-operator-catalog.png[Screenshot of the disco.lab instance of OpenShift Web Console showing OperatorHub with a custom CatalogSource]
 
-=== Deploy an Operator
+=== Install Web Terminal
 
 Go ahead and install the `Web Terminal` Operator.
 Accept all of the default values.
@@ -191,7 +193,7 @@ image::operator-web-terminal.png[Screenshot of the Web Terminal Operator install
 // == Remove default samples operator
 // https://docs.openshift.com/container-platform/4.14/openshift_images/configuring-samples-operator.html#configuring-samples-operator
 
-=== Update cluster
+== Update your cluster
 
 // First log into the [.salsa]#salsa-registry system#
 
@@ -271,7 +273,7 @@ NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version   4.14.18   True        True          50s     Working towards 4.14.19: 116 of 860 done (13% complete), waiting on etcd, kube-apiserver
 ----
 
-[INFO]
+[NOTE]
 --
 Applying cluster updates to the [.salsa]#salsa.lab# and [.highside]#disco.lab# clusters, which are Single Node OpenShift clusters, will result in the cluster becoming periodically unreachable.
 Your cluster(s) become unreachable when the update switchs the `console` and `apiserver` pods from the old version to the new version.

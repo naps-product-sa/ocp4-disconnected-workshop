@@ -2,7 +2,7 @@
 * xref:lab02.adoc[{counter:toc}. Disconnected Overview & Prepare "jump"]
 * xref:lab03.adoc[{counter:toc}. Setup "highside"]
 * xref:lab04.adoc[{counter:toc}. Install OpenShift]
-* xref:lab05.adoc[{counter:toc}. Post-Install Cluster Configuration]
+* xref:lab05.adoc[{counter:toc}. Post-Install Tasks]
 * xref:end.adoc[{counter:toc}. Finish]
 * xref:appendix01.adoc[Appendix: Lab Details]
 * xref:appendix-tmux.adoc[Appendix: tmux]
