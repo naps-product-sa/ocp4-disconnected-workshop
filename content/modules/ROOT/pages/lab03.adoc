@@ -141,7 +141,7 @@ Note that the `oc-mirror` command looks for _pull secrets_ in multiple locations
 == Transfer the installation content
 
 [WARNING]
-Make sure that your `oc mirror` command has completed successfully before proceeding.
+Make sure that your `oc-mirror` command has completed successfully before proceeding.
 You can confirm the mirroring has finished by looking in your `tmux` pane to see if your prompt has returned.
 
 [.output]
@@ -254,7 +254,7 @@ The `oc-mirror` task should complete in about 15 minutes.
 [.highside,source,bash,role=execute]
 ----
 cd /mnt/high-side-data
-oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443
+oc-mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443
 ----
 [.output]
 ----

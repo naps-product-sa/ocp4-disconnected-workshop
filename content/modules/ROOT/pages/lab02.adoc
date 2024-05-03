@@ -264,7 +264,7 @@ Now that `tmux` is running, choose one of the _panes_ to run the `oc-mirror` com
 
 [.lowside,source,bash,role=execute]
 ----
-oc mirror --config imageset-config.yaml file:///mnt/low-side-data
+oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
 ----
 [.output]
 ----
@@ -272,3 +272,47 @@ oc mirror --config imageset-config.yaml file:///mnt/low-side-data
 info: Mirroring completed in 2m52.23s (131.9MB/s)
 Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
 ----
+
+// [cols="10h,90a",frame=none,grid=none]
+// |===
+// ^|
+// *tmux*
+
+// [.tmux-block]#⬛#
+
+// [.tmux-block]#⃞#
+// |
+// [.lowside,source,bash,role=execute]
+// ----
+// oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
+// ----
+// [.output]
+// ----
+// ...
+// info: Mirroring completed in 2m52.23s (131.9MB/s)
+// Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+// ----
+// |===
+
+
+// [cols="10h,90a",frame=none,grid=none]
+// |===
+// ^|
+// *tmux*
+
+// [.tmux-block]#⃞#
+
+// [.tmux-block]#⬛#
+
+// |
+// [.lowside,source,bash,role=execute]
+// ----
+// oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
+// ----
+// [.output]
+// ----
+// ...
+// info: Mirroring completed in 2m52.23s (131.9MB/s)
+// Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+// ----
+// |===

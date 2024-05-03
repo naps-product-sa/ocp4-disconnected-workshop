@@ -67,3 +67,7 @@ div.banner-item-title {
   -moz-user-select: all;
   -webkit-user-select: all;
 }
+
+.tmux-block {
+  font-size: xx-large;
+}
