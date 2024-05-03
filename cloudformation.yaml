@@ -736,8 +736,14 @@ Resources:
           yum -y install "@GNOME" firefox tigervnc-server
 
           # disable search functionality in firefox address bar
-          echo 'pref("browser.urlbar.suggest.searches", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.urlbar.suggest.addons", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.urlbar.suggest.bestmatch", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.urlbar.suggest.engines", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.urlbar.suggest.history", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.urlbar.suggest.topsites", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.urlbar.suggest.weather", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
           echo 'pref("keyword.enabled", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
+          echo 'pref("browser.newtabpage.enabled", false);' >> /usr/lib64/firefox/defaults/preferences/all-redhat.js
 
           mkdir -vp /etc/firefox/policies
           cat << EOF > /etc/firefox/policies/policies.json
@@ -747,6 +753,8 @@ Resources:
               "DisplayBookmarksToolbar": "always",
               "DisableProfileImport": true,
               "DisableTelemetry": true,
+              "SearchBar": "separate",
+              "SearchSuggestEnabled": false,
               "Bookmarks": [
                 {
                   "Title": "Salsa - Registry",
@@ -777,6 +785,12 @@ Resources:
                 "URL": "file:///home/lab-user/homepage.html",
                 "Locked": true,
                 "StartPage": "homepage-locked"
+              },
+              "FirefoxSuggest": {
+                "WebSuggestions": false,
+                "SponsoredSuggestions": false,
+                "ImproveSuggest": false,
+                "Locked": true
               },
               "UserMessaging": {
                 "WhatsNew": true,
