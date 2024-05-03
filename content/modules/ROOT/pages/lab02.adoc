@@ -12,7 +12,7 @@ You can refer to the https://docs.openshift.com/container-platform/{openshift_ve
 {counter:steps}. Move the mirroring tools and installation images from the [.lowside]#jump system# to the [.highside]#highside system#
 
 ** We'll use `rsync` in this workshop
-** Many people uses DVDs and actually walk the content between systems and over air gaps
+** Many people use DVDs and actually walk the content between systems and over air gaps
 *** This is known as https://en.wikipedia.org/wiki/Sneakernet[👟 _sneaker net_ 👟,window=_blank]
 
 {counter:steps}. Setup a system ([.highside]#highside#) that can _serve the installation images_ in the disconnected network
@@ -67,6 +67,7 @@ We will also download two additional tools that will be used later on the [.high
 OpenShift 4.10 introduced `oc-mirror` as a new tool to download OpenShift content.
 The previous tool, `oc adm release mirror ...`, is still available but not recommended.
 
+[%hardbreaks]
 `oc-mirror` allows you to download additional images, Helm charts, and individual Operators.
 `oc-mirror` also intelligently downloads only the changes when updates are downloaded.
 --
@@ -139,7 +140,7 @@ rm -f openshift-install.tar.gz
 
 == Mirroring the OpenShift installation images
 
-Now that the mirroring and installation tools have been downloaded and extacted, it's time to put `oc-mirror` to work! Let's start with a brief overview of using `oc-mirror`:
+Now that the mirroring and installation tools have been downloaded and extracted, it's time to put `oc-mirror` to work! Let's start with a brief overview of using `oc-mirror`:
 
 {counter:mirror}. Provide your access credentials (a **_pull secret_**)
 
