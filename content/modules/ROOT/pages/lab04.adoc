@@ -163,7 +163,7 @@ additionalTrustBundle: |
 
 === Complete install-config.yaml
 
-image::install-config-5.svg[initial config,width=600]
+image::install-config-6.svg[initial config,width=600]
 
 Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
 
