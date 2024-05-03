@@ -6,9 +6,9 @@ image::disco-3.svg[disco diagram,800]
 
 == Build the install-config.yaml
 
-Here's a diagram describing the inputs and outputs of the installation configuration process: 
+// Here's a diagram describing the inputs and outputs of the installation configuration process: 
 
-image::install-overview-disco.svg[Install Overview,800]
+// image::install-overview-disco.svg[Install Overview,800]
 
 {counter:install}. Let's start by creating a workspace on the [.highside]#*highside* system# to house our installation materials:
 
@@ -163,8 +163,6 @@ additionalTrustBundle: |
 
 === Complete install-config.yaml
 
-image::install-config-6.svg[initial config,width=600]
-
 Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
 
 //TODO - the command block below wasn't rendering properly for jcall
@@ -176,6 +174,8 @@ cp -v install-config.yaml install-config.yaml.backup
 ----
 
 == Running the Installation
+
+image::install-config-6.svg[initial config,width=600]
 
 We're ready to run the install!
 Let's kick off the cluster installation:
