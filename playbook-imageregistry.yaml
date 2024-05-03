@@ -66,6 +66,7 @@
         content: ""
       loop:
         - mirror-registry-init.log
+        - mirror-registry-hydrate.log
         - cluster-init.log
 
     - name: Put ImageSetConfiguration in place
@@ -290,6 +291,7 @@
           Restart=on-failure
           RestartSec=30
           NotifyAccess=all
+          TimeoutStartSec=1800
 
           [Install]
           WantedBy=multi-user.target default.target
