@@ -20,7 +20,7 @@ cd /mnt/high-side-data/install
 
 === Initial install-config.yaml
 
-image::install-config-1.svg[initial config,width=600]
+image::install-config-1.svg[initial config,width=400]
 
 Create an initial `install-config.yaml`
 
