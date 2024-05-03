@@ -206,7 +206,7 @@
           chown -Rv lab-user:lab-user /home/lab-user/.docker
 
           # Ensure quay init does not run again
-          touch ${HOME}/mirror-registry-init-finished
+          touch ${HOME}/.mirror-registry-init-finished
 
           echo "$(date) : Finished mirror-registry-init"
           exit 0
@@ -222,7 +222,7 @@
           Description=Configure Mirror Quay on first boot
           Wants=network.target
           After=network-online.target
-          ConditionPathExists=!/home/lab-user/mirror-registry-init-finished
+          ConditionPathExists=!/home/lab-user/.mirror-registry-init-finished
 
           [Service]
           Type=oneshot
@@ -251,18 +251,29 @@
           #!/bin/bash -xe
           exec > >(tee /var/log/mirror-registry-hydrate.log) 2>&1
 
-          echo "$(date) : Starting mirror-registry-hydrate..."
-
           # Set the HOME env var missing in systemd
           export HOME="/home/lab-user"
           export USER="lab-user"
           cd ${HOME}
 
+          while true; do
+            echo "Waiting for ${HOME}/.mirror-registry-init-finished to exist"
+            if [ ! -f ${HOME}/.mirror-registry-init-finished ]; then
+              sleep 10
+            else
+              echo "Found ${HOME}/.mirror-registry-init-finished"
+              break
+            fi
+          done
+
+          echo "$(date) : Starting mirror-registry-hydrate..."
+
+
           echo "$(date) : Mirroring Content..."
           oc-mirror --config ${HOME}/imageset-config.yaml docker://${HOSTNAME}:8443
 
           # Ensure hydrate does not run again
-          touch ${HOME}/mirror-registry-hydrate-finished
+          touch ${HOME}/.mirror-registry-hydrate-finished
 
           echo "$(date) : Finished mirror-registry-hydrate"
           systemd-notify --ready
@@ -280,8 +291,7 @@
           Description=Hydrate the Mirror Quay
           Wants=network.target
           After=mirror-registry-init.service
-          ConditionPathExists=/home/lab-user/mirror-registry-init-finished
-          ConditionPathExists=!/home/lab-user/mirror-registry-hydrate-finished
+          ConditionPathExists=!/home/lab-user/.mirror-registry-hydrate-finished
 
           [Service]
           Type=notify
@@ -291,7 +301,7 @@
           Restart=on-failure
           RestartSec=30
           NotifyAccess=all
-          TimeoutStartSec=1800
+          TimeoutStartSec=3600
 
           [Install]
           WantedBy=multi-user.target default.target
@@ -314,21 +324,21 @@
           #!/bin/bash -xe
           exec > >(tee /var/log/cluster-init.log) 2>&1
 
+          # Set the HOME env var missing in systemd
+          export HOME="/home/lab-user"
+          export USER="lab-user"
+
           while true; do
-            echo "Waiting for /home/lab-user/mirror-registry-hydrate-finished to exist"
-            if [ ! -f /home/lab-user/mirror-registry-hydrate-finished ]; then
+            echo "Waiting for ${HOME}/.mirror-registry-hydrate-finished to exist"
+            if [ ! -f ${HOME}/.mirror-registry-hydrate-finished ]; then
               sleep 10
             else
-              echo "Found /home/lab-user/mirror-registry-hydrate-finished"
+              echo "Found ${HOME}/.mirror-registry-hydrate-finished"
               break
             fi
           done
 
           echo "$(date) : Starting cluster-init..."
-
-          # Set the HOME env var missing in systemd
-          export HOME="/home/lab-user"
-          export USER="lab-user"
 
           cp ${HOME}/cluster/install-config.yaml.template ${HOME}/cluster/install-config.yaml
 
@@ -379,7 +389,7 @@
           oc delete -n kube-system secret kubeadmin
           oc adm policy add-cluster-role-to-user cluster-admin admin
 
-          touch ${HOME}/cluster-init-finished
+          touch ${HOME}/.cluster-init-finished
 
           echo "$(date) : Finished cluster-init"
           exit 0
@@ -395,7 +405,7 @@
           Description=Configure cluster
           Wants=network.target
           After=mirror-registry-hydrate.service
-          ConditionPathExists=!/home/lab-user/cluster-init-finished
+          ConditionPathExists=!/home/lab-user/.cluster-init-finished
 
           [Service]
           Type=oneshot
