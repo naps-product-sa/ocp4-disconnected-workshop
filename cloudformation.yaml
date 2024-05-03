@@ -682,22 +682,22 @@ Resources:
 
           TMP_DIR=\$(mktemp -d)
           for host in ingress.apps.salsa.lab:443 ingress.apps.disco.lab:443 salsa:8443 highside:8443; do
-            openssl s_client -connect \${host} -showcerts 2>/dev/null </dev/null | \\
-            awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{ if(/BEGIN CERTIFICATE/){a++}; out="'\${TMP_DIR}'/scan-'\${host}'-"a".pem"; print >out}'
+            openssl s_client -connect \${!host} -showcerts 2>/dev/null </dev/null | \\
+            awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{ if(/BEGIN CERTIFICATE/){a++}; out="'\${!TMP_DIR}'/scan-'\${!host}'-"a".pem"; print >out}'
           done
 
-          for file in \$(ls -1 \${TMP_DIR}); do
-            if cmp -s /etc/pki/ca-trust/source/anchors/\${file} \${TMP_DIR}/\${file}; then
-              rm \${TMP_DIR}/\${file}
+          for file in \$(ls -1 \${!TMP_DIR}); do
+            if cmp -s /etc/pki/ca-trust/source/anchors/\${!file} \${!TMP_DIR}/\${!file}; then
+              rm \${!TMP_DIR}/\${!file}
             fi
           done
 
-          if [ ! \$(ls -1 \${TMP_DIR} | wc -l) -eq "0" ]; then
-            echo "found new certificates to import: \$(ls -l \${TMP_DIR})"
-            cp \${TMP_DIR}/*.pem /etc/pki/ca-trust/source/anchors/
+          if [ ! \$(ls -1 \${!TMP_DIR} | wc -l) -eq "0" ]; then
+            echo "found new certificates to import: \$(ls -l \${!TMP_DIR})"
+            cp \${!TMP_DIR}/*.pem /etc/pki/ca-trust/source/anchors/
             update-ca-trust
           fi
-          rm -rf \${TMP_DIR}
+          rm -rf \${!TMP_DIR}
           EOF
 
           chmod +x /usr/local/bin/scan-certificates.sh

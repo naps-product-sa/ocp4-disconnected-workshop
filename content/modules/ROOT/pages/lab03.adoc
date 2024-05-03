@@ -253,6 +253,7 @@ The `oc-mirror` task should complete in about 15 minutes.
 
 [.highside,source,bash,role=execute]
 ----
+cd /mnt/high-side-data
 oc mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443
 ----
 [.output]
