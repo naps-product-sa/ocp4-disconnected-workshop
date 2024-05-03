@@ -175,7 +175,15 @@ image::disconnected-operator-catalog.png[Screenshot of the disco.lab instance of
 
 === Deploy an Operator
 
-Go ahead and install the `Web Terminal` Operator. The cluster will pull all images from our disconnected registry mirror.
+Go ahead and install the `Web Terminal` Operator.
+Accept all of the default values.
+Your disconnected cluster will pull all of the images from your disconnected `mirror-registry`.
+
+After the Web Terminal Operator has been installed, refresh your browser page and see the new Terminal icon at the top of the page.
+Clicking the Terminal icon will reveal a Terminal that is logged in with your current credentials and permissions.
+The Terminal includes all of the standard `oc`, `kubectl`, `helm`, and `bash`tools.
+
+image::operator-web-terminal.png[Screenshot of the Web Terminal Operator installed and running]
 
 // == Add images with `podman`
 // https://docs.openshift.com/container-platform/4.14/post_installation_configuration/cluster-tasks.html#post-install-must-gather-disconnected
@@ -199,7 +207,20 @@ Go ahead and install the `Web Terminal` Operator. The cluster will pull all imag
 // oc login https://api.salsa.lab:6443 --username admin --password admin
 // ----
 
-Apply the release signatures for verifying the release images
+There are multiple ways to apply updates to your disconnected OpenShift cluster.
+The easiest and fastest way to apply updates is to use the `oc adm upgrade` command and reference the new version / release image.
+
+[TIP]
+--
+OpenShift versions are also known as `releases`.
+The list of updates, changes and dependencies each release / version provides is bundled into a `release image` and stored in your `mirror-registry`.
+"Applying an OpenShift update" could also be described as "Moving to a new release."
+--
+
+Before OpenShift applies any updates, it first checks the update / release's signature to make sure it came from a trusted source.
+`oc-mirror` automatically downloadeds signatures for each OpenShift version / release that it downloads.
+
+You upload the release signatures into OpenShift with this command:
 
 [.salsa,source,bash,role=execute]
 ----
@@ -208,11 +229,19 @@ oc apply -f oc-mirror-workspace/results-*/release-signatures
 [.output]
 ----
 configmap/sha256-08b8725ce619ff1855cb0ec5f5c5baa879ef3c6ab9930db300761b97d2761144 created
-configmap/sha256-b572b76fdc9ae73ef9e35d01b98438d9b19ec4ba4c9aabc5eea3972d4724bea3 created
 configmap/sha256-e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933 created
 ----
 
-We will be updating the cluster with the command line which is the simplest way to do upgrades in a disconnected environment
+OpenShift will complain if you tell it to update to a new release using the `tag` name.
+OpenShift prefers to update to new releases using the sha256 `digest` because the `digest` guarantees that the `release image` contents haven't been altered.
+Please use the following commands to log into the [.salsa]#salsa-registry#, identify the sha256 `digest` and tell OpenShift to begin the update.
+
+//   Applying a release (by tag) without checking signatures    //
+// [lab-user@highside ~]$ oc adm upgrade --to-image=ip-10-0-15-131.us-west-2.compute.internal:8443/openshift/release-images:4.14.20-x86_64 --force --allow-explicit-upgrade
+// warning: Using by-tag pull specs is dangerous, and while we still allow it in combination with --force for backward compatibility, it would be much safer to pass a by-digest pull spec instead
+// warning: The requested upgrade image is not one of the available updates. You have used --allow-explicit-upgrade for the update to proceed anyway
+// warning: --force overrides cluster verification of your supplied release image and waives any update precondition failures.
+// Requested update to release image ip-10-0-15-131.us-west-2.compute.internal:8443/openshift/release-images:4.14.20-x86_64
 
 // TODO add callout for other upgrade methods
 // TODO talk about getting release image digest from mirror registry directly
@@ -229,3 +258,23 @@ oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@$DIGEST --al
 
 Requested update to release image quay.io/openshift-release-dev/ocp-release@sha256:e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933
 ----
+
+You can follow along with the OpenShift update by using the following commands:
+
+[.salsa,source,bash,role=execute]
+----
+oc get clusterversion
+----
+[.output]
+----
+NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.14.18   True        True          50s     Working towards 4.14.19: 116 of 860 done (13% complete), waiting on etcd, kube-apiserver
+----
+
+[INFO]
+--
+Applying cluster updates to the [.salsa]#salsa.lab# and [.highside]#disco.lab# clusters, which are Single Node OpenShift clusters, will result in the cluster becoming periodically unreachable.
+Your cluster(s) become unreachable when the update switchs the `console` and `apiserver` pods from the old version to the new version.
+OpenShift updates also apply updates to the underlying Operating System, https://docs.openshift.com/container-platform/4.15/architecture/architecture-rhcos.html[Red Hat Enterprise Linux CoreOS,window=_blank].
+Your cluster(s) will become unreachable again when the Single Node of OpenShift reboots to apply `kernel` and other critical system updates.
+--

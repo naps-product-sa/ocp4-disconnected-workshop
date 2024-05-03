@@ -6,7 +6,7 @@
   vars:
     mirror_uri: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients"
     ocp_maj_ver: "4.14"
-    ocp_min_ver: "4.14.18"
+    ocp_min_ver: "4.14.19"
     ocp_max_ver: "4.14.20"
   tasks:
 
