@@ -75,16 +75,22 @@ The workshop labs intentionally avoid asking you to use `vi`, `nano`, or `emacs`
 
 If you prefer to use your own terminal, you can log into the [.lowside]#jump system# using SSH like this:
 
+[.output]
+----
+# Your unique SSH password is {bastion_ssh_password}
+----
 [source,bash,role=execute,subs="attributes"]
 ----
-# Your unique lab-user password is {bastion_ssh_password}
 {bastion_ssh_command}
 ----
 
 If you prefer to use your own VNC viewer, you can connect to the [.lowside]#jump system's# graphical desktop like this:
 
-[source,bash,role=execute,subs="attributes"]
+[.output]
 ----
 # Your unique VNC password is {bastion_ssh_password}
+----
+[source,bash,role=execute,subs="attributes"]
+----
 vncviewer {JumpInstancePublicIp}
 ----
