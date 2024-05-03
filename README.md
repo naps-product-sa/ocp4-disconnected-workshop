@@ -10,7 +10,7 @@ Alternatively, you can rendering the workshop instructions locally using:
 macOS
 ```bash
 mkdir output
-podman run -it --rm -v `pwd`:/showroom/repo --entrypoint antora -w /showroom/repo ghcr.io/rhpds/showroom-content:latest --to-dir=output default-site.yml
+podman run -it --rm -v `pwd`:/showroom/repo --mount 'type=tmpfs,dst=/showroom/repo/.cache,chown=true' --entrypoint antora -w /showroom/repo ghcr.io/rhpds/showroom-content:latest --to-dir=output default-site.yml
 python3 -m http.server 8080 --dir output/
 ```
 
