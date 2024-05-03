@@ -7,8 +7,17 @@ GitHub Actions will update the rendered version of the instructions after every 
 
 Alternatively, you can rendering the workshop instructions locally using:
 
+macOS
 ```bash
 mkdir output
 podman run -it --rm -v `pwd`:/showroom/repo --entrypoint antora -w /showroom/repo ghcr.io/rhpds/showroom-content:latest --to-dir=output default-site.yml
+python3 -m http.server 8080 --dir output/
+```
+
+Linux
+```bash
+mkdir output
+podman run -it --rm -v `pwd`:/showroom/repo:U,Z --mount 'type=tmpfs,dst=/showroom/repo/.cache,chown=true' --entrypoint antora -w /showroom/repo ghcr.io/rhpds/showroom-content:latest --t
+o-dir=output default-site.yml
 python3 -m http.server 8080 --dir output/
 ```
