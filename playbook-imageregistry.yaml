@@ -314,6 +314,16 @@
           #!/bin/bash -xe
           exec > >(tee /var/log/cluster-init.log) 2>&1
 
+          while true; do
+            echo "Waiting for /home/lab-user/mirror-registry-hydrate-finished to exist"
+            if [ ! -f /home/lab-user/mirror-registry-hydrate-finished ]; then
+              sleep 10
+            else
+              echo "Found /home/lab-user/mirror-registry-hydrate-finished"
+              break
+            fi
+          done
+
           echo "$(date) : Starting cluster-init..."
 
           # Set the HOME env var missing in systemd
@@ -385,7 +395,6 @@
           Description=Configure cluster
           Wants=network.target
           After=mirror-registry-hydrate.service
-          ConditionPathExists=/home/lab-user/mirror-registry-hydrate-finished
           ConditionPathExists=!/home/lab-user/cluster-init-finished
 
           [Service]
