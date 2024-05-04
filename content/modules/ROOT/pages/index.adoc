@@ -4,8 +4,9 @@ Welcome to the OpenShift **__Disco__**nnected Workshop!
 
 🪩 💃 It's DISCO time! 🕺 🪩
 
-In this workshop you will learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
+In this workshop you will: learn about, prepare for, install and operate an OpenShift 4 cluster in a disconnected network.
 This is also known as installing OpenShift in a https://docs.openshift.com/container-platform/{openshift_version}/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#installation-about-restricted-networks_installing-restricted-networks-aws-installer-provisioned[_restricted network_ or an _air gap network_,window=_blank].
+
 The workshop environment (illustrated below) gives you access to several servers/systems in different networks. The instructions and environments were created using OpenShift version `{openshift_min_version}`.
 
 [TIP]
@@ -32,13 +33,13 @@ The diagram will be simplifed and explained in more detail in later chapters.
 The workshop instructions will help you prepare the [.lowside]#jump system# to download the installation content, setup the [.highside]#highside system# to host the content, and create the [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
 
 The [.salsa]#salsa network# and its systems are built automatically when the workshop environment is created.
-You can log into the [.salsa]#salsa systems to compare your systems with functional disconnected systems.
+You can log into the [.salsa]#salsa systems# to compare your systems with functional disconnected systems.
 
 image::disco-4.svg[disco diagram,800]
 
 === Lab Access and Documentation notes
 
-The terminal window to your right is *already* logged into the [.lowside]#jump system's# *SSH Terminal*.
+The terminal window to your right is *already* logged in to the [.lowside]#jump system's# *SSH Terminal*.
 The right-hand side of this browser can also show the [.lowside]#jump system's# graphical desktop by clicking on the *Desktop* button.
 
 The lab instructions should be run as the user named `{bastion_ssh_user_name}`.
@@ -47,21 +48,22 @@ Commands that should be run on the [.lowside]#jump system# will appear in this c
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
-echo "Run this command on the jump system"
-echo "The jump system may also be referred to as the *lowside* system"
+echo 'Run this command on the "jump" system'
+echo 'The jump system is also known as the "lowside" system'
 ----
 
 Commands that should be run on the [.highside]#highside system# will appear in this color.
 
 [.highside,source,bash,role=execute]
 ----
-echo "Run this command on the highside system"
+echo 'Run this command on the "highside" system'
 ----
 
 [TIP]
 --
 Use the *Copy* button in the corner of the command boxes to your advantage!
 
+[%hardbreaks]
 On Linux, press **Ctrl + Shift + V** to paste.
 Using **Ctrl + Insert** (copy) and **Shift + Insert** (paste) also works.
 --
@@ -69,7 +71,7 @@ Using **Ctrl + Insert** (copy) and **Shift + Insert** (paste) also works.
 [NOTE]
 --
 The workshop labs intentionally avoid asking you to use `vi`, `nano`, or `emacs` to edit text files.
-The authors of workshop want you to focus on the material, instead of the strange incantations required to save and quit out of `vi` and `nano`.
+The authors of workshop want you to focus on the material instead of the strange incantations required to save and quit out of `vi` and `nano`.
 --
 
 === Alternate connection methods
