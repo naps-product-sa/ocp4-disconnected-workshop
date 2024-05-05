@@ -6,7 +6,7 @@ In this section you will create an `install-config.yaml` __"answer file"__ that 
 
 Installing OpenShift in a disconnected environment is as easy as adding three extra pieces of information to an `install-config.yaml`.
 
-{counter:overview}. Provide your disconnected **__pull secret__**
+{counter:overview}. Provide your disconnected `pull secret`
 
 {counter:overview}. Identify your disconnected `mirror-registry`
 
@@ -17,12 +17,11 @@ Installing OpenShift in a disconnected environment is as easy as adding three ex
 We will also create an SSH key that can be used for debugging.
 But nothing will go wrong, so we won't use it! 😊
 
-Creating and SSH key is not required for any OpenShift installation, connected or disconnected.
-But it's a good idea to include one, just in case...
+Creating and SSH key is not required for any OpenShift installation, connected or disconnected, but it's a good idea to include one just in case...
 --
 
-The diagram below is a reminder that your [.highside]#openshift.disco.lab cluster# is completely disconnected from the public internet.
-Aside from communicating with the AWS Cloud APIs to create its own DNS records, instances, and security groups -- your cluster is completely disconnected and will install from [.highside]#highside's# `mirror-registry`.
+The diagram below is a reminder that your [.highside]#disco.lab cluster# is completely disconnected from the public internet.
+Aside from communicating with the AWS Cloud APIs to create its own DNS records, instances, and security groups -- your cluster is completely disconnected and will install from [.highside]#highside's mirror-registry#.
 
 image::disco-3.svg[disco diagram,800]
 
@@ -46,7 +45,7 @@ Make sure the `tmux` pane that you're using is logged in to the [.highside]#high
 
 You may have to `ssh highside` if the only available `tmux` pane is still connected to the [.lowside]#jump# system.
 
-Don't forget to hit Enter/Return after pasting this gnarly block of text.
+Don't forget to hit Enter/Return after pasting this beautiful block of text.
 --
 
 [.highside,source,yaml,role=execute,subs="attributes"]
@@ -95,7 +94,28 @@ Generate an SSH key that can be used to debug / troubleshoot the cluster nodes a
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
 ssh-keygen -C "OpenShift Debug" -N "" -f /mnt/high-side-data/id_rsa
-echo "sshKey: $(cat /mnt/high-side-data/id_rsa.pub)" >> /mnt/high-side-data/install-config.yaml
+echo "sshKey: $(cat /mnt/high-side-data/id_rsa.pub)" | tee -a /mnt/high-side-data/install-config.yaml
+----
+[.output]
+----
+Generating public/private rsa key pair.
+Your identification has been saved in /mnt/high-side-data/id_rsa
+Your public key has been saved in /mnt/high-side-data/id_rsa.pub
+The key fingerprint is:
+SHA256:ckekOIN4KHNRkGuhsUikBAKIYOvmJd/P6qOZXVpKy6I OpenShift Debug
+The key's randomart image is:
++---[RSA 3072]----+
+|%+o+.     .      |
+|O.++ . . o       |
+|*=+oo + . .      |
+|=+o.   o .       |
+| = .  . S .      |
+|o + .  o .       |
+| . . o o         |
+|   .*.O          |
+| E.++Ooo         |
++----[SHA256]-----+
+sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCYsg/QZSc1JhF5Xm/oNAatp4e1vMntVZwDfOACtezet/U5mAl/rW0bWhzajvQmPRSRgWA01acdqYcrgjqAR02W5NJJVfiIwLme6qiK4Ks+8/SuqEd2zHeAyTPFOoLm0jZfafjbm+lzWBEA3Nz7iXjPIJkiUmETpKH+wOP9ns1dhB/HbaWjdgbQB+s5bJ6Xd0IlXyDvYriwSCzbfFLVuOku64brkeZnBtYY9TjFMqV5iQCZrzOFTp+lUXD3zMrAZ5//AQlaUsEpnz+R2Jt8JnSdJ+4pKgaot6RfN7xFHE934WB89reNVv/KE45gPMsjqKeUSwhSXmFTOjyHciAYzz/58oXD1QXAC9JRNl3ndxStIpWyBjohxmLkEEg60LJjB3hSYLrJgSQMSBWDy+MUH0G6yy1BYFRMO0PvJAv4tuhFD4mA2NJeRrOMG/k2i8GRxZI1c2x/kNo1bUv8yYtMwxWyTuSDUlomK5dB4K0urhG306xC5Jp+WSp7RoDu8jGSbeM= OpenShift Debug
 ----
 
 === Pull Secret
@@ -110,13 +130,18 @@ Use `jq` to minify your __pull secret__ and add it to the `install-config.yaml`
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-echo "pullSecret: '$(jq -c . $XDG_RUNTIME_DIR/containers/auth.json)'" >> /mnt/high-side-data/install-config.yaml
+echo "pullSecret: '$(jq -c . $XDG_RUNTIME_DIR/containers/auth.json)'" | tee -a /mnt/high-side-data/install-config.yaml
+----
+[.output]
+----
+pullSecret: '{"auths":{"ip-10-0-48-96.us-west-2.compute.internal:8443":{"auth":"aW5pdDpkaXNjb3Bhc3M="}}}'
 ----
 
 [NOTE]
 --
-Downloading the OpenShift installation images requires a _pull secret_ you download from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
+Downloading the OpenShift installation images requires a _pull secret_ from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
 That __pull secret__ provides credentials for several Red Hat image registries, including quay.io and registry.redhat.io.
+
 The __pull secret__ that gets added to a disconnected installation's `install-config.yaml` is only required to provide credentials for the `mirror-registry`.
 --
 
@@ -195,7 +220,7 @@ $(sed 's/^/  /' /home/lab-user/quay-install/quay-rootCA/rootCA.pem)
 EOF
 ----
 
-It will look something like this, including the 2 spaces of indentation, when we inspect in just a moment.
+It will look something like this, including the 2 spaces of indentation, when we inspect the finished `install-config.yaml` in the next step.
 
 [source,yaml]
 ----
@@ -231,12 +256,20 @@ In addition to the base template, you should have sections for:
 
 {counter:inspect}. Mirror Registry Certificate Authority under `additionalTrustBundle:`
 
-Please make a backup of your `install-config.yaml`!
-The OpenShift installer will consume it / delete it.
+[NOTE]
+--
+Please make a backup of your `install-config.yaml` because `openshift-install` will consume it / delete it.
+--
+
+Make a backup of your perfect `install-config.yaml`.
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
 cp -v /mnt/high-side-data/install-config.yaml /mnt/high-side-data/install-config.yaml.backup
+----
+[.output]
+----
+'/mnt/high-side-data/install-config.yaml' -> '/mnt/high-side-data/install-config.yaml.backup'
 ----
 
 == Running the Installation
