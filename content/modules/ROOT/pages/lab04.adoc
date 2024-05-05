@@ -16,6 +16,7 @@ Installing OpenShift in a disconnected environment is as easy as adding three ex
 --
 We will also create an SSH key that can be used for debugging.
 But nothing will go wrong, so we won't use it! 😊
+
 Creating and SSH key is not required for any OpenShift installation, connected or disconnected.
 But it's a good idea to include one, just in case...
 --
@@ -38,6 +39,15 @@ Do not change any values in the `install-config.yaml` template below.
 --
 
 image::install-config-1.svg[initial config,width=400]
+
+[TIP]
+--
+Make sure the `tmux` pane that you're using is logged in to the [.highside]#highside# system.
+
+You may have to `ssh highside` if the only available `tmux` pane is still connected to the [.lowside]#jump# system.
+
+Don't forget to hit Enter/Return after pasting this gnarly block of text.
+--
 
 [.highside,source,yaml,role=execute,subs="attributes"]
 ----
@@ -110,11 +120,11 @@ That __pull secret__ provides credentials for several Red Hat image registries, 
 The __pull secret__ that gets added to a disconnected installation's `install-config.yaml` is only required to provide credentials for the `mirror-registry`.
 --
 
-=== Add `imageContentSources`
+=== Add imageContentSources
 
 image::install-config-4.svg[initial config,width=600]
 
-When `oc-mirror` is done uploading the OpenShift installation images into the `mirror-registry` it creates a __result file__.
+When `oc-mirror` is done uploading the OpenShift installation images into the `mirror-registry` it creates several __results files__.
 The contents of the `imageContentSourcePolicy.yaml` __result file__ must be added to the `install-config.yaml` __answer file__.
 
 [WARNING]
@@ -154,7 +164,7 @@ And that the output looks similar to the example below.
 
 [.highside,source,bash,role=execute]
 ----
-tail /mnt/high-side-data/install-config.yaml
+tail -22 /mnt/high-side-data/install-config.yaml
 ----
 [source,yaml]
 ----
@@ -169,13 +179,13 @@ imageContentSources:
 
 The `imageContentSources:` lines tell OpenShift that its installation images should be pulled from your `mirror-registry` instead of from quay.io
 
-=== Trust mirror registry CA
+=== Trust the mirror-registry's TLS certificate
 
 image::install-config-5.svg[initial config,width=600]
 
 Now that your `install-config.yaml` includes the location and credentials for your `mirror-registry`, the last step is to add the `mirror-registry's` TLS Certificate Authority (CA) data.
 
-Add the Root CA of your `mirror-registry` to the trust bundle using the `additionalTrustBundle:` field by running this command:
+Add the Root CA of your `mirror-registry` to the `install-config.yaml` file by running this command:
 
 [.highside,source,bash,role=execute]
 ----
@@ -185,7 +195,7 @@ $(sed 's/^/  /' /home/lab-user/quay-install/quay-rootCA/rootCA.pem)
 EOF
 ----
 
-It should look something like this, including the 2 spaces of indentation.
+It will look something like this, including the 2 spaces of indentation, when we inspect in just a moment.
 
 [source,yaml]
 ----
@@ -195,7 +205,31 @@ additionalTrustBundle: |
   -----END CERTIFICATE-----
 ----
 
-=== Complete install-config.yaml
+=== Review the install-config.yaml
+
+Please take a moment to inspect your `install-config.yaml` file for the sections that were added in this lab.
+
+[TIP]
+--
+[%hardbreaks]
+`tmux` has been setup for "mouse mode" which allows you to scroll up and down with the mouse wheel.
+After scrolling up, you can quickly get back to the bottom by pressing `q`, as in `quit`
+--
+
+[.highside,source,bash,role=execute]
+----
+cat /mnt/high-side-data/install-config.yaml
+----
+
+In addition to the base template, you should have sections for:
+
+{counter:inspect}. SSH key under `sshKey:`
+
+{counter:inspect}. Pull Secret under `pullSecret:`
+
+{counter:inspect}. Mirror Registry under `imageContentSources:`
+
+{counter:inspect}. Mirror Registry Certificate Authority under `additionalTrustBundle:`
 
 Please make a backup of your `install-config.yaml`!
 The OpenShift installer will consume it / delete it.
@@ -208,17 +242,9 @@ cp -v /mnt/high-side-data/install-config.yaml /mnt/high-side-data/install-config
 == Running the Installation
 
 With all of the installation questions answered, `openshift-install` can now automate the installation of your disconnected cluster.
-Let's kick off the cluster installation!
+Let's kick off your disconnectd OpenShift installation!
 
 image::install-config-6.svg[initial config,width=600]
-
-[NOTE]
---
-The OpenShift Installer (`openshift-install`) is specifically built for every version / release.
-
-This means that `openshift-install` version `{openshift_min_version}` will install OpenShift `{openshift_min_version}`.
-It also means you can't use `openshift-install` version `{openshift_min_version}` to install OpenShift `{openshift_max_version}`.
---
 
 Run the `openshift-install` command.
 The command below includes the directory where your `install-config.yaml` __answer file__ is located.
@@ -229,7 +255,14 @@ openshift-install create cluster --dir /mnt/high-side-data
 ----
 [.output]
 ----
-...
+INFO Credentials loaded from the "default" profile in file "/home/lab-user/.aws/credentials"
+WARNING imageContentSources is deprecated, please use ImageDigestSource
+WARNING Making control-plane schedulable by setting MastersSchedulable to true for Scheduler cluster settings
+INFO Consuming Install Config from target directory
+INFO Creating infrastructure resources...
+
+... the longest wait of this workshop ...
+
 INFO Install complete!
 INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/mnt/high-side-data/auth/kubeconfig'
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.disco.lab
@@ -238,5 +271,14 @@ INFO Time elapsed: 30m49s
 ----
 
 [IMPORTANT]
-This `disco.lab` cluster will take about 30 minutes to install but if you do not want to wait *proceed to the next section
-to work on the pre-built salsa.lab cluster*!
+This `disco.lab` OpenShift cluster will take about 30 minutes to install.
+
+Please go on to the next section and work with the pre-built [.salsa]#salsa.lab cluster# while the installation completes.
+
+[NOTE]
+--
+The OpenShift Installer (`openshift-install`) is specifically built for every version / release of OpenShift.
+
+This means that `openshift-install` version `{openshift_min_version}` will install OpenShift `{openshift_min_version}`.
+It also means you can't use `openshift-install` version `{openshift_min_version}` to install OpenShift `{openshift_max_version}`.
+--

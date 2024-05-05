@@ -7,7 +7,7 @@
 Or, perhaps, your cluster will finish installing in the next ~30 minutes... 😸
 
 Don't worry!
-Your workshop environment also includes a previously-built and disconnected [.salsa]#salsa cluster#.
+Your workshop environment includes a previously-built [.salsa]#salsa cluster#, which is also disconnected.
 You can complete this lab using either cluster.
 
 image::disco-4.svg[disco diagram,800]
@@ -29,26 +29,30 @@ Here are a few suggested __"day 2"__ tasks that will improve your experience.
 {counter:overview}. Update OpenShift from a disconnected _Update Server_
 
 [NOTE]
-You may not have enough time during the Summit 2024 Lab Session to complete the __Update Server__ task.
+You may not have enough time during the Summit 2024 Lab Session to complete all of these tasks.
 
 == Accessing your cluster
 
-Because of time constraints, we recommend that you decide now to either use your [.highside]#disco.lab cluster#, or the prebuilt [.salsa]#salsa.lab cluster#.
+[NOTE]
+--
+Because of time constraints, we recommend that you complete this lab using the pre-built [.salsa]#salsa.lab cluster#.
+If you complete quickly, and your [.highside]#disco.lab# cluster has finished installing, you can repeat the steps again.
+--
 
-The instructions are the same - only the names change.
+=== Retrieving the default kubeadmin password
 
-=== Retrieving the default `kubeadmin` password
+The OpenShift install process creates a randomized password for the default cluster administrative user, `kubeadmin`.
+The password is printed to the screen when `openshift-install` finishes installing the cluster.
 
-The OpenShift install process creates a randomized password for the default cluster administrative user, `kubeadmin` and it is printed when `openshift-install` finishes.
-However, if you don't want to wait or your terminal output is gone you can lookup the password:
+If you don't want to wait for the cluster to finish installing, or your terminal output is no longer available, you can find the password by looking in the `openshift-install` directory.
 
-With the [.highside]#highside system#:
+Use the available `tmux` pane to find the `kubeadmin` password for your [.highside]#highside disco.lab# OpenShift cluster.
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
 echo "URL: https://console-openshift-console.apps.disco.lab"
 echo "Username: kubeadmin"
-echo "Password: $(more /mnt/high-side-data/install/auth/kubeadmin-password)"
+echo "Password: $(more /mnt/high-side-data/auth/kubeadmin-password)"
 ----
 [.output]
 ----
@@ -57,17 +61,24 @@ Username: kubeadmin
 Password: *****-*****-*****-*****
 ----
 
-[TIP]
+=== Log in to OpenShift using the 'oc' command-line tool
+
+SSH to the appropriate system from the [.lowside]#jump# system, then use `oc` to log in to the OpenShift cluster.
+
+The pre-built [.salsa]#salsa.lab# OpenShift cluster has simplified credentials.
+
+* A cluster-admin user is available as `admin` / `admin`.
+* A non-admin user is also available as `user` / `user`.
+* Its `mirror-registry` credentials are `init` / `salsapass`
+
+[NOTE]
 --
-The pre-built **salsa.lab** cluster has preconfigured authentication for the purposes of this lab:
+Both of your `tmux` panes may be logged in to the [.highside]#highside# system.
+You may need to type `exit` to go back to the [.lowside]#jump# system.
 
-* There is a cluster-admin user available as `admin` / `admin`.
-* There is also a non-admin user available as `user` / `user`.
+Logging in to  either OpenShift cluster with the `oc` command-line tool will display an untrusted TLS certificate warning.
+You can safely answer `y` as in `yes` to continue logging in.
 --
-
-=== Accessing the cluster with the command-line interface
-
-We can access either cluster from the [.lowside]#jump system#:
 
 [cols="a,a",options="header"]
 |===
@@ -93,31 +104,37 @@ ssh highside
 oc login https://api.disco.lab:6443 --username kubeadmin 
 ----
 
-|
-* *Username:* admin
-* *Password:* admin
-|
-* *Username:* kubeadmin
-* *Password:* (that we found above on the [.highside]#highside system#)
+//|
+//* *Username:* admin
+//* *Password:* admin
+//|
+//* *Username:* kubeadmin
+//* *Password:* (that we found above on the [.highside]#highside system#)
 |===
 
-[WARNING]
---
-The copy-paste commands below assume that you will be using the pre-built [.salsa]#salsa.lab cluster#.
---
+[TIP]
+As a convenience, the [.lowside]#jump# system has been configured to automatically trust the Web Console certificates.
 
-=== Accessing the cluster's web console
+=== Log in to the OpenShift Web Console
 
-Now you can click the *Desktop* button on the right-hand side of the lab web interface and use Firefox to login to the OpenShift __Web Console__.
-The __Web Console__ is the very last part of OpenShift to come online.
-If you are trying to connect to your [.highside]#disco.lab# cluster, and see an "**Application is not available**" message, it means the installation hasn't completed yet.
-
-Your workshop environment includes a Firefox bookmark to quickly connect with the __Web Console__.
+Please click on the *Desktop* button at the top of the right-hand terminal and use Firefox to log in to the OpenShift __Web Console__.
+Your workshop environment includes browser bookmarks to quickly connect with both of the OpenShift __Web Consoles__.
+Remember, the [.salsa]#salsa cluster's# credentials are `admin` / `admin`.
 
 image::vnc-disco-openshift-bookmark.png[Screenshot of Desktop with DISCO - OpenShift bookmark highlighted]
 
-The web-based VNC client is a bit klunky when it comes to **copy** and **paste**.
-You can copy and paste into the VNC desktop using __noVNC__'s tool ribbon (hidden by default.) 
+[NOTE]
+--
+The __Web Console__ is the very last part of OpenShift to come online.
+If you are trying to connect to your [.highside]#disco.lab# cluster, and see an "**Application is not available**" message, it means the installation hasn't completed yet.
+--
+
+[NOTE]
+--
+The web-based VNC client (`noVNC`) is a bit klunky with **copy** and **paste**.
+You can copy and paste into the desktop using __noVNC__'s tool ribbon (hidden by default.) 
+You might need this if you're trying to copy and paste the 23-character `kubeadmin` password.
+--
 
 image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted]
 
@@ -128,7 +145,7 @@ image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted
 // [.highside,source,bash,role=execute,subs="attributes"]
 // ----
 // mkdir -vp $HOME/.kube
-// cp -v /mnt/high-side/install/auth/kubeconfig $HOME/.kube/config
+// cp -v /mnt/high-side/auth/kubeconfig $HOME/.kube/config
 // oc status
 // ----
 // [.output]
@@ -143,47 +160,73 @@ image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted
 
 // Now that you're logged in via the command-line or the _Web Console_ we can proceed with the __"day 2"__ tasks.
 
-== Install Operators
+== Install Operators in a disconnected environment
 
-=== Add custom catalog sources
-// https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned
+Operators are like apps.
+OpenShift's OperatorHub is like an app store.
+The OperatorHub is configured, by default, to show you apps / Operators from multiple __sources__.
+The __sources__ include:
 
-In order to deploy Operators from the customized catalog that was created in the `mirror-registry`, we have to add a new `CatalogSource` to OpenShift.
-We also need to disable the default CatalogSources.
-OpenShift clusters, by default, will try to use the online/connected versions of the Operator Catalogs from registry.redhat.io.
+* Operators that are provided by, and supported by, Red Hat
+* Operators that are provided by, and supported by, Certified Partners (Marketplace)
+* Operators that are provided by Certified Partners without support
+* Operators that are provided by the Community without support
 
-First, we will disable the default sources from the disconnected [.salsa]#salsa.lab cluster#.
+Each Operator __source__ provides its own __catalog__ of Operators.
+OpenShift will check for new __catalog__ data every 10 minutes by default.
+The __catalogs__ are stored in the registry.redhat.io image registry, which is not accessible from disconnected clusters.
+
+The `ImageSetConfiguration` that `oc-mirror` used to download the installation content also included instructions to download the `Web Terminal` Operator from the Red Hat Certified __catalog__.
+When `oc-mirror` downloads Operators, it creates `CatalogSources` that are automatically uploaded to the `mirror-registry` and described in the __results files__.
+Those `CatalogSources` need to be added to OpenShift as a __"day 2"__ task.
+
+=== Add custom CatalogSources
+
+[NOTE]
+In a disconnected environment, https://docs.openshift.com/container-platform/4.14/installing/installing_aws/installing-restricted-networks-aws-installer-provisioned.html#olm-restricted-networks-operatorhub_installing-restricted-networks-aws-installer-provisioned[you must disable the default `CatalogSources`].
+
+The default `CatalogSources` can be disabled individually, or all at once.
+The command below will disable all of the default __sources__ in a single command.
 
 [.salsa,source,bash,role=execute]
 ----
 oc patch OperatorHub cluster --type merge -p '{"spec": {"disableAllDefaultSources": true}}'
 ----
 
-Next, we will add the customized `CatalogSource` that `oc-mirror` created for us.
+[NOTE]
+--
+The `CatalogSources` created by `oc-mirror` only contain the Operators that were mirrored (along with their dependencies).
+All the other Operators are removed from the __catalog__ because they weren't mirrored and can't be installed.
+--
 
-[INFO]
---
-New `CatalogSources` can take 1-5 minutes to appear in the Web Console.
---
+After the default `CatalogSources` have been **disabled**, you can add the disconnected `CatalogSource` that `oc-mirror` created to your cluster with this command.
 
 [.salsa,source,bash,role=execute]
 ----
 oc create -f oc-mirror-workspace/results-*/catalogSource-cs-redhat-operator-index.yaml
 ----
 
-Now we should see the Operators that we mirrored over with `oc-mirror` in the OperatorHub on the OpenShift Web Console for [.salsa]#salsa.lab cluster# 
+The new `CatalogSources` will appear in the Web Console / OperatorHub after ~60 seconds.
+You may notice that the [.salsa]#salsa.lab cluster's# list of Operators includes the `OpenShift Update Service` and `Logging` Operators in addition to the `Web Terminal` Operator.
+The `DevWorkSpace` Operator is a dependency of the `Web Terminal` Operator.
 
-image::disconnected-operator-catalog.png[Screenshot of the disco.lab instance of OpenShift Web Console showing OperatorHub with a custom CatalogSource]
+[TIP]
+--
+The OpenShift Web Console will automatically hide the left-hand navigation menu when the browser window is not wide enough.
+You can reveal the navigation menu, and find the OperatorHub link, by clicking the "hamburger" menu in the top-left corner.
+--
 
-=== Install Web Terminal
+image::disconnected-operator-catalog.png[Screenshot of the salsa.lab clusters OpenShift Web Console showing OperatorHub with a custom CatalogSource]
 
-Go ahead and install the `Web Terminal` Operator.
+=== Install the Web Terminal Operator
+
+Go ahead and install the Web Terminal Operator.
 Accept all of the default values.
 Your disconnected cluster will pull all of the images from your disconnected `mirror-registry`.
 
-After the Web Terminal Operator has been installed, refresh your browser page and see the new Terminal icon at the top of the page.
-Clicking the Terminal icon will reveal a Terminal that is logged in with your current credentials and permissions.
-The Terminal includes all of the standard `oc`, `kubectl`, `helm`, and `bash`tools.
+After the Web Terminal Operator has been installed, **refresh your browser page** to see the new terminal icon it provides at the top of the page.
+Clicking the terminal icon will create a terminal in your browser that is logged in to the cluster with your current credentials and permissions.
+The terminal includes all of the standard `oc`, `kubectl`, `helm`, and `bash` tools.
 
 image::operator-web-terminal.png[Screenshot of the Web Terminal Operator installed and running]
 
@@ -195,38 +238,40 @@ image::operator-web-terminal.png[Screenshot of the Web Terminal Operator install
 
 == Update your cluster
 
-// First log into the [.salsa]#salsa system#
-
-// [.lowside,source,bash,role=execute]
-// ----
-// ssh salsa
-// ----
-
-// Next log into the [.salsa]#salsa.lab cluster#
-
-// [.salsa,source,bash,role=execute]
-// ----
-// oc login https://api.salsa.lab:6443 --username admin --password admin
-// ----
-
 There are multiple ways to apply updates to your disconnected OpenShift cluster.
-The easiest and fastest way to apply updates is to use the `oc adm upgrade` command and reference the new version / release image.
+
+The easiest and fastest way to apply OpenShift updates is to use the `oc adm upgrade` command and reference the new version / release image.
+You will use this method below to update your cluster.
+
+Installing and configuring the `OpenShift Update Service` Operator is discussed in the xref:openshift-update-service-operator.adoc[Optional Lab].
 
 [TIP]
 --
 OpenShift versions are also known as `releases`.
 The list of updates, changes and dependencies each release / version provides is bundled into a `release image` and stored in your `mirror-registry`.
-"Applying an OpenShift update" could also be described as "Moving to a new release."
+
+"Applying an OpenShift update" could also be described as "moving to a new release."
 --
 
 Before OpenShift applies any updates, it first checks the update / release's signature to make sure it came from a trusted source.
-`oc-mirror` automatically downloadeds signatures for each OpenShift version / release that it downloads.
+`oc-mirror` automatically downloads signatures for each OpenShift version / release that it downloads.
 
-You upload the release signatures into OpenShift with this command:
+Another __"day 2"__ task you must complete is uploading the release signatures from `oc-mirror's` __results files__ into your OpenShift cluster.
+
+[NOTE]
+--
+The `oc-mirror` __results files__ for the [.salsa]#salsa.lab cluster# were created in the `lab-users` home directory.
+
+The `oc-mirror` __results files__ for the [.highside]#disco.lab cluster# were created in the `/mnt/high-side-data` directory.
+
+Please adjust the following command accordingly.
+--
+
+You can add the release signatures to your OpenShift cluster with this command.
 
 [.salsa,source,bash,role=execute]
 ----
-oc apply -f oc-mirror-workspace/results-*/release-signatures
+oc apply -f $HOME/oc-mirror-workspace/results-*/release-signatures/
 ----
 [.output]
 ----
@@ -235,8 +280,16 @@ configmap/sha256-e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda93
 ----
 
 OpenShift will complain if you tell it to update to a new release using the `tag` name.
-OpenShift prefers to update to new releases using the sha256 `digest` because the `digest` guarantees that the `release image` contents haven't been altered.
-Please use the following commands to log into the [.salsa]#salsa system#, identify the sha256 `digest` and tell OpenShift to begin the update.
+OpenShift prefers to update to new releases using the sha256 `digest` because the `digest` guarantees the `release image's` contents haven't been altered.
+
+Please use the following commands to identify the sha256 `digest` and tell OpenShift to begin the update.
+
+[NOTE]
+--
+The username / password for the [.salsa]#salsa# `mirror-registry` is `init` / `salsapass`.
+
+The username / password for the [.highside]#highside# `mirror-registry` is `init` / `discopass`.
+--
 
 //   Applying a release (by tag) without checking signatures    //
 // [lab-user@highside ~]$ oc adm upgrade --to-image=ip-10-0-15-131.us-west-2.compute.internal:8443/openshift/release-images:4.14.20-x86_64 --force --allow-explicit-upgrade
@@ -251,17 +304,31 @@ Please use the following commands to log into the [.salsa]#salsa system#, identi
 [.salsa,source,bash,role=execute]
 ----
 podman login -u init -p salsapass $(hostname):8443
+podman login -u init -p discopass $(hostname):8443
 DIGEST=$(oc image info -o json $HOSTNAME:8443/openshift/release-images:4.14.20-x86_64 | jq -r .contentDigest)
 oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@$DIGEST --allow-explicit-upgrade
 ----
 [.output]
 ----
-...
-
+Login Succeeded!
+Error: logging into "disco" because you're on "salsa"
+warning: The requested upgrade image is not one of the available updates. You have used --allow-explicit-upgrade for the update to proceed anyway
 Requested update to release image quay.io/openshift-release-dev/ocp-release@sha256:e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933
 ----
 
-You can follow along with the OpenShift update by using the following commands:
+[WARNING]
+--
+Applying cluster updates to the [.salsa]#salsa.lab# and [.highside]#disco.lab# clusters, which are **Single Node OpenShift** clusters, will result in the cluster becoming periodically unreachable.
+
+Your cluster(s) become unreachable when the update process replaces the old `console` and `apiserver` pods with new versions.
+
+OpenShift updates also update the nodes' operating system, https://docs.openshift.com/container-platform/4.15/architecture/architecture-rhcos.html[Red Hat Enterprise Linux CoreOS,window=_blank].
+You get two updates for the price of one!
+
+Your cluster(s) will become unreachable again when the Single Node of OpenShift reboots to apply `kernel` and other critical system updates.
+--
+
+You can follow along with the OpenShift update by using the following commands.
 
 [.salsa,source,bash,role=execute]
 ----
@@ -273,10 +340,19 @@ NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version   4.14.18   True        True          50s     Working towards 4.14.19: 116 of 860 done (13% complete), waiting on etcd, kube-apiserver
 ----
 
-[NOTE]
---
-Applying cluster updates to the [.salsa]#salsa.lab# and [.highside]#disco.lab# clusters, which are Single Node OpenShift clusters, will result in the cluster becoming periodically unreachable.
-Your cluster(s) become unreachable when the update switchs the `console` and `apiserver` pods from the old version to the new version.
-OpenShift updates also apply updates to the underlying Operating System, https://docs.openshift.com/container-platform/4.15/architecture/architecture-rhcos.html[Red Hat Enterprise Linux CoreOS,window=_blank].
-Your cluster(s) will become unreachable again when the Single Node of OpenShift reboots to apply `kernel` and other critical system updates.
---
+[.salsa,source,bash,role=execute]
+----
+watch oc get clusteroperators
+----
+[.output]
+----
+NAME                      VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+authentication            4.14.19   True        False         False      3h5m    
+...
+console                   4.14.19   True        False         False      3h16m   
+...
+kube-apiserver            4.14.20   True        False         False      3h23m   
+kube-controller-manager   4.14.19   True        True          False      3h25m   NodeInstallerProgressing: 1 nodes are at revision 6; 0 nodes have achieved new revision 7
+kube-scheduler            4.14.19   True        True          False      3h25m   NodeInstallerProgressing: 1 nodes are at revision 7; 0 nodes have achieved new revision 8...
+...
+----

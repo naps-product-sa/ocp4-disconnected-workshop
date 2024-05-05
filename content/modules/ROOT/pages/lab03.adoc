@@ -38,7 +38,7 @@ Installing the `mirror-registry` takes ~8 minutes.
 The `oc-mirror` download that began in the last section takes ~15 minutes.
 
 We will demonstrate that the [.highside]#highside# system is disconnected while we wait for the download to complete.
-Then we will end this section by transferring the 25GB of OpenShift installation images across the 🍃 air gap 🍃 and into the disconnected `mirror-registry`.
+Then we will end this section by transferring the ~25GB of OpenShift installation images across the 🍃 air gap 🍃 and into the disconnected `mirror-registry`.
 
 == Creating a Mirror Registry
 
@@ -70,7 +70,7 @@ In the real world, customers often access their disconnected systems using a VPN
 In your workshop environment, an exception was created in the firewall that allows (only) the [.lowside]#jump# system to SSH to the [.highside]#highside# system.
 
 Password-less SSH has been enabled for your convenience.
-Please log into the [.highside]#highside# system using `ssh` from the [.lowside]#jump# system.
+Please log in to the [.highside]#highside# system using `ssh` from the [.lowside]#jump# system.
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
@@ -110,8 +110,8 @@ The only option that we will provide is one to set the password for the `init` u
 [.output]
 ----
 ...
-INFO[2023-07-06 15:43:41] Quay installed successfully, config data is stored in /home/lab-user/quay-install
-INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, discopass)
+INFO[2024-05-04 15:43:41] Quay installed successfully, config data is stored in /home/lab-user/quay-install
+INFO[2024-05-04 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.internal:8443 with credentials (init, discopass)
 ----
 
 [NOTE]
@@ -121,13 +121,13 @@ We can't move on to the next step of trusting the TLS certificate until the `mir
 
 === Trusting the `mirror-registry's` TLS certificate
 
-The `mirror-registry` installer creates a TLS certificate that is not trusted by anything, not even the [.highside]#highside# system where it was installed.
+The `mirror-registry` installer creates its own TLS certificate that is not trusted by anything, not even the [.highside]#highside# system where it was installed.
 The `mirror-registry` allows users to provide their own certificate, if they were issued one by somebody they trust, using the `--sslCert` option.
 
 The procedure to trust the `mirror-registry's` self-signed TLS certificate is simple.
 
 [%hardbreaks]
-Copy the Certificate Authority file (`rootCA.pem`) into the Red Hat Enterprise Linux CA trust directory.
+Copy the Certificate Authority file (`rootCA.pem`) that was created by the `mirror-registry` automation in to the Red Hat Enterprise Linux CA trust directory.
 Then run the `update-ca-trust` command.
 
 [.highside,source,bash,role=execute]
@@ -153,10 +153,13 @@ Login Succeeded!
 
 The `podman login` command creates an authentication file / __pull secret__ at `/run/user/1000/containers/auth.json`.
 
-Note that the `oc-mirror` command looks for _pull secrets_ in multiple locations:
+[NOTE]
+--
+The `oc-mirror` command looks for _pull secrets_ in multiple locations:
 
 * `$HOME/.docker/config.json` (created on the [.lowside]#lowside jump# system)
 * `$XDG_RUNTIME_DIR/containers/auth.json` (created on the [.highside]#highside# system)
+--
 
 == Transfer the installation content [[rsync-content]]
 
@@ -165,7 +168,7 @@ Make sure that your `oc-mirror` command has completed successfully before procee
 If `oc-mirror` is still downloading the OpenShift installation images, please jump forward to <<prove-disconnected>>.
 But don't forget to come back!
 
-You can confirm the download finished by looking in your `tmux` pane to see if your [.underline]#prompt has returned#, and that the `.tar` archive was created.
+You can confirm the download finished by looking in your `tmux` pane to see if your [.underline]#prompt has returned#, and that the `.tar` archive file was created.
 
 [.output]
 ----
@@ -190,8 +193,17 @@ rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
 ----
 [.output]
 ----
-[lab-user@jump ~]$ rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
-...
+sending incremental file list
+./
+.oc-mirror.log
+        186,850 100%  146.94MB/s    0:00:00 (xfr#1, to-chk=124/126)
+imageset-config.yaml
+            469 100%  458.01kB/s    0:00:00 (xfr#2, to-chk=123/126)
+mirror_seq1_000000.tar
+ 22,931,079,168  92%  125.16MB/s    0:00:15  (xfr#2, to-chk=122/126)
+
+... a long, but amazing, transfer ...
+
 publish/
 publish/.metadata.json
         332,183 100%  332.37kB/s    0:00:00 (xfr#66, to-chk=0/127)
@@ -202,7 +214,7 @@ total size is 30,788,095,434  speedup is 1.00
 
 == Prove that highside is disconnected [[prove-disconnected]]
 
-Looking at the workshop environment diagram, we can see how the [.highside]#highside# system is disconnected.
+Looking at the workshop environment diagram, you can see how the [.highside]#highside# system is disconnected.
 The [.highside]#highside network# doesn't provide any direct route to the internet.
 
 [NOTE]
@@ -229,7 +241,7 @@ You may recall that:
 
 If you try to access a **blocked website**, like [.underline]#quay.io#, you will see an **Access Denied** message like this.
 
-[.highside,source,bash,role=execute]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 curl -I quay.io
 ----
@@ -243,7 +255,7 @@ X-Squid-Error: ERR_ACCESS_DENIED 0
 
 If you try to access an **allowed website**, like the Red Hat Update Infrastructure (RHUI) repos inside the Amazon AWS Cloud, you will see a message like this.
 
-[.highside,source,bash,role=execute]
+[.highside,source,bash,role=execute,subs="attributes"]
 ----
 curl -I https://rhui.{aws_default_region}.aws.ce.redhat.com
 ----
@@ -256,11 +268,14 @@ Date: Mon, 29 Apr 2024 20:15:51 GMT
 
 If you skipped ahead to prove that the [.highside]#highside systems# are really disconnected while the `oc-mirror` download was still working, it's time to go back to <<rsync-content>>.
 
-== Upload OpenShift's installation images into the `mirror-registry`
+== Upload OpenShift's installation images into the mirror-registry
 
-Now that the [.highside]#highside# system has: a) received the installation images, b) trusts the `mirror-registry's` TLS certificate, and c) `podman` has logged in and created a new _pull secret_, you are ready to upload the installation images.
+Now that the [.highside]#highside# system has: **a**) received the installation images, **b**) trusts the `mirror-registry's` TLS certificate, and **c**) `podman` has logged in and created a new _pull secret_, you are ready to upload the installation images.
 
 We'll begin by adding the `oc`, `oc-mirror` and `openshift-install` commands to the PATH.
+
+[TIP]
+Make sure you are using the `tmux` pane that is logged in to the [.highside]#highside# system.
 
 [.highside,source,bash,role=execute]
 ----
@@ -269,12 +284,13 @@ sudo mv -v /mnt/high-side-data/oc-mirror /bin/
 sudo mv -v /mnt/high-side-data/openshift-install /bin/
 ----
 
-[WARNING]
---
-Please run the next `oc-mirror` command in your `tmux` screen.
-This will allow you to keep working on the next section while `oc-mirror` uploads ~25 GB of data into the `mirror-registry`.
-The `oc-mirror` task should complete in about 15 minutes.
---
+With the mirroring tools installed and configured, it is now time to run `oc-mirror` again, this time on the [.highside]#highside# system, to __upload__ the installation images in to the `mirror-registry`.
+The __upload__ process takes ~15 minutes in this workshop environment.
+
+[NOTE]
+`oc-mirror` will create several __results files__ in the directory where it was ran.
+
+Please change directories to `/mnt/high-side-data`, and use the `tmux` pane that is logged in to the [.highside]#highside# system to run the next command.
 
 [.highside,source,bash,role=execute]
 ----
@@ -283,7 +299,16 @@ oc-mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname)
 ----
 [.output]
 ----
-...
+Logging to .oc-mirror.log
+Checking push permissions for ip-10-0-54-198.us-west-2.compute.internal:8443
+Publishing image set from archive "/mnt/high-side-data/mirror_seq1_000000.tar" to registry "ip-10-0-54-198.us-west-2.compute.internal:8443"
+ip-10-0-54-198.us-west-2.compute.internal:8443/
+  openshift/release
+    blobs:
+      file://openshift/release sha256:d8190195889efb5333eeec18af9b6c82313edd4db62989bd3a357caca4f13f0e 1.404KiB
+      file://openshift/release sha256:cd8c26ed660bfc4447a17563df1dc5374f1cbd2ced1d7ae0af135fabaff1f7d2 17.86KiB
+
+... a long, mind-expanding, upload ...
 
 info: Mirroring completed in 18m10.33s (39.33MB/s)
 Rendering catalog image "ip-10-0-8-121.us-west-2.compute.internal:8443/redhat/redhat-operator-index:v4.14" with file-based catalog 

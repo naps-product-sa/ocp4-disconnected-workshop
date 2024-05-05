@@ -20,7 +20,7 @@ You can refer to the https://docs.openshift.com/container-platform/{openshift_ve
 ** Install the `mirror-registry`
 ** Use `oc-mirror` to populate the `mirror-registry`
 
-{counter:steps}. Tell the OpenShift installation program (`openshift-install`) where to find the installation images
+{counter:steps}. Tell the OpenShift Installer (`openshift-install`) where to find the installation images
 
 ** Make a few changes to the default `install-config.yaml` file
 *** Add credentials (`pull secret`) for the `mirror-registry`
@@ -34,7 +34,7 @@ You can refer to the https://docs.openshift.com/container-platform/{openshift_ve
 
 Now that we know the procedure, let's start with **Step 1 - Preparing the [.lowside]#jump system#**
 
-== Preparing the `jump system`
+== Preparing the jump system
 
 The [.lowside]#jump system# lives in the [.lowside]#lowside network# which allows it to download the mirroring tools and installation images.
 The network is called [.lowside]#lowside# because it has a low security profile, and shouldn't be used to store sensitive information.
@@ -138,7 +138,7 @@ tar -xzf openshift-install.tar.gz openshift-install
 rm -f openshift-install.tar.gz
 ----
 
-== Mirroring the OpenShift installation images
+=== Mirroring the OpenShift installation images
 
 Now that the mirroring and installation tools have been downloaded and extracted, it's time to put `oc-mirror` to work! Let's start with a brief overview of using `oc-mirror`:
 
@@ -149,8 +149,8 @@ Now that the mirroring and installation tools have been downloaded and extracted
 {counter:mirror}. Create an `ImageSetConfiguration` YAML file that describes:
 
 ** What to download (OpenShift itself, an Operator, and an image)
-** What versions (e.g. everything between {openshift_min_version} and {openshift_max_version})
-** Where to store the download content
+** What versions (e.g. everything between `{openshift_min_version}` and `{openshift_max_version}`)
+** Where to store the downloaded content
 
 {counter:mirror}. Run `oc-mirror` with the YAML file
 
@@ -191,7 +191,8 @@ Create a file called `imageset-config.yaml` with the following contents:
 
 [.lowside,source,yaml,subs="attributes",role=execute]
 ----
-cat << EOF > imageset-config.yaml
+cat << EOF > /mnt/low-side-data/imageset-config.yaml
+---
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
 storageConfig:
@@ -252,8 +253,8 @@ tmux
 
 
 [0] 0:bash*                                                                     "ip-10-0-6-23.us-west-" 07:21 01-May-24
-        Welcome to tmux - press [Ctrl + b then d] to Disconnect or press [Ctrl + b then h] for additional Help         
-  Mouse mode has been turned on. Click to select your window/pane. Resize works too. Hold shift when selecting text.   
+        Welcome to tmux - press [Ctrl + b then d] to Disconnect or press [Ctrl + b then h] for additional Help
+  Mouse mode has been turned on. Click to select your window/pane. Resize works too. Hold shift when selecting text.
 ----
 
 [TIP]
@@ -272,8 +273,16 @@ oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
 ----
 [.output]
 ----
-...
-info: Mirroring completed in 2m52.23s (131.9MB/s)
+Logging to .oc-mirror.log
+Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/publish
+Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/v2
+Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/charts
+Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/release-signatures
+No metadata detected, creating new workspace
+
+...  a long, uncomfortable pause ...
+
+info: Mirroring completed
 Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
 ----
 
