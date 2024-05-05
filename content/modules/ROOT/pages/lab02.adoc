@@ -15,16 +15,16 @@ You can refer to the https://docs.openshift.com/container-platform/{openshift_ve
 ** Many people use DVDs or USBs to walk content between systems and over air gaps
 *** This is known as https://en.wikipedia.org/wiki/Sneakernet[👟 _sneaker net_ 👟,window=_blank]
 
-{counter:steps}. Setup a system ([.highside]#highside#) that can _serve the installation images_ in the disconnected network
+{counter:steps}. Setup a system ([.highside]#highside#) that can serve the installation images in the disconnected network
 
 ** Install the `mirror-registry`
 ** Use `oc-mirror` to populate the `mirror-registry`
 
 {counter:steps}. Tell the OpenShift Installer (`openshift-install`) where to find the installation images
 
-** Make a few changes to the default `install-config.yaml` file
+** Add three additional sections to the `install-config.yaml` file
+*** Add the `mirror-registry` as an approved mirror / installation source
 *** Add credentials (`pull secret`) for the `mirror-registry`
-*** Add the `mirror-registry` as an approved mirror source
 *** Trust the TLS certificate of the `mirror-registry`
 
 {counter:steps}. After OpenShift has been installed...
@@ -58,9 +58,9 @@ OpenShift provides two primary tools that are used to create disconnected cluste
 
 We will also download two additional tools that will be used later on the [.highside]#highside system#.
 
-{counter:tools}. `oc`: The OpenShift command line interface
-
 {counter:tools}. `openshift-install`: The OpenShift Installer
+
+{counter:tools}. `oc`: The OpenShift command line interface
 
 [NOTE]
 --
@@ -119,6 +119,15 @@ sudo cp -v oc-mirror /bin
 curl -L -o mirror-registry.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz
 ----
 
+* `openshift-install`: The OpenShift Installer
+
+[.lowside,source,bash,role=execute,subs="attributes"]
+----
+curl -L -o openshift-install.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_min_version}/openshift-install-linux.tar.gz
+tar -xzf openshift-install.tar.gz openshift-install
+rm -f openshift-install.tar.gz
+----
+
 * `oc`: The OpenShift command line interface
 
 [.lowside,source,bash,role=execute,subs="attributes"]
@@ -129,13 +138,22 @@ rm -f oc.tar.gz
 sudo cp -v oc /bin
 ----
 
-* `openshift-install`: The OpenShift Installer
+=== Checkpoint
 
-[.lowside,source,bash,role=execute,subs="attributes"]
+The commands above asked you to download and extract OpenShift's mirroring and installation tools.
+You can verify your work by looking at the files in your __low side transfer directory__ (`/mnt/low-side-data`).
+You should see four files in that directory
+
+[.lowside,source,bash,role=execute]
 ----
-curl -L -o openshift-install.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{openshift_min_version}/openshift-install-linux.tar.gz
-tar -xzf openshift-install.tar.gz openshift-install
-rm -f openshift-install.tar.gz
+ls -1 /mnt/low-side-data/
+----
+[.output]
+----
+mirror-registry.tar.gz
+oc
+oc-mirror
+openshift-install
 ----
 
 === Mirroring the OpenShift installation images
@@ -155,31 +173,39 @@ Now that the mirroring and installation tools have been downloaded and extracted
 {counter:mirror}. Run `oc-mirror` with the YAML file
 
 ** This process downloads ~25 GB of data and takes about 15 minutes in this workshop environment
-** We will run this process in the background so that you can keep working.
+** We will run the download in a separate (`tmux`) terminal so that you can keep working.
 
 [NOTE]
 --
 A **_pull secret_** is JSON-formated data that combines authentication information for one or more Image Registries into a single file.
 You can find your own _pull secret_ in the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
 
-This workshop provides a generic _pull secret_ in order to avoid delays and frustrations using `vi` or `nano`.
+This workshop provides a generic _pull secret_ in order to avoid delays logging in to the [.underline]#Hybrid Cloud Console# and avoid frustrations using `vi`, `nano` or `emacs`.
 
-More information about _pull secrets_ can be found in the xref:appendix01.adoc#pull-secrets[Appendix].
+More information about _pull secrets_ can be found in the xref:appendix01.adoc#pull-secret[Appendix].
 --
 
 Please begin by copying the provided _pull secret_ into the default location.
 
 [.lowside,source,bash,role=execute]
 ----
-mkdir -v ~/.docker
-cp -v ~/pull-secret-example.json ~/.docker/config.json
+mkdir -v $HOME/.docker
+cp -v $HOME/pull-secret-example.json $HOME/.docker/config.json
+----
+[.output]
+----
+mkdir: created directory '/home/lab-user/.docker'
+'/home/lab-user/pull-secret-example.json' -> '/home/lab-user/.docker/config.json'
 ----
 
-Next, we need to create an `ImageSetConfiguration` YAML file that describes what needs to be downloaded.
-**To save time and storage, we're only going to download two versions of OpenShift**.
-We will also only download one extra app/Operator, the `Web Terminal` Operator.
-And one additional image, `registry.redhat.io/rhel8/support-tools`.
-No Helm charts will be download.
+Then create an `ImageSetConfiguration` YAML file that tells `oc-mirror` what to downloaded.
+A template of this file is provided for you.
+To save time and storage, the template downloads:
+
+* Two specific versions of OpenShift
+* One optional app / Operator, the `Web Terminal` Operator
+* One additional image, `registry.redhat.io/rhel8/support-tools`
+* No Helm charts will be download
 
 [TIP]
 --
@@ -231,8 +257,8 @@ Your workshop environment has configured `tmux` to be as user-friendly as possib
 --
 
 Let's create a `tmux` session and begin the `oc-mirror` download.
-Run the `tmux` command and see how your terminal is automatically split into two "panes", top and bottom.
-You can use your mouse to click and change between the top _pane_ and the bottom _pane_.
+Run the `tmux` command and see how your terminal is automatically split into two __"panes"__, top and bottom.
+You can use your mouse to click and change between the top __pane__ and the bottom __pane__.
 You can drag the line that divides the panes to resize them.
 
 If you use your scroll wheel, please press `q` to return to the bottom and continue typing.
@@ -261,6 +287,7 @@ tmux
 --
 [%hardbreaks]
 If you get disconnected from tmux, you can re-attach by typing: `tmux attach`
+
 For more information on tmux, xref:appendix-tmux.adoc[check out the Appendix]
 --
 
@@ -269,6 +296,7 @@ Now that `tmux` is running, choose one of the _panes_ to run the `oc-mirror` com
 
 [.lowside,source,bash,role=execute]
 ----
+cd /mnt/low-side-data
 oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
 ----
 [.output]
@@ -285,6 +313,14 @@ No metadata detected, creating new workspace
 info: Mirroring completed
 Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
 ----
+
+=== Summary
+
+This lab's instructions helped you downloaded OpenShift's __mirroring__ and __installation__ tools.
+You provided credentials (a `pull secret`) and download instructions (`imageset-config.yaml`) to `oc-mirror`.
+
+Because `oc-mirror` takes a long time to complete, you ran the download command in a `tmux` __pane__.
+You can now proceed to the next section and use the other `tmux` __pane__ to keep working without waiting for the download to complete.
 
 // [cols="10h,90a",frame=none,grid=none]
 // |===

@@ -1,6 +1,6 @@
 = Appendix: Lab Details
 
-== Pull Secrets
+== Pull Secrets [[pull-secret]]
 
 A **_pull secret_** is JSON-formated data that combines authentication information for one or more Image Registries into a single file.
 You can find your own _pull secret_ in the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].

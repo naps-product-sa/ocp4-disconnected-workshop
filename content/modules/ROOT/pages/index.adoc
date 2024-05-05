@@ -30,9 +30,9 @@ Before we begin let's consider a few use-cases for disconnected networks:
 
 == Understanding our lab environment
 
-The diagram below illustrates the various networks, systems, and connections this workshop provides.
+The diagram below illustrates the various systems, networks and connections your workshop environment provides.
 The diagram will be simplifed and explained in more detail later.
-The workshop instructions will help you prepare the [.lowside]#jump system# to download the installation content, setup the [.highside]#highside system# to serve the content, and create an [.highside]#openshift.disco.lab cluster# -- which doesn't exist yet.
+The workshop instructions will help you prepare the [.lowside]#jump system# to download the installation content, setup the [.highside]#highside system# to serve the content, and create the [.highside]#disco.lab# OpenShift cluster -- which doesn't exist yet.
 
 The [.salsa]#salsa network# and its systems were built automatically when the workshop environment was created.
 You can log into the [.salsa]#salsa systems# to compare your systems with functional disconnected systems.
