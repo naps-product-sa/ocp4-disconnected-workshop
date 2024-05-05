@@ -285,10 +285,9 @@ Login Succeeded!
 
 Replace the [.highside]#disco.lab# cluster's global __pull secret__
 
-
 [.highside,source,bash,role=execute]
 ----
-oc set data secret/pull-secret -n openshift-config --from-file $XDG_RUNTIME_DIR/containers/auth.json
+oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=$XDG_RUNTIME_DIR/containers/auth.json
 ----
 [.output]
 ----
