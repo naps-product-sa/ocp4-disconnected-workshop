@@ -2,5 +2,5 @@
 
 *Thank you* for attending this lab session on creating and managing OpenShift in a disconnected environment!
 
-While we understand that disconnected environemnts in a cloud like AWS may be the exception rather than the rule, 
+While we understand that disconnected environments in a cloud like AWS may be the exception rather than the rule, 
 we hope that you have learned more about the processes around installing and managing OpenShift disconnected.
