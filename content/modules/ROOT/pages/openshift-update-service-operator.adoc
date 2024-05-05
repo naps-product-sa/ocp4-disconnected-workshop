@@ -1,0 +1,386 @@
+= OpenShift Update Service
+
+== Overview
+
+The https://docs.openshift.com/container-platform/4.14/updating/updating_a_cluster/updating_disconnected_cluster/disconnected-update-osus.html[OpenShift Update Service Operator (OSUS)] provides a fleet of disconnected OpenShift clusters with centralized updates.
+
+Red Hat maintains an update __"graph"__ that describes the supported, **and blocked**, paths when upgrading an older version of OpenShift to a newer one.
+For example, the __graph__ allows clusters to upgrade directly from version `4.14.0` to `4.14.20`.
+However, clusters that are running OpenShift version `4.13.0` are instructed, by the __graph__, to first update to `4.13.39` before applying the `4.14.20` update.
+
+`oc-mirror` will download the __graph__ data if the `ImageSetConfiguration` sets `mirror.platform.graph: true`
+
+For example:
+
+[source,yaml]
+----
+---
+apiVersion: mirror.openshift.io/v1alpha2
+kind: ImageSetConfiguration
+storageConfig:
+  local:
+    path: /home/lab-user/
+mirror:
+  platform:
+    graph: true   # <-- this is required for OpenShift Update Service
+    channels:
+      - name: stable-4.13
+        minVersion: 4.13.0
+        maxVersion: 4.13.40
+      - name: stable-4.14
+        minVersion: 4.14.0
+        maxVersion: 4.14.22
+  ...
+----
+
+The [.salsa]#salsa.lab cluster# has already downloaded the __graph__ data and the OpenShift Update Service Operator (also known as `cincinnati`).
+
+This lab will show how to install and configure the Update Service Operator, and configure the [.highside]#disco.lab cluster# to pull updates from it.
+The abbreviated list of tasks include:
+
+{counter:overview}. Install the OpenShift Update Service (OSUS) Operator
+
+{counter:overview}. Configure the OSUS pods to trust the [.salsa]#salsa mirror-registry#
+
+{counter:overview}. Configure the [.salsa]#salsa.lab# to trust OSUS
+
+{counter:overview}. Configure the [.highside]#disco.lab# cluster to use OSUS:
+
+** Trust the TLS certificate of the [.salsa]#salsa.lab# cluster (where OSUS runs)
+** Trust the TLS certificate of the [.salsa]#salsa mirror-registry# (where the updates are stored)
+** Add the [.salsa]#salsa mirror-registry's# authentication data to [.highside]#disc.lab's# global __pull secret__.
+
+== Installing the OpenShift Update Service Operator
+
+Please install the OpenShift Update Service on the [.salsa]#salsa.lab# cluster.
+Accept all of the default values.
+
+image::disconnected-operator-catalog.png[Screenshot of the salsa.lab clusters OpenShift Web Console showing OperatorHub with a custom CatalogSource]
+
+After the Operator has finished installing, return to the command-line to apply the `UpdateService` __result file__ that was created by `oc-mirror`.
+
+[WARNING]
+--
+The `updateService.yaml` file created by `oc-mirror` will create the `UpdateService` in the the `default` namespace.
+
+The command below includes a `-n openshift-update-service` and creates the `UpdateService` in the correct namespace.
+--
+
+[.salsa,source,bash,role=execute]
+----
+oc apply -n openshift-update-service -f $HOME/oc-mirror-workspace/results-*/updateService.yaml
+----
+[.output]
+----
+updateservice.updateservice.operator.openshift.io/update-service-oc-mirror created
+----
+
+== Configure OSUS to trust the salsa mirror-registry
+
+After applying the `updateService.yaml` __result file__, OSUS will immediately try to pull the __graph__ data and list of available updates / releases from the [.salsa]#salsa# `mirror-registry`.
+But the pods/containers running OSUS haven't been configured to trust any additional TLS Certificate Authorities (CA).
+
+You can see the error message by describing the `UpdateService`
+
+[.salsa,source,bash,role=execute]
+----
+oc describe UpdateService --all-namespaces
+----
+[.output]
+----
+...
+Status:
+  Conditions:
+    Message:               image.config.openshift.io.Spec.AdditionalTrustedCA.Name not set for image name cluster
+    Reason:                NotConfigured
+    Type:                  RegistryCACertFound
+...
+----
+
+Configuring the OSUS pods running on the [.salsa]#salsa.lab# cluster to trust the [.salas]#salsa# `mirror-registry` requires two steps.
+First, create a `ConfigMap` (in the `openshift-config` namespace) with the [.salsa]#salsa# `mirror-registry's` TLS Certificate Authority in two different __keys__.
+The first __key__ of the `ConfigMap` is the special name `updateservice-registry`.
+The second __key__ of the `ConfigMap` is the DNS name of the [.salsa]#salsa# mirror-registry with the colon (two dots) replaced with two other dots (periods `.`)
+In other words, `salsa.registry.com:8443` becomes `salsa.registry.com..8443` because the colon `:` is a reserved character in YAML.
+
+Replacing the colon with two periods is only required if your `mirror-registry` uses a port number, like `8443`.
+
+[.salsa,source,bash,role=execute]
+----
+oc create configmap osus-ca-trust -n openshift-config \
+  --from-file=updateservice-registry=$HOME/quay/quay-rootCA/rootCA.pem \
+  --from-file=$(hostname -f)..8443=$HOME/quay/quay-rootCA/rootCA.pem
+----
+[.output]
+----
+configmap/osus-ca-trust created
+----
+
+Then patch OpenShift's Image Configuration so that the new `ConfigMap` is also used to trust TLS certificates.
+
+[.salsa,source,bash,role=execute]
+----
+oc patch image.config/cluster --type merge \
+  --patch '{"spec": {"additionalTrustedCA": {"name": "osus-ca-trust"}}}'
+----
+[.output]
+----
+image.config.openshift.io/cluster patched
+----
+
+== Configure the [.salsa]#salsa.lab# to trust OSUS
+
+The [.salsa]#salsa.lab# cluster should also be configured to trust the OSUS TLS certificate.
+This will allow the [.salsa]#salsa.lab# cluster to apply updates it serves to itself.
+
+The OSUS TLS certificate is provided by OpenShift's Ingress Controller / Router.
+
+The [.salsa]#salsa.lab# cluster already has a cluster-wide CA trust bundle because the `install-config.yaml` included the `mirror-registry's` Certificate Authority.
+We need to download the pre-existing cluster-wide CA trust (`configmap/user-ca-bundle`) to a file and add the Router Certificate Authority to the end of that file.
+
+[.salsa,source,bash,role=execute]
+----
+oc extract configmap/user-ca-bundle -n openshift-config
+
+oc extract secret/router-certs-default -n openshift-ingress \
+  --keys=tls.crt --to=- >> ca-bundle.crt
+----
+[.output]
+----
+ca-bundle.crt
+# tls.crt
+----
+
+Then replace the pre-existing cluster-wide CA trust (`configmap/user-ca-bundle`) with the updated list of Certificate Authorities.
+
+[.salsa,source,bash,role=execute]
+----
+oc set data configmap/user-ca-bundle -n openshift-config --from-file ca-bundle.crt
+----
+[.output]
+----
+configmap/user-ca-bundle data updated
+----
+
+The [.salsa]#salsa.lab# cluster will now trust itself when applying updates.
+
+Use the following commands to point [.salsa]#salsa.lab# to itself for updates.
+Begin by identifying the URL of the __graph__ data being served by OSUS.
+
+[.salsa,source,bash,role=execute]
+----
+OSUS_URL=$(oc get -n openshift-update-service updateservice update-service-oc-mirror -o jsonpath='{.status.policyEngineURI}/api/upgrades_info/v1/graph{"\n"}')
+echo $OSUS_URL
+----
+[.output]
+----
+https://update-service-oc-mirror-route-openshift-update-service.apps.salsa.lab/api/upgrades_info/v1/graph
+----
+
+Then patch the __graph__ data URL into the [.salsa]#salsa.lab# cluster.
+
+[.salsa,source,bash,role=execute]
+----
+oc patch clusterversion/version --type merge -p "{\"spec\":{\"upstream\":\"$OSUS_URL\"}}"
+----
+[.output]
+----
+clusterversion.config.openshift.io/version patched
+----
+
+Finally, you can use the Web Console (under Administration and Cluster Settings) to choose an update.
+You can also use the command-line `oc adm upgrade` to show the next suggested upgrade.
+
+== Configure the disco.lab cluster to use OSUS
+
+Configuring the [.highside]#disco.lab# cluster to use OSUS from the [.salsa]#salsa.lab# cluster adds one extra step, updating the global __pull secret__ with credentials for the [.salsa]#salsa mirror-registry#.
+
+The [.salsa]#salsa mirror-registry# credentials are `init` / `salsapass`.
+
+Log in to the [.highside]#highside# system, discover the [.salsa]#salsa mirror-registry's# DNS name, trust its TLS certificates,and add its credentials to the [.highside]#disco.lab# __pull secret__ with `podman`.
+
+[.highside,source,bash,role=execute]
+----
+SALSA_REG=$(openssl s_client -connect salsa:8443</dev/null 2>/dev/null | awk '/^issuer/ {print $NF}')
+echo $SALSA_REG
+----
+[.output]
+----
+ip-10-0-6-85.us-west-2.compute.internal
+----
+
+Download the [.salsa]#salsa mirror-registry# and OSUS TLS certificates and trust them.
+
+[TIP]
+--
+Use SSH to copy the TLS certificate bundle file that was created on the [.salsa]#salsa# system.
+
+Look in the Table of Contents, or the xref:index.adoc[Workshop Overview] to find your unique password.
+--
+
+[.highside,source,bash,role=execute]
+----
+scp salsa:~/ca-bundle.crt .
+----
+[.output]
+----
+ca-bundle.crt                         100%  3823    4.3MB/s   00:00
+----
+
+Configure the [.highside]#highside# system to trust [.salsa]#salsa's mirror-registry#. 
+
+[.highside,source,bash,role=execute]
+----
+sudo cp -v ca-bundle.crt /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust
+----
+[.output]
+----
+'ca-bundle.crt' -> '/etc/pki/ca-trust/source/anchors/ca-bundle.crt'
+----
+
+Combine the [.highside]#disco.lab's# cluster-wide CA trust with the [.salsa]#salsa# certificates.
+
+[.highside,source,bash,role=execute]
+----
+oc extract configmap/user-ca-bundle -n openshift-config --to=- >> ca-bundle.crt
+----
+[.output]
+----
+# ca-bundle.crt
+----
+
+Replace [.highside]#disco.lab's# cluster-wide CA trust with the combined CA bundle
+
+[.highside,source,bash,role=execute]
+----
+oc set data configmap/user-ca-bundle -n openshift-config --from-file ca-bundle.crt
+----
+[.output]
+----
+configmap/user-ca-bundle data updated
+----
+
+Add the [.salsa]#salsa mirror-registry# credentials to the [.highside]#highside# system's local __pull secret__.
+
+[.highside,source,bash,role=execute]
+----
+podman login --username init --password salsapass $SALSA_REG:8443
+cat $XDG_RUNTIME_DIR/containers/auth.json
+----
+[.output]
+----
+Login Succeeded!
+{
+  "auths": {
+    "ip-10-0-54-198.us-west-2.compute.internal:8443": {
+      "auth": "aW5pdDpkaXNjb3Bhc3M="
+    },
+    "ip-10-0-6-85.us-west-2.compute.internal:8443": {
+      "auth": "aW5pdDpzYWxzYXBhc3M="
+    }
+  }
+}
+----
+
+Replace the [.highside]#disco.lab# cluster's global __pull secret__
+
+
+[.highside,source,bash,role=execute]
+----
+oc set data secret/pull-secret -n openshift-config --from-file $XDG_RUNTIME_DIR/containers/auth.json
+----
+[.output]
+----
+secret/pull-secret data updated
+----
+
+Finally, patch the [.highside]#disco.lab# cluster to look for updates from the [.salsa]#OSUS on salsa.lab#.
+
+[.highside,source,bash,role=execute]
+----
+oc patch clusterversion/version --type merge \
+  --patch '{"spec":{"upstream":"https://update-service-oc-mirror-route-openshift-update-service.apps.salsa.lab/api/upgrades_info/v1/graph"}}'
+----
+[.output]
+----
+clusterversion.config.openshift.io/version patched
+----
+
+Confirm that [.highside]#disco.lab# can update from [.salsa]#OSUS running on salsa.lab# cluster.
+
+[TIP]
+You can also use the Web Console (under Administration and Cluster Settings) to choose an update.
+
+[.highside,source,bash,role=execute]
+----
+oc adm upgrade
+----
+[.output]
+----
+Cluster version is 4.14.19
+
+Upstream: https://update-service-oc-mirror-route-openshift-update-service.apps.salsa.lab/api/upgrades_info/v1/graph
+Channel: stable-4.14 (available channels: candidate-4.14, candidate-4.15, eus-4.14, fast-4.14, fast-4.15, stable-4.14, stable-4.15)
+
+Recommended updates:
+
+  VERSION     IMAGE
+  4.14.20     ip-10-0-6-85.us-west-2.compute.internal:8443/openshift/release-images@sha256:e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933
+----
+
+[NOTE]
+--
+Your update / release will not be accepted if you haven't uploaded the `release` signatures from the `oc-mirror` __results files__.
+See xref:lab05.adoc#_update_your_cluster[Lab 5] for details on how to trust the `release signatures`.
+--
+
+
+
+
+
+
+
+// Appendix
+
+== OSUS Appendix
+
+=== ConfigMap YAML
+
+[.salsa,source,bash,role=execute]
+----
+oc get configmap/osus-ca-trust -n openshift-config
+----
+[.output]
+----
+[lab-user@salsa ~]$ oc get -n openshift-config cm/osus-ca-trust -o yaml
+apiVersion: v1
+data:
+  ip-10-0-6-85.us-west-2.compute.internal..8443: |
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
+  updateservice-registry: |
+    -----BEGIN CERTIFICATE-----
+    ....
+    -----END CERTIFICATE-----
+kind: ConfigMap
+metadata:
+  name: osus-ca-trust
+  namespace: openshift-config
+----
+
+
+//[.highside,source,bash,role=execute]
+//----
+//openssl s_client -connect $SALSA_REG:8443 -showcerts 2>/dev/null </dev/null |
+//  awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/ {if(/BEGIN CERTIFICATE/){a++}; out="salsa-mirror-reg-" a ".pem"; print >out}'
+//
+//sudo cp -v salsa-mirror-reg* /etc/pki/ca-trust/source/anchors/
+//sudo update-ca-trust
+//----
+//[.output]
+//----
+//'salsa-mirror-reg-1.pem' -> '/etc/pki/ca-trust/source/anchors/salsa-mirror-reg-1.pem'
+//'salsa-mirror-reg-2.pem' -> '/etc/pki/ca-trust/source/anchors/salsa-mirror-reg-2.pem'
+//----
