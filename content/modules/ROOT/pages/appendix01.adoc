@@ -104,9 +104,9 @@ Another instance of `oc-mirror` will open the .tar file and upload the contents 
 This is documented as a https://docs.openshift.com/container-platform/4.15/installing/disconnected_install/installing-mirroring-disconnected.html#mirroring-image-set-full[fully disconnected environment,window=_blank].
 
 
-== Proxy
+== Proxy [[proxy]]
 
-The high side protects outbound traffic with a http://www.squid-cache.org/[Squid proxy] running on the `nat system`.
+The [.highside]#highside network# restricts outbound traffic with a http://www.squid-cache.org/[Squid proxy] running on the `nat system`.
 The `nat system / proxy` prevents any egress traffic not listed in its `/etc/squid/whitelist.txt` file.
 
 Note that access from the [.highside]#highside systems# to quay.io, openshift.com, and redhat.com is **DENIED**.
