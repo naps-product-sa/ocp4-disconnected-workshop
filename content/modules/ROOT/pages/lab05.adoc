@@ -4,10 +4,10 @@
 
 🪩 💃 It's DISCO time! 🕺 🪩
 
-Or, perhaps, your cluster will finish installing in the next ~30 minutes. 😸
+Or, perhaps, your cluster will finish installing in the next ~30 minutes... 😸
 
 Don't worry!
-Your workshop environment also includes a previously-built disconnected **Salsa cluster**.
+Your workshop environment also includes a previously-built and disconnected [.salsa]#salsa cluster#.
 You can complete this lab using either cluster.
 
 image::disco-4.svg[disco diagram,800]

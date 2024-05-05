@@ -4,7 +4,7 @@ In this lab we will setup the [.highside]#highside# system.
 Recall from the architecture diagram (below) that you will configure the [.highside]#highside# system to run an _image registry_ inside the disconnected network.
 We'll use OpenShift's `mirror-registry` as our _image registry_.
 The `mirror-registry` is a simplified version of Red Hat's Quay Image Registry.
-You can use any _image registry_ you like, as long as it supports the Docker v2 API, [.underline]#uses TLS encryption, and requires authenticated image pulls#.
+You can use any _image registry_ you like, as long as it supports the Docker v2 API, [.underline]#uses TLS encryption#, and [.underline]#requires authenticated image pulls#.
 Examples of alternative _image registries_ include.
 
 * Harbor
@@ -25,21 +25,27 @@ The tasks in this lab include:
 * Trusting the generated TLS certificate
 * Logging in and creating a _pull secret_
 
-{counter:overview}. Uploading the `.tar` file's contents into the `mirror-registry`
+{counter:overview}. Uploading OpenShift's installation images into your `mirror-registry`
 
+image::disco-5.svg[disco diagram,800]
 
 == Out-of-Order operations
 
 In order to make good use of our time together, we will perform the tasks described above out-of-order.
-We will start by copying the `mirror-registry` file from the [.lowside]#lowside# system onto the [.highside]#highside# system.
-Next, we will log into the [.highside]#highside# system to install the `mirror-registry`.
-While the `mirror-registry` installs itself (5 minutes), we will demonstrate that the [.highside]#highside# system is disconnected.
-The `oc-mirror` download command (15 minutes) should be finished by the time we finish those tasks.
-We will end this section by transfering the 25GB `.tar` file and uploading its contents into the `mirror-registry`
+
+We will start by copying the `mirror-registry` from the [.lowside]#jump# system to the [.highside]#highside# system, and installing it.
+Installing the `mirror-registry` takes ~8 minutes.
+The `oc-mirror` download that began in the last section takes ~15 minutes.
+
+We will demonstrate that the [.highside]#highside# system is disconnected while we wait for the download to complete.
+Then we will end this section by transferring the 25GB of OpenShift installation images across the 🍃 air gap 🍃 and into the disconnected `mirror-registry`.
 
 == Creating a Mirror Registry
 
-Let's begin by using the `rsync` command to copy the `mirror-registry` file from the [.lowside]#lowside# system onto the [.highside]#highside# system. Please run this command in the other `tmux` pane.
+Let's begin by using the `rsync` command to copy the `mirror-registry` file from the [.lowside]#lowside# system to the [.highside]#highside# system.
+We will run another `rsync` command a bit later to copy the installation images that `oc-mirror` is still downloading.
+
+Please run the following commands in the other `tmux` pane.
 
 [.lowside,source,bash,role=execute,subs="attributes"]
 ----
@@ -56,12 +62,12 @@ sent 706,975,008 bytes  received 35 bytes  128,540,916.91 bytes/sec
 total size is 706,802,330  speedup is 1.00
 ----
 
-Great! Now its time to log into the [.highside]#highside# system.
+Please wait for a moment while `rsync` finished copying the `mirror-registry`.
 
 === Logging into the highside system
 
 In the real world, customers often access their disconnected systems using a VPN, a jump server, or with dedicated workstations.
-In your workshop environment, an exception was created in the firewall that allows (only) the [.lowside]#jump system# to SSH to the [.highside]#highside# system.
+In your workshop environment, an exception was created in the firewall that allows (only) the [.lowside]#jump# system to SSH to the [.highside]#highside# system.
 
 Password-less SSH has been enabled for your convenience.
 Please log into the [.highside]#highside# system using `ssh` from the [.lowside]#jump# system.
@@ -72,13 +78,15 @@ ssh highside
 ----
 [.output]
 ----
+[lab-user@jump ~]$ ssh highside
 Warning: Permanently added 'highside' (ED25519) to the list of known hosts.
 Last login: Wed May  1 07:56:13 2024 from 10.0.6.23
 [lab-user@highside ~]$
 ----
 
-Now that the [.highside]#highside# system has the mirroring tools and installation content transferred, we can setup the `mirror-registry`.
-We need to change directories and extract the `mirror-registry` files first.
+=== Installing the `mirror-registry`
+
+Now that you're logged into the [.highside]#highside# system, change to the transfer directory and extract the `mirror-registry` files.
 
 [.highside,source,bash,role=execute]
 ----
@@ -92,9 +100,8 @@ execution-environment.tar
 mirror-registry
 ----
 
-Now we install the `mirror-registry` and set a password for the initial user.
 The automation that installs and configures the `mirror-registry` takes ~5 minutes to complete.
-Unfortunately we can't move on to the next step of trusting the TLS certificate until the `mirror-registry` has finished installing.
+The only option that we will provide is one to set the password for the `init` user to `discopass`.
 
 [.highside,source,bash,role=execute]
 ----
@@ -108,10 +115,19 @@ INFO[2023-07-06 15:43:41] Quay is available at https://ip-10-0-51-47.ec2.interna
 ----
 
 [NOTE]
-The `mirror-registry` is installed with a TLS certificate that is not trusted by anything, not even the [.highside]#highside# system where it was installed.
+--
+We can't move on to the next step of trusting the TLS certificate until the `mirror-registry` has finished installing.
+--
 
-The procedure to trust the `mirror-registry` TLS certificate is simple.
-Copy the Certificate Authority file (rootCA.pem) into the Red Hat Enterprise Linux CA trust directory.
+=== Trusting the `mirror-registry's` TLS certificate
+
+The `mirror-registry` installer creates a TLS certificate that is not trusted by anything, not even the [.highside]#highside# system where it was installed.
+The `mirror-registry` allows users to provide their own certificate, if they were issued one by somebody they trust, using the `--sslCert` option.
+
+The procedure to trust the `mirror-registry's` self-signed TLS certificate is simple.
+
+[%hardbreaks]
+Copy the Certificate Authority file (`rootCA.pem`) into the Red Hat Enterprise Linux CA trust directory.
 Then run the `update-ca-trust` command.
 
 [.highside,source,bash,role=execute]
@@ -120,7 +136,10 @@ sudo cp -v /home/lab-user/quay-install/quay-rootCA/rootCA.pem /etc/pki/ca-trust/
 sudo update-ca-trust
 ----
 
-After the `mirror-registry` TLS certificate has been trusted, use `podman` to login.
+=== Log in to the `mirror-registry`
+
+After the `mirror-registry` TLS certificate has been trusted, log in with `podman`.
+
 The username is `init` and the password `discopass`.
 
 [.highside,source,bash,role=execute]
@@ -132,17 +151,21 @@ podman login -u init -p discopass $(hostname):8443
 Login Succeeded!
 ----
 
-The `podman login` command creates an authentication file / (_pull secret_) at `/run/user/1000/containers/auth.json`.
+The `podman login` command creates an authentication file / __pull secret__ at `/run/user/1000/containers/auth.json`.
+
 Note that the `oc-mirror` command looks for _pull secrets_ in multiple locations:
 
 * `$HOME/.docker/config.json` (created on the [.lowside]#lowside jump# system)
 * `$XDG_RUNTIME_DIR/containers/auth.json` (created on the [.highside]#highside# system)
 
-== Transfer the installation content
+== Transfer the installation content [[rsync-content]]
 
-[WARNING]
-Make sure that your `oc-mirror` command has completed successfully before proceeding.
-You can confirm the mirroring has finished by looking in your `tmux` pane to see if your prompt has returned.
+Make sure that your `oc-mirror` command has completed successfully before proceeding!
+
+If `oc-mirror` is still downloading the OpenShift installation images, please jump forward to <<prove-disconnected>>.
+But don't forget to come back!
+
+You can confirm the download finished by looking in your `tmux` pane to see if your [.underline]#prompt has returned#, and that the `.tar` archive was created.
 
 [.output]
 ----
@@ -154,9 +177,9 @@ Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
 
 After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump# system to copy the installation content into `/mnt/high-side-data` on the [.highside]#highside# system.
 
-[WARNING]
+[TIP]
 --
-Please run the `rsync` command in your `tmux` screen.
+Please run the `rsync` command in your `tmux` session.
 This will allow you to keep working on the next section while `rsync` moves ~25 GB of data.
 The `rsync` tasks should complete in about 5 minutes.
 --
@@ -167,6 +190,7 @@ rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
 ----
 [.output]
 ----
+[lab-user@jump ~]$ rsync -avP /mnt/low-side-data/ highside:/mnt/high-side-data/
 ...
 publish/
 publish/.metadata.json
@@ -176,23 +200,22 @@ sent 30,795,621,525 bytes  received 1,565 bytes  131,324,618.72 bytes/sec
 total size is 30,788,095,434  speedup is 1.00
 ----
 
-== Prove that highside is disconnected
+== Prove that highside is disconnected [[prove-disconnected]]
 
 Looking at the workshop environment diagram, we can see how the [.highside]#highside# system is disconnected.
-
-image::disco-5.svg[disco diagram,800]
+The [.highside]#highside network# doesn't provide any direct route to the internet.
 
 [NOTE]
 --
-The [.highside]#highside systems# are configured to use a `nat / squid proxy` server to access a few resources
+The [.highside]#highside systems# are configured to use a `nat / squid proxy` server to access a few [.underline]#__**internal**__# resources.
 
-{counter:exceptions}. The [.highside]#highside# system allows inbound SSH connections from the [.lowside]#jump system#
+{counter:exceptions}. The [.highside]#highside# system allows inbound SSH & HTTP connections from the [.lowside]#jump# system
 
 {counter:exceptions}. The [.highside]#highside# system is allowed to install RHEL RPMs from the repos inside the Amazon AWS Cloud (not from the public repos at https://cdn.redhat.com)
 
 {counter:exceptions}. Your [.highside]#openshift.demo.lab# cluster will be allowed to talk to the Amazon AWS Cloud APIs. More details about this permission will be provided in the next lab
 
-{counter:exceptions}. 🛑 **nothing else** 🛑 is allowed into or out of the [.highside]#highside network#
+{counter:exceptions}. 🛑 **Nothing else** 🛑 is allowed into or out of the [.highside]#highside network#
 
 The xref:appendix01.adoc[Appendix] has more information about the `nat / squid` proxy configuration.
 --
@@ -204,7 +227,7 @@ You may recall that:
 * The `oc` and `openshift-install` tools were downloaded from [.underline]#openshift.com#
 * The OpenShift installation images were downloaded from [.underline]#quay.io#
 
-If you try to access a blocked website, [.underline]#quay.io#, you'll see an **Acces Denied** message like this.
+If you try to access a **blocked website**, like [.underline]#quay.io#, you will see an **Access Denied** message like this.
 
 [.highside,source,bash,role=execute]
 ----
@@ -218,11 +241,11 @@ Date: Mon, 29 Apr 2024 20:08:15 GMT
 X-Squid-Error: ERR_ACCESS_DENIED 0
 ----
 
-The [.highside]#highside# system is configured to install RPMs (like `podman`) from the Red Hat Update Infrastructure (RHUI) repos inside the Amazon AWS Cloud.
-The output for an allowed website, like that repo, will look similar to this:
+If you try to access an **allowed website**, like the Red Hat Update Infrastructure (RHUI) repos inside the Amazon AWS Cloud, you will see a message like this.
+
 [.highside,source,bash,role=execute]
 ----
-curl -I --insecure https://rhui.us-east-2.aws.ce.redhat.com
+curl -I https://rhui.{aws_default_region}.aws.ce.redhat.com
 ----
 [.output]
 ----
@@ -231,9 +254,11 @@ Server: nginx/1.20.1
 Date: Mon, 29 Apr 2024 20:15:51 GMT
 ----
 
-== Mirroring Content
+If you skipped ahead to prove that the [.highside]#highside systems# are really disconnected while the `oc-mirror` download was still working, it's time to go back to <<rsync-content>>.
 
-Now that the [.highside]#highside# system trusts the `mirror-registry's` TLS certificate, and `podman` has logged in and created a new _pull secret_, we're ready to upload the installation images from the `.tar`` file.
+== Upload OpenShift's installation images into the `mirror-registry`
+
+Now that the [.highside]#highside# system has: a) received the installation images, b) trusts the `mirror-registry's` TLS certificate, and c) `podman` has logged in and created a new _pull secret_, you are ready to upload the installation images.
 
 We'll begin by adding the `oc`, `oc-mirror` and `openshift-install` commands to the PATH.
 
@@ -278,11 +303,24 @@ Don't spend too much time exploring the `mirror-registry's` web pages.
 We need to start the next section, **Installing OpenShift**
 
 [%hardbreaks]
-Reminder: The credentials for your DISCO - Registry are:
+**Reminder**: The credentials for your DISCO - Registry are:
 Username: `init`
 Password: `discopass`
 --
 
 image::vnc-disco-registry-bookmark.png[Screenshot of Desktop with DISCO - Registry bookmark highlighted]
+
+[TIP]
+--
+As a convenience, the [.lowside]#jump# system has been configured to scan for new [.highside]#highside# TLS certificates and trust them automatically.
+
+This automation means workshop participants don't have to:
+
+* Download the [.highside]#highside `mirror-registry's`# Certificate Authority (CA) certificate onto the [.lowside]#jump system#.
+* Move the CA certificate in to the `/etc/pki/ca-trust/source/anchors` folder
+* Run `update-ca-trust`
+
+You're welcome!
+--
 
 //TODO get the user out of tmux!

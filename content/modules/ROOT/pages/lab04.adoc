@@ -1,33 +1,47 @@
 = Install OpenShift
 
-In this lab, we'll make final preparations and execute the OpenShift Installer.
+You're almost there!
+
+In this section you will create an `install-config.yaml` __"answer file"__ that the OpenShift Installer `openshift-install` will use to automatically create your disconnected [.highside]#openshift.disco.lab cluster#.
+
+Installing OpenShift in a disconnected environment is as easy as adding three extra pieces of information to an `install-config.yaml`.
+
+{counter:overview}. Provide your disconnected **__pull secret__**
+
+{counter:overview}. Identify your disconnected `mirror-registry`
+
+{counter:overview}. Trust the `mirror-registry's` TLS certificate
+
+[NOTE]
+--
+We will also create an SSH key that can be used for debugging.
+But nothing will go wrong, so we won't use it! 😊
+Creating and SSH key is not required for any OpenShift installation, connected or disconnected.
+But it's a good idea to include one, just in case...
+--
+
+The diagram below is a reminder that your [.highside]#openshift.disco.lab cluster# is completely disconnected from the public internet.
+Aside from communicating with the AWS Cloud APIs to create its own DNS records, instances, and security groups -- your cluster is completely disconnected and will install from [.highside]#highside's# `mirror-registry`.
 
 image::disco-3.svg[disco diagram,800]
 
-== Build the install-config.yaml
+== Create the install-config.yaml
 
-// Here's a diagram describing the inputs and outputs of the installation configuration process: 
+Instead of answering `openshift-install's` questions via its interactive wizard, this workshop shows you how to create the `install-config.yaml` __answer file__ from a template.
 
-// image::install-overview-disco.svg[Install Overview,800]
+The template below provides the Amazon AWS cloud `region` and `subnet` values that are [.underline]#unique to your environment#.
+The template also provides the DNS name (`disco.lab`) that OpenShift will use and tells `openshift-install` to create a Single Node Openshift (SNO) cluster by setting `compute.replicas` to `0` and `controlPlane.replicas` to `1`. Question, is a cluster of 1 still a cluster? 🤷
 
-{counter:install}. Let's start by creating a workspace on the [.highside]#*highside* system# to house our installation materials:
-
-[.highside,source,bash,role=execute,subs="attributes"]
-----
-mkdir /mnt/high-side-data/install
-cd /mnt/high-side-data/install
-----
-
-=== Initial install-config.yaml
+[WARNING]
+--
+Do not change any values in the `install-config.yaml` template below.
+--
 
 image::install-config-1.svg[initial config,width=400]
 
-Create an initial `install-config.yaml`
-
-
 [.highside,source,yaml,role=execute,subs="attributes"]
 ----
-cat << EOF > /mnt/high-side-data/install/install-config.yaml
+cat << EOF > /mnt/high-side-data/install-config.yaml
 ---
 apiVersion: v1
 metadata:
@@ -62,70 +76,86 @@ additionalTrustBundlePolicy: Always
 EOF
 ----
 
-=== SSH Keys
+=== SSH key
 
 image::install-config-2.svg[initial config,width=600]
 
-{counter:install}. Generate an SSH key pair for access to cluster nodes and add it to the `install-config.yaml`
+Generate an SSH key that can be used to debug / troubleshoot the cluster nodes and add it to the `install-config.yaml`
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
 ssh-keygen -C "OpenShift Debug" -N "" -f /mnt/high-side-data/id_rsa
-echo "sshKey: $(cat /mnt/high-side-data/id_rsa.pub)" >> /mnt/high-side-data/install/install-config.yaml
+echo "sshKey: $(cat /mnt/high-side-data/id_rsa.pub)" >> /mnt/high-side-data/install-config.yaml
 ----
-
-[NOTE]
-The SSH key for OpenShift is only used for troubleshooting.
 
 === Pull Secret
 
 image::install-config-3.svg[initial config,width=600]
 
-{counter:install}. Use `jq` to minify your container registry pull secret and add it to the `install-config.yaml`
+Your disconnected __pull secret__ contains the username and password for the `mirror-registry`.
+However, the __pull secret__ created by `podman login` stores that information on multiple lines.
+The `install-config.yaml` file expects your __pull secret__ to be on a single line.
+
+Use `jq` to minify your __pull secret__ and add it to the `install-config.yaml`
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-echo "pullSecret: '$(jq -c . $XDG_RUNTIME_DIR/containers/auth.json)'" >> /mnt/high-side-data/install/install-config.yaml
+echo "pullSecret: '$(jq -c . $XDG_RUNTIME_DIR/containers/auth.json)'" >> /mnt/high-side-data/install-config.yaml
 ----
 
 [NOTE]
 --
-For connected installations, you would use your _pull secret_ from the Hybrid Cloud Console, but for our use case, the `mirror-registry` is the only _image registry_ OpenShift will need to authenticate to.
+Downloading the OpenShift installation images requires a _pull secret_ you download from the https://console.redhat.com/openshift/install/pull-secret[Red Hat Hybrid Cloud Console,window=_blank].
+That __pull secret__ provides credentials for several Red Hat image registries, including quay.io and registry.redhat.io.
+The __pull secret__ that gets added to a disconnected installation's `install-config.yaml` is only required to provide credentials for the `mirror-registry`.
 --
 
 === Add `imageContentSources`
 
 image::install-config-4.svg[initial config,width=600]
 
-We will be using what was generated by `oc-mirror` to ensure that the cluster install maps the container images to our disconnected mirror
-running on the [.highside]#highside system#
+When `oc-mirror` is done uploading the OpenShift installation images into the `mirror-registry` it creates a __result file__.
+The contents of the `imageContentSourcePolicy.yaml` __result file__ must be added to the `install-config.yaml` __answer file__.
 
-*Before continuing*, make sure the second stage of your mirror is done by checking that the `imageContentSourcePolicy.yaml` file exists on disk.
-
-// while true ; do if (test -e /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml) ; then break; fi; sleep 5; done
+[WARNING]
+Use the following command to check if `oc-mirror` on the [.highside]#highside# system has finished uploading the installation images.
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
 if (test -e /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
   then
-     echo "Looks good, go ahead!"
+     echo -e "\n\n Looks good, go ahead! \n\n"
    else
-     echo "Uh oh, something is wrong..."
+     echo -e "\n\n Uh oh, something is wrong... \n\n"
 fi
 ----
 
-Then you can append the relevant snippet to your `install-config.yaml` by running this command:
+[WARNING]
+--
+If the check command said that something is wrong, please make sure that `oc-mirror` has finished uploading.
+
+If the `oc-mirror` upload completed successfully, and the check command still says something is wrong, it's possible that your __results files__ were written to a different directory.
+Look for a directory called `oc-mirror-workspace` on your [.highside]#highside# system.
+Or ask a lab assistant for help.
+--
+
+When the check command says that everything looks good, you can add the `imageContentSources:` data to your `install-config.yaml` with the following command.
 
 [.highside,source,bash,role=execute]
 ----
-cat << EOF >> /mnt/high-side-data/install/install-config.yaml
+cat << EOF >> /mnt/high-side-data/install-config.yaml
 imageContentSources:
 $(grep "mirrors:" -A 2 --no-group-separator /mnt/high-side-data/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml)
 EOF
 ----
 
-They'll look something like this:
+Confirm that the `imageContentSources` were added to the bottom of your `install-config.yaml` with this command.
+And that the output looks similar to the example below.
 
+[.highside,source,bash,role=execute]
+----
+tail /mnt/high-side-data/install-config.yaml
+----
 [source,yaml]
 ----
 imageContentSources:
@@ -137,21 +167,25 @@ imageContentSources:
      source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 ----
 
+The `imageContentSources:` lines tell OpenShift that its installation images should be pulled from your `mirror-registry` instead of from quay.io
+
 === Trust mirror registry CA
 
 image::install-config-5.svg[initial config,width=600]
 
-Add the root CA of our mirror registry to the trust bundle using the `additionalTrustBundle` field by running this command:
+Now that your `install-config.yaml` includes the location and credentials for your `mirror-registry`, the last step is to add the `mirror-registry's` TLS Certificate Authority (CA) data.
+
+Add the Root CA of your `mirror-registry` to the trust bundle using the `additionalTrustBundle:` field by running this command:
 
 [.highside,source,bash,role=execute]
 ----
-cat << EOF >> /mnt/high-side-data/install/install-config.yaml
+cat << EOF >> /mnt/high-side-data/install-config.yaml
 additionalTrustBundle: |
 $(sed 's/^/  /' /home/lab-user/quay-install/quay-rootCA/rootCA.pem)
 EOF
 ----
 
-It should look something like this:
+It should look something like this, including the 2 spaces of indentation.
 
 [source,yaml]
 ----
@@ -163,46 +197,45 @@ additionalTrustBundle: |
 
 === Complete install-config.yaml
 
-Then make a backup of your `install-config.yaml` since the installer will consume (and delete) it:
-
-//TODO - the command block below wasn't rendering properly for jcall
+Please make a backup of your `install-config.yaml`!
+The OpenShift installer will consume it / delete it.
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-cd /mnt/high-side-data/install
-cp -v install-config.yaml install-config.yaml.backup
+cp -v /mnt/high-side-data/install-config.yaml /mnt/high-side-data/install-config.yaml.backup
 ----
 
 == Running the Installation
 
-image::install-config-6.svg[initial config,width=600]
+With all of the installation questions answered, `openshift-install` can now automate the installation of your disconnected cluster.
+Let's kick off the cluster installation!
 
-We're ready to run the install!
-Let's kick off the cluster installation:
+image::install-config-6.svg[initial config,width=600]
 
 [NOTE]
 --
-The OpenShift Installer (`openshift-install`) is rebuilt for every release (`{openshift_version}`).
+The OpenShift Installer (`openshift-install`) is specifically built for every version / release.
 
-This means that you can't use `openshift-install` version `{openshift_min_version}` to install OpenShift `{openshift_max_version}`.
+This means that `openshift-install` version `{openshift_min_version}` will install OpenShift `{openshift_min_version}`.
+It also means you can't use `openshift-install` version `{openshift_min_version}` to install OpenShift `{openshift_max_version}`.
 --
 
+Run the `openshift-install` command.
+The command below includes the directory where your `install-config.yaml` __answer file__ is located.
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-openshift-install create cluster --dir /mnt/high-side-data/install
+openshift-install create cluster --dir /mnt/high-side-data
 ----
 [.output]
 ----
 ...
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/mnt/high-side-data/install/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/mnt/high-side-data/auth/kubeconfig'
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.disco.lab
-INFO Login to the console with user: "kubeadmin", and password: "password"
+INFO Login to the console with user: "kubeadmin", and password: "*****-*****-*****-*****"
 INFO Time elapsed: 30m49s
 ----
-
-The installation process should take about 30 minutes.
 
 [IMPORTANT]
 This `disco.lab` cluster will take about 30 minutes to install but if you do not want to wait *proceed to the next section
