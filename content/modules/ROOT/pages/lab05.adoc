@@ -112,14 +112,30 @@ oc login https://api.disco.lab:6443 --username kubeadmin
 //* *Password:* (that we found above on the [.highside]#highside system#)
 |===
 
-[TIP]
-As a convenience, the [.lowside]#jump# system has been configured to automatically trust the Web Console certificates.
+[.output]
+----
+The server uses a certificate signed by an unknown authority.
+You can bypass the certificate check, but any data you send to the server could be intercepted by others.
+Use insecure connections? (y/n): y
+
+WARNING: Using insecure TLS client config. Setting this option is not supported!
+
+Login successful.
+
+You have access to 68 projects, the list has been suppressed. You can list all projects with 'oc projects'
+
+Using project "default".
+Welcome! See 'oc help' to get started.
+----
 
 === Log in to the OpenShift Web Console
 
 Please click on the *Desktop* button at the top of the right-hand terminal and use Firefox to log in to the OpenShift __Web Console__.
 Your workshop environment includes browser bookmarks to quickly connect with both of the OpenShift __Web Consoles__.
 Remember, the [.salsa]#salsa cluster's# credentials are `admin` / `admin`.
+
+[TIP]
+As a convenience, the [.lowside]#jump# system has been configured to automatically trust both of the [.salsa]#salsa.lab# and [.highside]#disco.lab# OpenShiftWeb Console certificates, but not the command-line / API certificates.
 
 image::vnc-disco-openshift-bookmark.png[Screenshot of Desktop with DISCO - OpenShift bookmark highlighted]
 
@@ -172,13 +188,12 @@ The __sources__ include:
 * Operators that are provided by Certified Partners without support
 * Operators that are provided by the Community without support
 
-Each Operator __source__ provides its own __catalog__ of Operators.
-OpenShift will check for new __catalog__ data every 10 minutes by default.
-The __catalogs__ are stored in the registry.redhat.io image registry, which is not accessible from disconnected clusters.
+Each __source__ provides its own __catalog__ of Operators.
+OpenShift will check each __source__ for new __catalog__ data (new Operators) every 10 minutes.
 
-The `ImageSetConfiguration` that `oc-mirror` used to download the installation content also included instructions to download the `Web Terminal` Operator from the Red Hat Certified __catalog__.
-When `oc-mirror` downloads Operators, it creates `CatalogSources` that are automatically uploaded to the `mirror-registry` and described in the __results files__.
-Those `CatalogSources` need to be added to OpenShift as a __"day 2"__ task.
+When `oc-mirror` downloads Operators, it automatically creates __catalogs__ and __sources__.
+The __catalogs__ are automatically uploaded into the `mirror-registry`.
+But the __sources__, which are YAML files tell OpenShift where to find the __catalogs__, need to be added to OpenShift manually as a __"day 2"__ task. 
 
 === Add custom CatalogSources
 
@@ -192,6 +207,10 @@ The command below will disable all of the default __sources__ in a single comman
 ----
 oc patch OperatorHub cluster --type merge -p '{"spec": {"disableAllDefaultSources": true}}'
 ----
+[.output]
+----
+operatorhub.config.openshift.io/cluster patched
+----
 
 [NOTE]
 --
@@ -199,11 +218,24 @@ The `CatalogSources` created by `oc-mirror` only contain the Operators that were
 All the other Operators are removed from the __catalog__ because they weren't mirrored and can't be installed.
 --
 
-After the default `CatalogSources` have been **disabled**, you can add the disconnected `CatalogSource` that `oc-mirror` created to your cluster with this command.
+After the default `CatalogSources` have been **disabled**, you can add the disconnected `CatalogSources` that `oc-mirror` created to your cluster.
+
+[NOTE]
+--
+The `oc-mirror` __results files__ for the [.salsa]#salsa.lab cluster# were created in the `lab-users` home directory.
+
+The `oc-mirror` __results files__ for the [.highside]#disco.lab cluster# were created in the `/mnt/high-side-data` directory.
+
+Please adjust the following command accordingly.
+--
 
 [.salsa,source,bash,role=execute]
 ----
-oc create -f oc-mirror-workspace/results-*/catalogSource-cs-redhat-operator-index.yaml
+oc create -f $HOME/oc-mirror-workspace/results-*/catalogSource-cs-redhat-operator-index.yaml
+----
+[.output]
+----
+catalogsource.operators.coreos.com/cs-redhat-operator-index created
 ----
 
 The new `CatalogSources` will appear in the Web Console / OperatorHub after ~60 seconds.
@@ -238,7 +270,7 @@ image::operator-web-terminal.png[Screenshot of the Web Terminal Operator install
 
 == Update your cluster
 
-There are multiple ways to apply updates to your disconnected OpenShift cluster.
+There are multiple ways to update your disconnected OpenShift clusters.
 
 The easiest and fastest way to apply OpenShift updates is to use the `oc adm upgrade` command and reference the new version / release image.
 You will use this method below to update your cluster.
@@ -305,6 +337,7 @@ The username / password for the [.highside]#highside# `mirror-registry` is `init
 ----
 podman login -u init -p salsapass $(hostname):8443
 podman login -u init -p discopass $(hostname):8443
+
 DIGEST=$(oc image info -o json $HOSTNAME:8443/openshift/release-images:4.14.20-x86_64 | jq -r .contentDigest)
 oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@$DIGEST --allow-explicit-upgrade
 ----
@@ -312,6 +345,7 @@ oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@$DIGEST --al
 ----
 Login Succeeded!
 Error: logging into "disco" because you're on "salsa"
+
 warning: The requested upgrade image is not one of the available updates. You have used --allow-explicit-upgrade for the update to proceed anyway
 Requested update to release image quay.io/openshift-release-dev/ocp-release@sha256:e64464879cd1acdfa7112c1ac1d90039e1689189e0af197f34881c79decda933
 ----
