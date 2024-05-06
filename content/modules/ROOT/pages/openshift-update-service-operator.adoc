@@ -1,5 +1,12 @@
 = OpenShift Update Service
 
+[NOTE]
+--
+This section is a work-in-progress.
+
+Please be patient, and leave your feedback on how it can be improved.
+--
+
 == Overview
 
 The https://docs.openshift.com/container-platform/4.14/updating/updating_a_cluster/updating_disconnected_cluster/disconnected-update-osus.html[OpenShift Update Service Operator (OSUS)] provides a fleet of disconnected OpenShift clusters with centralized updates.

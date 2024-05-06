@@ -1,6 +1,17 @@
 = Lab Finish
 
-*Thank you* for attending this lab session on creating and managing OpenShift in a disconnected environment!
+== Thank you!
 
-While we understand that disconnected environments in a cloud like AWS may be the exception rather than the rule, 
-we hope that you have learned more about the processes around installing and managing OpenShift disconnected.
+Thank you for attending the [.underline]#Red Hat OpenShift Disco Lab: Installation In A Disconnected Environment#!
+
+Please use the Summit 2024 mobile app to leave feedback on how this Lab can be improved!
+
+== Acknowledgements
+
+This workshop gave you access to a disconnected environment in the Amazon AWS Cloud.
+The workshop authors understand that the workshop environment may be more-or-less __disconnected__ than your environments.
+Regardless, we hope that you learned more about the preparations and requirements of installing and managing OpenShift in a disconnected environment.
+
+We would love to hear your disconnected stories, and learn how the entire disconnected experience could be improved!
+
+🪩 💃 Goodnight beautiful DISCO people Keep dancing! 🕺 🪩
