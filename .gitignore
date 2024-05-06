@@ -5,3 +5,5 @@ venv
 # antora output
 output
 .cache
+
+cli

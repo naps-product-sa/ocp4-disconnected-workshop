@@ -71,3 +71,10 @@ div.banner-item-title {
 .tmux-block {
   font-size: xx-large;
 }
+
+#topbar-nav > div:before {
+  content: " ";
+  background-size: cover;
+  width: 450px;
+  background-image: url("modules/_images/making-disconnected-fun-since-2024.png");
+}
