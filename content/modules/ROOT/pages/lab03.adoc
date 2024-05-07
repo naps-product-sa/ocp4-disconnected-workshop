@@ -155,7 +155,7 @@ podman login -u init -p discopass $(hostname):8443
 Login Succeeded!
 ----
 
-The `podman login` command creates an authentication file / __pull secret__ at `/run/user/1001/containers/auth.json`.
+The `podman login` command creates an authentication file / __pull secret__ at `$XDG_RUNTIME_DIR/containers/auth.json`, for example: `/run/user/1001/containers/auth.json`.
 
 [NOTE]
 --
