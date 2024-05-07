@@ -150,6 +150,8 @@ If you are trying to connect to your [.highside]#disco.lab# cluster, and see an 
 The web-based VNC client (`noVNC`) is a bit klunky with **copy** and **paste**.
 You can copy and paste into the desktop using __noVNC__'s tool ribbon (hidden by default.) 
 You might need this if you're trying to copy and paste the 23-character `kubeadmin` password.
+
+Just click the Clipboard icon in the tool ribbon, paste your `kubeadmin` password, and then click the Clipboard icon again to save your password in the copy buffer & dismiss the dialog. Now you can go paste your password in the cluster login box.
 --
 
 image::vnc-copy-paste.png[Screenshot of Desktop with noVNC clipboard highlighted]
