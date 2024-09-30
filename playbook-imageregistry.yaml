@@ -8,6 +8,7 @@
     ocp_maj_ver: "4.14"
     ocp_min_ver: "4.14.19"
     ocp_max_ver: "4.14.20"
+    mirror_registry_ver: "1.3.11"
   tasks:
 
     - name: Install container-management module
@@ -27,7 +28,7 @@
         dest: /bin
         remote_src: true
       loop:
-        - "{{ mirror_uri }}/mirror-registry/latest/mirror-registry.tar.gz"
+        - "{{ mirror_uri }}/mirror-registry/{{ mirror_registry_ver }}/mirror-registry.tar.gz"
         - "{{ mirror_uri }}/ocp/{{ ocp_min_ver }}/openshift-install-linux-{{ ocp_min_ver }}.tar.gz"
         - "{{ mirror_uri }}/ocp/{{ ocp_min_ver }}/openshift-client-linux-{{ ocp_min_ver }}.tar.gz"
         - "{{ mirror_uri }}/ocp/{{ ocp_min_ver }}/oc-mirror.tar.gz"
