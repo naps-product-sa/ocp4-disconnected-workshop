@@ -99,8 +99,6 @@
                     channels:
                       - name: v1
                   - name: cluster-logging
-                    channels:
-                      - name: stable-5.9
             additionalImages:
               - name: registry.redhat.io/rhel8/support-tools
 
