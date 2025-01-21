@@ -197,11 +197,11 @@ tail -22 /mnt/high-side-data/install-config.yaml
 ----
 imageContentSources:
   - mirrors:
-     - ip-10-0-51-206.ec2.internal:8443/openshift/release-images
-     source: quay.io/openshift-release-dev/ocp-release
+      - ip-10-0-51-206.ec2.internal:8443/openshift/release-images
+    source: quay.io/openshift-release-dev/ocp-release
   - mirrors:
-     - ip-10-0-51-206.ec2.internal:8443/openshift/release
-     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+      - ip-10-0-51-206.ec2.internal:8443/openshift/release
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 ----
 
 The `imageContentSources:` lines tell OpenShift that its installation images should be pulled from your `mirror-registry` instead of from quay.io
