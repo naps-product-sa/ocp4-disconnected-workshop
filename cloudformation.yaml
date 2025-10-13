@@ -97,6 +97,14 @@ Parameters:
     Description: Base64 of the pull secret
     Type: String
 
+  Debug:
+    Description: Enable debug mode for enhanced logging and debugging features
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
 # for region in us-east-1 us-east-2 us-west-1 us-west-2; do echo $region; aws ec2 describe-images --region $region --no-include-deprecated --filters Name=architecture,Values=x86_64 Name=name,Values=RHEL-9.6*Hourly* --owners amazon --output json | jq -r '.Images | sort_by(.CreationDate) | .[] | [.ImageId, .Name, .CreationDate, .State]  | @tsv'; done
 Mappings:
   RegionMap:
@@ -1050,7 +1058,11 @@ Resources:
           echo ${PrivateSubnet1} > /home/lab-user/private-subnet-id
           chown -R lab-user:lab-user /home/lab-user/private-subnet-id
 
-          curl -Lo /root/playbook.yaml https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/refs/tags/rhdp-prod/playbook-imageregistry.yaml
+          if [ "${Debug}" = "true" ]; then
+            curl -Lo /root/playbook.yaml https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/heads/update-salsa-418/playbook-imageregistry.yaml
+          else
+            curl -Lo /root/playbook.yaml https://raw.githubusercontent.com/naps-product-sa/ocp4-disconnected-workshop/refs/tags/rhdp-prod/playbook-imageregistry.yaml
+          fi
           ansible-playbook -v /root/playbook.yaml
 
   #############################################################################
