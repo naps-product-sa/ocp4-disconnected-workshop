@@ -196,11 +196,12 @@
           echo "$(date) : Updated system certificate trust store"
 
           # Login to local quay registry
-          podman login -u=${REG_USER} -p=${REG_PASS} ${HOSTNAME}:8443
+          mkdir ${HOME}/.docker || true
+          podman login --authfile=${HOME}/.docker/config.json -u=${REG_USER} -p=${REG_PASS} ${HOSTNAME}:8443
 
           # Remove the Insights / Telemetry credential to cloud.openshift.com
-          podman logout cloud.openshift.com || true
-          chown -Rv lab-user:lab-user /home/lab-user/.docker
+          podman logout --authfile ${HOME}/.docker/config.json cloud.openshift.com || true
+          chown -Rv ${USER}:${USER} ${HOME}/.docker
 
           # Ensure quay init does not run again
           touch ${HOME}/.mirror-registry-init-finished
