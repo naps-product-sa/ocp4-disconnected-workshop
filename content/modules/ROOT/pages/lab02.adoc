@@ -166,13 +166,12 @@ Now that the mirroring and installation tools have been downloaded and extracted
 
 {counter:mirror}. Create an `ImageSetConfiguration` YAML file that describes:
 
-** What to download (OpenShift itself, an Operator, and an image)
+** What to download (OpenShift itself, an Operator, a Helm chart, and specified images)
 ** What versions (e.g. everything between `{openshift_min_version}` and `{openshift_max_version}`)
-** Where to store the downloaded content
 
 {counter:mirror}. Run `oc-mirror` with the YAML file
 
-** This process downloads ~25 GB of data and takes about 15 minutes in this workshop environment
+** This process downloads `~62` GB of data and takes up to `30` minutes in this workshop environment
 ** We will run the download in a separate (`tmux`) terminal so that you can keep working.
 
 [NOTE]
@@ -204,7 +203,7 @@ To save time and storage, the template downloads:
 
 * Two specific versions of OpenShift
 * One optional app / Operator, the `Web Terminal` Operator
-* One additional image, `registry.redhat.io/rhel8/support-tools`
+* One additional image, `registry.redhat.io/rhel8/support-tools:latest`
 * No Helm charts will be download
 
 [TIP]
@@ -221,9 +220,6 @@ cat << EOF > /mnt/low-side-data/imageset-config.yaml
 ---
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
-storageConfig:
-  local:
-    path: ./
 mirror:
   platform:
     channels:
@@ -240,7 +236,7 @@ mirror:
       - name: fast
 
   additionalImages:
-  - name: registry.redhat.io/rhel8/support-tools
+  - name: registry.redhat.io/rhel8/support-tools:latest
 
   helm: {}
 EOF
@@ -248,10 +244,10 @@ EOF
 
 [WARNING]
 --
-**It takes ~15 minutes to download the installation images in this workshop environment.**
+**It takes up to 30 minutes to download the installation images in this workshop environment depending on network conditions.**
 
 Please run the next `oc-mirror` command in a `tmux` session.
-This will allow you to move on to the next section while `oc-mirror` downloads ~25 GB of data.
+This will allow you to move on to the next section while `oc-mirror` downloads `~62` GB of data.
 
 Your workshop environment has configured `tmux` to be as user-friendly as possible.
 --
@@ -297,24 +293,21 @@ Now that `tmux` is running, choose one of the _panes_ to run the `oc-mirror` com
 [.lowside,source,bash,role=execute]
 ----
 cd /mnt/low-side-data
-oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
+oc-mirror --v2 --config imageset-config.yaml file:///mnt/low-side-data
 ----
 [.output]
 ----
-W1008 23:48:58.215696   38057 mirror.go:102]
 
-⚠️  oc-mirror v1 is deprecated (starting in 4.18 release) and will be removed in a future release - please migrate to oc-mirror --v2
-
-Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/publish
-Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/v2
-Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/charts
-Creating directory: /mnt/low-side-data/oc-mirror-workspace/src/release-signatures
-No metadata detected, creating new workspace
+2025/10/19 23:18:14  [INFO]   : 👋 Hello, welcome to oc-mirror
+2025/10/19 23:18:14  [INFO]   : ⚙️  setting up the environment for you...
+2025/10/19 23:18:14  [INFO]   : 🔀 workflow mode: mirrorToDisk 
+2025/10/19 23:18:14  [INFO]   : 🕵  going to discover the necessary images...
+2025/10/19 23:18:14  [INFO]   : 🔍 collecting release images...
 
 ...  a long, uncomfortable pause ...
 
-info: Mirroring completed in 14m12.12s (52.55MB/s)
-Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+2025/10/20 00:14:11  [INFO]   : mirror time     : 18m56.926294457s
+2025/10/20 00:14:11  [INFO]   : 👋  Goodbye, thank you for using oc-mirror
 ----
 
 === Summary
@@ -324,47 +317,3 @@ You provided credentials (a `pull secret`) and download instructions (`imageset-
 
 Because `oc-mirror` takes a long time to complete, you ran the download command in a `tmux` __pane__.
 You can now proceed to the next section and use the other `tmux` __pane__ to keep working without waiting for the download to complete.
-
-// [cols="10h,90a",frame=none,grid=none]
-// |===
-// ^|
-// *tmux*
-
-// [.tmux-block]#⬛#
-
-// [.tmux-block]#⃞#
-// |
-// [.lowside,source,bash,role=execute]
-// ----
-// oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
-// ----
-// [.output]
-// ----
-// ...
-// info: Mirroring completed in 14m12.12s (52.55MB/s)
-// Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
-// ----
-// |===
-
-
-// [cols="10h,90a",frame=none,grid=none]
-// |===
-// ^|
-// *tmux*
-
-// [.tmux-block]#⃞#
-
-// [.tmux-block]#⬛#
-
-// |
-// [.lowside,source,bash,role=execute]
-// ----
-// oc-mirror --config imageset-config.yaml file:///mnt/low-side-data
-// ----
-// [.output]
-// ----
-// ...
-// info: Mirroring completed in 14m12.12s (52.55MB/s)
-// Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
-// ----
-// |===
