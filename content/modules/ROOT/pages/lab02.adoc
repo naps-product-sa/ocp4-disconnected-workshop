@@ -114,7 +114,7 @@ sudo cp -v oc-mirror /bin
 
 * `mirror-registry`: a small-scale Red Hat Quay registry designed for mirroring
 
-[.lowside,source,bash,role=execute]
+[.lowside,source,bash,role=execute,subs="attributes"]
 ----
 curl -L -o mirror-registry.tar.gz https://mirror.openshift.com/pub/cgw/mirror-registry/{mirror_registry_version}/mirror-registry-amd64.tar.gz
 ----
