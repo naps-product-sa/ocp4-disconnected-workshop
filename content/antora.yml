@@ -7,10 +7,10 @@ nav:
 
 asciidoc:
   attributes:
-    openshift_version: 4.18
-    openshift_channel: stable-4.18
-    openshift_min_version: 4.18.24
-    openshift_max_version: 4.18.25
+    openshift_version: 4.20
+    openshift_channel: stable-4.20
+    openshift_min_version: 4.20.8
+    openshift_max_version: 4.20.8
     mirror_registry_version: 2.0.7
 
     page-pagination: true

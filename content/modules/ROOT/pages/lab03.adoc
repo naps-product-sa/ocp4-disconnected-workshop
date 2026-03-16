@@ -191,7 +191,7 @@ You can confirm the download finished by looking in your `tmux` pane to see if y
 ----
 ...
 info: Mirroring completed in 14m12.12s (52.55MB/s)
-Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+Creating archive /mnt/low-side-data/mirror_000001.tar
 [lab-user@jump low-side-data]$
 ----
 
@@ -216,7 +216,7 @@ sending incremental file list
         186,850 100%  146.94MB/s    0:00:00 (xfr#1, to-chk=124/126)
 imageset-config.yaml
             469 100%  458.01kB/s    0:00:00 (xfr#2, to-chk=123/126)
-mirror_seq1_000000.tar
+mirror_000001.tar
  22,931,079,168  92%  125.16MB/s    0:00:15  (xfr#2, to-chk=122/126)
 
 ... a long, but amazing, transfer ...
@@ -319,16 +319,14 @@ Please change directories to `/mnt/high-side-data`, and use the `tmux` pane that
 [.highside,source,bash,role=execute]
 ----
 cd /mnt/high-side-data
-oc-mirror --from=/mnt/high-side-data/mirror_seq1_000000.tar docker://$(hostname):8443
+oc-mirror -c imageset-config.yaml --from=file:///mnt/high-side-data/ docker://$(hostname):8443 --v2
 ----
 [.output]
 ----
 W1009 01:24:56.827617   37859 mirror.go:102]
 
-⚠️  oc-mirror v1 is deprecated (starting in 4.18 release) and will be removed in a future release - please migrate to oc-mirror --v2
-
 Checking push permissions for ip-10-0-56-192.ap-southeast-1.compute.internal:8443
-Publishing image set from archive "/mnt/high-side-data/mirror_seq1_000000.tar" to registry "ip-10-0-56-192.ap-southeast-1.compute.internal:8443"
+Publishing image set from archive "/mnt/high-side-data/mirror_000001.tar" to registry "ip-10-0-56-192.ap-southeast-1.compute.internal:8443"
 ip-10-0-56-192.ap-southeast-1.compute.internal:8443/
   openshift/release
     blobs:
