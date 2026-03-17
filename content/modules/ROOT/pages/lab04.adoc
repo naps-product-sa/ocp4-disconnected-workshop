@@ -313,11 +313,11 @@ If you recieve the following error:
 ERROR failed to fetch Metadata: failed to load asset "Install Config": failed to create install config: platform.aws.vpc.subnets: Forbidden: additional subnets [subnet-ID] without tag prefix kubernetes.io/cluster/ are found in vpc vpc-052f1bfee99b414d3 of provided subnets. Please add a tag kubernetes.io/cluster/unmanaged to those subnets to exclude them from cluster installation or explicitly assign roles in the install-config to provided subnets
 ----
 
-Run the following command and insert the subnet id from the error message:
+Run the following command and replace SUBNET_ID with the subnet id from the error message:
 
 [.highside,source,bash,role=execute,subs="attributes"]
 ----
-aws ec2 create-tags --resources <SUBNET_ID> --tags Key=kubernetes.io/cluster/unmanaged,Value=true
+aws ec2 create-tags --resources SUBNET_ID --tags Key=kubernetes.io/cluster/unmanaged,Value=true
 ----
 
 Run the `openshift-install` command again.
