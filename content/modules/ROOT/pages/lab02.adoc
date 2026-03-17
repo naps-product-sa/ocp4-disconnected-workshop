@@ -310,7 +310,7 @@ No metadata detected, creating new workspace
 ...  a long, uncomfortable pause ...
 
 info: Mirroring completed in 14m12.12s (52.55MB/s)
-Creating archive /mnt/low-side-data/mirror_seq1_000000.tar
+Creating archive /mnt/low-side-data/mirror_000001.tar
 ----
 
 === Summary
