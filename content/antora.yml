@@ -7,7 +7,7 @@ nav:
 
 asciidoc:
   attributes:
-    openshift_version: 4.20
+    openshift_version: '4.20'
     openshift_channel: stable-4.20
     openshift_min_version: 4.20.8
     openshift_max_version: 4.20.8
