@@ -9,7 +9,7 @@ Please be patient, and leave your feedback on how it can be improved.
 
 == Overview
 
-The https://docs.redhat.com/container-platform/{openshift_version}/updating/updating_a_cluster/updating_disconnected_cluster/disconnected-update-osus.html[OpenShift Update Service Operator (OSUS)] provides a fleet of disconnected OpenShift clusters with centralized updates.
+The https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html-single/disconnected_environments/index#update-service-overview_updating-disconnected-cluster-osus[OpenShift Update Service Operator (OSUS)] provides a fleet of disconnected OpenShift clusters with centralized updates.
 
 Red Hat maintains an update __"graph"__ that describes the supported, **and blocked**, paths when upgrading an older version of OpenShift to a newer one.
 For example, the __graph__ allows clusters to upgrade directly from version `4.18.0` to `4.18.20`.
