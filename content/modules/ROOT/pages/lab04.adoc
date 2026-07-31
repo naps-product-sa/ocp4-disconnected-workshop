@@ -152,7 +152,7 @@ That __pull secret__ provides credentials for several Red Hat image registries, 
 The __pull secret__ that gets added to a disconnected installation's `install-config.yaml` is only required to provide credentials for the `mirror-registry`.
 --
 
-=== Add imageContentSources
+=== Add imageDigestSources
 
 image::install-config-4.svg[initial config,width=600]
 
@@ -261,7 +261,7 @@ In addition to the base template, you should have sections for:
 
 {counter:inspect}. Pull Secret under `pullSecret:`
 
-{counter:inspect}. Mirror Registry under `imageContentSources:`
+{counter:inspect}. Mirror Registry under `imageDigestSources:`
 
 {counter:inspect}. Mirror Registry Certificate Authority under `additionalTrustBundle:`
 
@@ -298,7 +298,6 @@ openshift-install create cluster --dir /mnt/high-side-data
 [.output]
 ----
 INFO Credentials loaded from the "default" profile in file "/home/lab-user/.aws/credentials"
-WARNING imageContentSources is deprecated, please use ImageDigestSource
 WARNING Making control-plane schedulable by setting MastersSchedulable to true for Scheduler cluster settings
 INFO Consuming Install Config from target directory
 INFO Creating infrastructure resources...
