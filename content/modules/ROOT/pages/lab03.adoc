@@ -328,26 +328,45 @@ oc-mirror -c imageset-config.yaml --from=file:///mnt/high-side-data/ docker://$(
 ----
 [.output]
 ----
-W1009 01:24:56.827617   37859 mirror.go:102]
-
-Checking push permissions for ip-10-0-56-192.ap-southeast-1.compute.internal:8443
-Publishing image set from archive "/mnt/high-side-data/mirror_000001.tar" to registry "ip-10-0-56-192.ap-southeast-1.compute.internal:8443"
-ip-10-0-56-192.ap-southeast-1.compute.internal:8443/
-  openshift/release
-    blobs:
-      file://openshift/release sha256:a1edca13087b34e32f77a4698096f3aa3fef4d65a34515d5b68f5e7229cdf483 22.73KiB
-      file://openshift/release sha256:afa798da1eea334bab3cb1e14451ff84f98d35b436cdc4b408b46e289e4e2bc2 8.878MiB
+2026/10/14 20:55:52  [INFO]   :👋👋 Hello, welcome to oc-mirror
+2026/10/14 20:55:52  [INFO]   : ⚙️  setting up the environment for you...
+2026/10/14 20:55:52  [INFO]   : ⚙️  environment version: 4.20.0-202512070314.p2.gf4775a2.assembly.stream.el9-f4775a2
+2026/10/14 20:55:52  [INFO]   :🔀🔀 workflow mode: diskToMirror 
+2026/10/14 20:55:52  [INFO]   : Verified we can authenticate against registry "ip-10-0-56-149.us-east-2.compute.internal:8443"
+2026/10/14 20:55:52  [INFO]   :📦📦 Extracting mirror archive(s)...
+/mnt/high-side-data/mirror_000001.tar (26.2 GiB / 26.2 GiB) [===============================================================================================================================] 7m2s
+2026/10/14 21:02:55  [INFO]   : 🕵  going to discover the necessary images...
+2026/10/14 21:02:55  [INFO]   :🔍🔍 collecting release images...
+2026/10/14 21:02:55  [INFO]   :🔍🔍 collecting operator images...
+ ✓   () Collecting catalog registry.redhat.io/redhat/redhat-operator-index:v4.20 
+2026/10/14 21:02:55  [INFO]   :🔍🔍 collecting additional images...
+2026/10/14 21:02:55  [INFO]   :🔍🔍 collecting helm images...
+2026/10/14 21:02:55  [INFO]   :🚀🚀 Start copying the images...
+2026/10/14 21:02:55  [INFO]   :📌📌 images to copy 199 
+ ✓   (29s)  ocp-v4.0-art-dev@sha256:0662bb5072a8076af3a038024e0a674d44938143e0a3dcc74559da39d15687a8 ➡️  ip-10-0-56-149.us-east-2.compute.internal:8443/openshift/  
 
 ... a long, mind-expanding, upload ...
 
-info: Mirroring completed in 18m10.33s (39.33MB/s)
-Rendering catalog image "ip-10-0-56-192.ap-southeast-1.compute.internal:8443/redhat/redhat-operator-index:v4.18" with file-based catalog
-Writing image mapping to oc-mirror-workspace/results-1759973097/mapping.txt
-Writing CatalogSource manifests to oc-mirror-workspace/results-1759973097
-Writing ICSP manifests to oc-mirror-workspace/results-1759973097
-
-[lab-user@highside ~]$
-----
+199 / 199 (15m51s) [=======================================================================================================================================================================] 100 %
+ ✓   (1m16s)  redhat-operator-index:v4.20 ➡️  ip-10-0-56-149.us-east-2.compute.internal:8443/redhat/  
+2026/10/14 21:18:46  [INFO]   : === Results ===
+2026/10/14 21:18:46  [INFO]   :  ✓  193 / 193 release images mirrored successfully
+2026/10/14 21:18:46  [INFO]   :  ✓  5 / 5 operator images mirrored successfully
+2026/10/14 21:18:46  [INFO]   :  ✓  1 / 1 additional images mirrored successfully
+2026/10/14 21:18:46  [INFO]   : 📄  Generating IDMS file...
+2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/idms-oc-mirror.yaml file created
+2026/10/14 21:18:46  [INFO]   : 📄  Generating ITMS file...
+2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/itms-oc-mirror.yaml file created
+2026/10/14 21:18:46  [INFO]   : 📄  Generating CatalogSource file...
+2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/cs-redhat-operator-index-v4-20.yaml file created
+2026/10/14 21:18:46  [INFO]   : 📄  Generating ClusterCatalog file...
+2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/cc-redhat-operator-index-v4-20.yaml file created
+2026/10/14 21:18:46  [INFO]   : 📄  Generating Signature Configmap...
+2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/signature-configmap.json file created
+2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/signature-configmap.yaml file created
+2026/10/14 21:18:46  [INFO]   : mirror time     : 22m54.166459262s
+2026/10/14 21:18:46  [INFO]   : 👋  Goodbye, thank you for using oc-mirror
+[lab-user@highside high-side-data]$ ----
 
 [TIP]
 --
