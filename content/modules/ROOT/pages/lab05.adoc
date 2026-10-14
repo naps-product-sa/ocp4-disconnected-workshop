@@ -350,7 +350,7 @@ The username / password for the [.highside]#highside# `mirror-registry` is `init
 [[ $NICKNAME == "salsa" ]] && podman login -u init -p salsapass $(hostname):8443
 [[ $NICKNAME != "salsa" ]] && podman login -u init -p discopass $(hostname):8443
 
-DIGEST=$(oc image info -o json $HOSTNAME:8443/openshift/release-images:4.18.25-x86_64 | jq -r .contentDigest)
+DIGEST=$(oc image info -o json $HOSTNAME:8443/openshift/release-images:4.14.20-x86_64 | jq -r .contentDigest)
 oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@$DIGEST --allow-explicit-upgrade
 ----
 [.output]
