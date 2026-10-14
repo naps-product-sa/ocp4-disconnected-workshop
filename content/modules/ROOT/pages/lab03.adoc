@@ -366,7 +366,8 @@ oc-mirror -c imageset-config.yaml --from=file:///mnt/high-side-data/ docker://$(
 2026/10/14 21:18:46  [INFO]   : /mnt/high-side-data/working-dir/cluster-resources/signature-configmap.yaml file created
 2026/10/14 21:18:46  [INFO]   : mirror time     : 22m54.166459262s
 2026/10/14 21:18:46  [INFO]   : 👋  Goodbye, thank you for using oc-mirror
-[lab-user@highside high-side-data]$ ----
+[lab-user@highside high-side-data]$ 
+----
 
 [TIP]
 --
