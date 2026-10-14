@@ -190,9 +190,14 @@ You can confirm the download finished by looking in your `tmux` pane to see if y
 [.output]
 ----
 ...
-info: Mirroring completed in 14m12.12s (52.55MB/s)
-Creating archive /mnt/low-side-data/mirror_000001.tar
-[lab-user@jump low-side-data]$
+2026/10/14 20:43:51  [INFO]   : === Results ===
+2026/10/14 20:43:51  [INFO]   :  ✓  193 / 193 release images mirrored successfully
+2026/10/14 20:43:51  [INFO]   :  ✓  5 / 5 operator images mirrored successfully
+2026/10/14 20:43:51  [INFO]   :  ✓  1 / 1 additional images mirrored successfully
+2026/10/14 20:43:51  [INFO]   : 📦 Preparing the tarball archive...
+2026/10/14 20:50:41  [INFO]   : mirror time     : 11m6.746238255s
+2026/10/14 20:50:41  [INFO]   : 👋 Goodbye, thank you for using oc-mirror
+[lab-user@jump low-side-data]$ 
 ----
 
 After the `oc-mirror` command has completed, use `rsync` on the [.lowside]#jump# system to copy the installation content into `/mnt/high-side-data` on the [.highside]#highside# system.
