@@ -235,6 +235,9 @@ mirror:
     - name: web-terminal
       channels:
       - name: fast
+    - name: devworkspace-operator  # dependency of web-terminal
+      channels:
+      - name: fast
 
   additionalImages:
   - name: registry.redhat.io/rhel8/support-tools:latest
